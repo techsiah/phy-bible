@@ -559,10 +559,75 @@ textarea:focus {
   box-shadow: 0 1px 0 0 var(--gold);
 }
 
+/* ── Reference field group ────────────────────────────────── */
+
+.ref-group {
+  margin-bottom: 16px;
+}
+
+.ref-preview {
+  font-size: 0.74rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--gold);
+}
+
+.ref-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.ref-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.ref-sublabel {
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 3px;
+  user-select: none;
+}
+
+.ref-col-book {
+  flex: 2.3;
+  min-width: 120px;
+}
+
+.ref-col-chapter {
+  flex: 1;
+  min-width: 60px;
+}
+
+.ref-colon {
+  padding-bottom: 6px;
+  font-size: 1.25rem;
+  font-family: var(--font-serif);
+  color: var(--ink-faint);
+  user-select: none;
+  line-height: 1;
+}
+
+.ref-col-verse {
+  flex: 1.4;
+  min-width: 80px;
+}
+
+#bookInput,
+#chapterInput,
+#verseInput,
 #refInput {
   padding: 4px 2px 8px;
-  font-size: 1.28rem;
+  font-size: 1.15rem;
   letter-spacing: 0.01em;
+}
+
+#chapterInput {
+  text-align: left;
 }
 
 #noteText {
@@ -1075,6 +1140,20 @@ html[data-theme="candle"] button.note-ref:hover { color: var(--gold-bright); }
   .page.compose { padding-right: 20px; }
   .page.margins { padding-left: 20px; }
   #noteText { min-height: 200px; }
+
+  .ref-row {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+  .ref-col-book {
+    flex-basis: 100%;
+  }
+  .ref-col-chapter {
+    flex: 1;
+  }
+  .ref-col-verse {
+    flex: 1.5;
+  }
 
   .compose-actions { flex-wrap: wrap; }
   .draft-status {

@@ -22,6 +22,23 @@
     '1 Peter', '2 Peter', '1 John', '2 John', '3 John', 'Jude', 'Revelation'
   ];
 
+  const BOOK_CHAPTERS = {
+    'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numbers': 36, 'Deuteronomy': 34,
+    'Joshua': 24, 'Judges': 21, 'Ruth': 4, '1 Samuel': 31, '2 Samuel': 24,
+    '1 Kings': 22, '2 Kings': 25, '1 Chronicles': 29, '2 Chronicles': 36,
+    'Ezra': 10, 'Nehemiah': 13, 'Esther': 10, 'Job': 42, 'Psalms': 150, 'Psalm': 150,
+    'Proverbs': 31, 'Ecclesiastes': 12, 'Song of Solomon': 8, 'Isaiah': 66,
+    'Jeremiah': 52, 'Lamentations': 5, 'Ezekiel': 48, 'Daniel': 12, 'Hosea': 14,
+    'Joel': 3, 'Amos': 9, 'Obadiah': 1, 'Jonah': 4, 'Micah': 7, 'Nahum': 3,
+    'Habakkuk': 3, 'Zephaniah': 3, 'Haggai': 2, 'Zechariah': 14, 'Malachi': 4,
+    'Matthew': 28, 'Mark': 16, 'Luke': 24, 'John': 21, 'Acts': 28, 'Romans': 16,
+    '1 Corinthians': 16, '2 Corinthians': 13, 'Galatians': 6, 'Ephesians': 6,
+    'Philippians': 4, 'Colossians': 4, '1 Thessalonians': 5, '2 Thessalonians': 3,
+    '1 Timothy': 6, '2 Timothy': 4, 'Titus': 3, 'Philemon': 1, 'Hebrews': 13,
+    'James': 5, '1 Peter': 5, '2 Peter': 3, '1 John': 5, '2 John': 1, '3 John': 1,
+    'Jude': 1, 'Revelation': 22
+  };
+
   // Public-domain KJV verses, bundled so the page never needs the internet.
   const VERSES = [
     { ref: 'Psalm 119:105', text: 'Thy word is a lamp unto my feet, and a light unto my path.' },
@@ -70,6 +87,11 @@
   const todayDate = $('todayDate');
   const printHead = $('printHead');
   const noteForm = $('noteForm');
+  const bookInput = $('bookInput');
+  const chapterInput = $('chapterInput');
+  const verseInput = $('verseInput');
+  const refPreview = $('refPreview');
+  const chapterList = $('chapterList');
   const refInput = $('refInput');
   const noteText = $('noteText');
   const tagsInput = $('tagsInput');
@@ -174,7 +196,20 @@
 
   function normalizeNote(raw) {
     if (!raw || typeof raw !== 'object') return null;
-    const ref = typeof raw.ref === 'string' ? raw.ref.trim().slice(0, 120) : '';
+    let ref = typeof raw.ref === 'string' ? raw.ref.trim().slice(0, 120) : '';
+    let book = typeof raw.book === 'string' ? raw.book.trim().slice(0, 60) : '';
+    let chapter = typeof raw.chapter === 'string' ? raw.chapter.trim().slice(0, 20) : '';
+    let verse = typeof raw.verse === 'string' ? raw.verse.trim().slice(0, 40) : '';
+
+    if (!ref && (book || chapter || verse)) {
+      ref = assembleReference(book, chapter, verse);
+    } else if (ref && (!book && !chapter && !verse)) {
+      const parsed = parseReference(ref);
+      book = parsed.book;
+      chapter = parsed.chapter;
+      verse = parsed.verse;
+    }
+
     const text = typeof raw.text === 'string' ? raw.text.slice(0, 20000) : '';
     if (!ref && !text) return null;
 
@@ -193,6 +228,9 @@
     return {
       id: typeof raw.id === 'string' && raw.id ? raw.id.slice(0, 80) : uid(),
       ref,
+      book,
+      chapter,
+      verse,
       text,
       tags,
       pinned: Boolean(raw.pinned),
@@ -214,30 +252,168 @@
       });
   }
 
-  function formatReference(raw) {
-    let value = raw.trim().replace(/\s+/g, ' ');
+  function formatBookName(raw) {
+    let value = (raw || '').trim().replace(/\s+/g, ' ');
     if (!value) return '';
 
     const lower = value.toLowerCase();
-    let book = null;
+    if (lower === 'psalm') return 'Psalm';
+
+    let matched = null;
     for (const candidate of BOOKS) {
       const cl = candidate.toLowerCase();
-      if (lower === cl || lower.startsWith(cl + ' ') || lower.startsWith(cl + ':')) {
-        if (!book || candidate.length > book.length) book = candidate;
+      if (lower === cl) return candidate;
+      if (lower.startsWith(cl + ' ') || lower.startsWith(cl + ':')) {
+        if (!matched || candidate.length > matched.length) matched = candidate;
       }
     }
 
-    if (book) {
-      value = book + value.slice(book.length);
+    if (matched) return matched;
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  function parseReference(raw) {
+    if (!raw || typeof raw !== 'string') return { book: '', chapter: '', verse: '' };
+    const trimmed = raw.trim().replace(/\s+/g, ' ');
+    if (!trimmed) return { book: '', chapter: '', verse: '' };
+
+    const lower = trimmed.toLowerCase();
+    let bestBook = null;
+
+    if (lower === 'psalm' || lower.startsWith('psalm ') || lower.startsWith('psalm:')) {
+      bestBook = 'Psalm';
     } else {
-      value = value.charAt(0).toUpperCase() + value.slice(1);
+      for (const candidate of BOOKS) {
+        const bl = candidate.toLowerCase();
+        if (lower === bl || lower.startsWith(bl + ' ') || lower.startsWith(bl + ':')) {
+          if (!bestBook || candidate.length > bestBook.length) {
+            bestBook = candidate;
+          }
+        }
+      }
     }
 
-    return value
-      .replace(/\s*:\s*/g, ':')
-      .replace(/\s*[\u2013\u2014-]\s*/g, '\u2013')
-      .replace(/\s+/g, ' ')
-      .trim();
+    let remainder = '';
+    let bookName = '';
+
+    if (bestBook) {
+      bookName = bestBook;
+      remainder = trimmed.slice(bestBook.length).trim();
+      if (remainder.startsWith(':')) remainder = remainder.slice(1).trim();
+    } else {
+      const match = trimmed.match(/^(.+?)(?:\s+(\d+.*))?$/);
+      if (match) {
+        bookName = match[1].trim();
+        remainder = (match[2] || '').trim();
+      } else {
+        bookName = trimmed;
+      }
+    }
+
+    if (!remainder) {
+      return { book: bookName, chapter: '', verse: '' };
+    }
+
+    remainder = remainder.replace(/\s*[\u2013\u2014-]\s*/g, '\u2013');
+    const isSingleChapter = BOOK_CHAPTERS[bookName] === 1;
+
+    const cvMatch = remainder.match(/^(\d+)\s*[:\.]\s*(\S+.*)$/);
+    if (cvMatch) {
+      return {
+        book: bookName,
+        chapter: cvMatch[1].trim(),
+        verse: cvMatch[2].trim()
+      };
+    }
+
+    if (/^\d+$/.test(remainder)) {
+      if (isSingleChapter) {
+        return {
+          book: bookName,
+          chapter: '1',
+          verse: remainder
+        };
+      }
+      return {
+        book: bookName,
+        chapter: remainder,
+        verse: ''
+      };
+    }
+
+    const vMatch = remainder.match(/^(?:v|vs|verse|verses)\.?\s*(\S+.*)$/i);
+    if (vMatch) {
+      return {
+        book: bookName,
+        chapter: isSingleChapter ? '1' : '',
+        verse: vMatch[1].trim()
+      };
+    }
+
+    return {
+      book: bookName,
+      chapter: remainder,
+      verse: ''
+    };
+  }
+
+  function assembleReference(book, chapter, verse) {
+    const b = formatBookName(book);
+    const c = (chapter || '').trim();
+    let v = (verse || '').trim().replace(/\s*[\u2013\u2014-]\s*/g, '\u2013');
+
+    if (!b && !c && !v) return '';
+
+    if (!c && !v) {
+      return b;
+    }
+
+    if (b) {
+      if (c && v) return `${b} ${c}:${v}`;
+      if (c) return `${b} ${c}`;
+      return `${b} :${v}`;
+    }
+
+    if (c && v) return `${c}:${v}`;
+    if (c) return `${c}`;
+    return `${v}`;
+  }
+
+  function formatReference(raw) {
+    const parsed = parseReference(raw);
+    return assembleReference(parsed.book, parsed.chapter, parsed.verse);
+  }
+
+  function updateChapterList(bookName) {
+    if (!chapterList) return;
+    chapterList.replaceChildren();
+    const count = BOOK_CHAPTERS[bookName] || (bookName === 'Psalm' ? 150 : 0);
+    if (!count) return;
+    const fragment = document.createDocumentFragment();
+    for (let i = 1; i <= count; i++) {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      fragment.append(opt);
+    }
+    chapterList.append(fragment);
+  }
+
+  function updateReferenceFromParts() {
+    const full = assembleReference(bookInput.value, chapterInput.value, verseInput.value);
+    refInput.value = full;
+    if (refPreview) {
+      refPreview.textContent = full || '';
+    }
+    return full;
+  }
+
+  function setReferenceFields(refString) {
+    const parsed = parseReference(refString || '');
+    bookInput.value = parsed.book;
+    chapterInput.value = parsed.chapter;
+    verseInput.value = parsed.verse;
+    updateChapterList(parsed.book);
+    updateReferenceFromParts();
   }
 
   function parseTags(raw) {
@@ -317,7 +493,7 @@
 
     window.setTimeout(() => { cover.hidden = true; }, reduced ? 20 : 1200);
     window.setTimeout(() => {
-      const target = noteText.value.trim() ? noteText : refInput;
+      const target = noteText.value.trim() ? noteText : (bookInput.value.trim() ? chapterInput : bookInput);
       target.focus({ preventScroll: true });
       if (target === noteText) {
         const end = noteText.value.length;
@@ -363,6 +539,7 @@
         if (!q) return true;
         return (
           note.ref.toLowerCase().includes(q) ||
+          (note.book && note.book.toLowerCase().includes(q)) ||
           note.text.toLowerCase().includes(q) ||
           note.tags.some((tag) => tag.toLowerCase().includes(q))
         );
@@ -498,15 +675,19 @@
   }
 
   function saveDraftNow() {
+    const fullRef = updateReferenceFromParts();
     const hasContent =
-      refInput.value.trim() || noteText.value.trim() || tagsInput.value.trim();
+      fullRef || noteText.value.trim() || tagsInput.value.trim();
     if (!hasContent) {
       removeKey(DRAFT_KEY);
       setDraftStatus('');
       return;
     }
     const ok = writeJSON(DRAFT_KEY, {
-      ref: refInput.value,
+      ref: fullRef,
+      book: bookInput.value,
+      chapter: chapterInput.value,
+      verse: verseInput.value,
       text: noteText.value,
       tags: tagsInput.value,
       editingId
@@ -521,6 +702,12 @@
 
   function resetForm() {
     noteForm.reset();
+    bookInput.value = '';
+    chapterInput.value = '';
+    verseInput.value = '';
+    refInput.value = '';
+    if (refPreview) refPreview.textContent = '';
+    updateChapterList('');
     setEditing(null);
     setDraftStatus('');
     window.clearTimeout(draftTimer);
@@ -528,14 +715,16 @@
   }
 
   function saveNote() {
-    const ref = formatReference(refInput.value);
-    refInput.value = ref;
+    const ref = updateReferenceFromParts();
+    const book = bookInput.value.trim();
+    const chapter = chapterInput.value.trim();
+    const verse = verseInput.value.trim();
     const text = noteText.value.trim();
     const tags = parseTags(tagsInput.value);
 
     if (!ref && !text) {
       toast('Write a reference or a note first.');
-      refInput.focus();
+      bookInput.focus();
       return;
     }
 
@@ -545,6 +734,9 @@
       const existing = notes.find((note) => note.id === editingId);
       if (existing) {
         existing.ref = ref;
+        existing.book = book;
+        existing.chapter = chapter;
+        existing.verse = verse;
         existing.text = text;
         existing.tags = tags;
         existing.updatedAt = now;
@@ -552,7 +744,7 @@
         renderNotes();
         resetForm();
         toast('Note updated.');
-        refInput.focus();
+        bookInput.focus();
         return;
       }
       setEditing(null);
@@ -561,6 +753,9 @@
     notes.unshift({
       id: uid(),
       ref,
+      book,
+      chapter,
+      verse,
       text,
       tags,
       pinned: false,
@@ -571,12 +766,20 @@
     renderNotes();
     resetForm();
     toast('Note saved.');
-    refInput.focus();
+    bookInput.focus();
   }
 
   function startEdit(note) {
     setEditing(note.id);
-    refInput.value = note.ref;
+    if (note.book || note.chapter || note.verse) {
+      bookInput.value = note.book || '';
+      chapterInput.value = note.chapter || '';
+      verseInput.value = note.verse || '';
+      updateChapterList(note.book);
+      updateReferenceFromParts();
+    } else {
+      setReferenceFields(note.ref || '');
+    }
     noteText.value = note.text;
     tagsInput.value = note.tags.join(', ');
     setDraftStatus('Editing a saved note');
@@ -851,7 +1054,16 @@
     const draft = readJSON(DRAFT_KEY, null);
     if (!draft || typeof draft !== 'object') return;
 
-    refInput.value = typeof draft.ref === 'string' ? draft.ref : '';
+    if (draft.book || draft.chapter || draft.verse) {
+      bookInput.value = typeof draft.book === 'string' ? draft.book : '';
+      chapterInput.value = typeof draft.chapter === 'string' ? draft.chapter : '';
+      verseInput.value = typeof draft.verse === 'string' ? draft.verse : '';
+      updateChapterList(bookInput.value);
+      updateReferenceFromParts();
+    } else if (typeof draft.ref === 'string' && draft.ref) {
+      setReferenceFields(draft.ref);
+    }
+
     noteText.value = typeof draft.text === 'string' ? draft.text : '';
     tagsInput.value = typeof draft.tags === 'string' ? draft.tags : '';
 
@@ -891,24 +1103,82 @@
       saveNote();
     });
 
-    refInput.addEventListener('keydown', (event) => {
+    bookInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (chapterInput.value.trim()) {
+          (verseInput.value.trim() ? noteText : verseInput).focus();
+        } else {
+          chapterInput.focus();
+        }
+      }
+    });
+
+    chapterInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        verseInput.focus();
+      }
+    });
+
+    verseInput.addEventListener('keydown', (event) => {
       if (event.key === 'Enter') {
         event.preventDefault();
         noteText.focus();
       }
     });
-    refInput.addEventListener('blur', () => {
-      refInput.value = formatReference(refInput.value);
+
+    bookInput.addEventListener('input', () => {
+      const raw = bookInput.value;
+      if (/\d/.test(raw) || raw.includes(':')) {
+        const parsed = parseReference(raw);
+        if (parsed.chapter || parsed.verse) {
+          bookInput.value = parsed.book;
+          if (parsed.chapter) chapterInput.value = parsed.chapter;
+          if (parsed.verse) verseInput.value = parsed.verse;
+        }
+      }
+      updateChapterList(bookInput.value);
+      updateReferenceFromParts();
       saveDraftSoon();
     });
 
-    [refInput, noteText, tagsInput].forEach((input) => {
+    bookInput.addEventListener('blur', () => {
+      bookInput.value = formatBookName(bookInput.value);
+      updateChapterList(bookInput.value);
+      updateReferenceFromParts();
+      saveDraftSoon();
+    });
+
+    chapterInput.addEventListener('input', () => {
+      updateReferenceFromParts();
+      saveDraftSoon();
+    });
+
+    chapterInput.addEventListener('blur', () => {
+      chapterInput.value = chapterInput.value.trim();
+      updateReferenceFromParts();
+      saveDraftSoon();
+    });
+
+    verseInput.addEventListener('input', () => {
+      updateReferenceFromParts();
+      saveDraftSoon();
+    });
+
+    verseInput.addEventListener('blur', () => {
+      verseInput.value = verseInput.value.trim().replace(/\s*[\u2013\u2014-]\s*/g, '\u2013');
+      updateReferenceFromParts();
+      saveDraftSoon();
+    });
+
+    [noteText, tagsInput].forEach((input) => {
       input.addEventListener('input', saveDraftSoon);
     });
 
     cancelEdit.addEventListener('click', () => {
       resetForm();
-      refInput.focus();
+      bookInput.focus();
     });
 
     searchInput.addEventListener('input', () => {

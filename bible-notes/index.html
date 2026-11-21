@@ -84,10 +84,28 @@
         </div>
 
         <form id="noteForm" autocomplete="off">
-          <label class="field" for="refInput">
-            <span class="field-label">Reference</span>
-            <input type="text" id="refInput" list="bookList" placeholder="e.g. John 3:16" spellcheck="false">
-          </label>
+          <div class="field ref-group">
+            <div class="field-label">
+              <label for="bookInput">Reference</label>
+              <span class="ref-preview" id="refPreview" aria-live="polite"></span>
+            </div>
+            <div class="ref-row">
+              <div class="ref-col ref-col-book">
+                <span class="ref-sublabel">Book</span>
+                <input type="text" id="bookInput" list="bookList" placeholder="e.g. John" spellcheck="false" autocomplete="off">
+              </div>
+              <div class="ref-col ref-col-chapter">
+                <span class="ref-sublabel">Chapter</span>
+                <input type="text" id="chapterInput" list="chapterList" inputmode="numeric" placeholder="e.g. 3" spellcheck="false" autocomplete="off">
+              </div>
+              <span class="ref-colon" aria-hidden="true">:</span>
+              <div class="ref-col ref-col-verse">
+                <span class="ref-sublabel">Verse(s)</span>
+                <input type="text" id="verseInput" placeholder="e.g. 16" spellcheck="false" autocomplete="off">
+              </div>
+            </div>
+            <input type="hidden" id="refInput">
+          </div>
 
           <label class="field grow" for="noteText">
             <span class="field-label">Your note</span>
@@ -188,6 +206,7 @@
   </div>
 
   <datalist id="bookList"></datalist>
+  <datalist id="chapterList"></datalist>
   <script src="app.js"></script>
 </body>
 </html>
