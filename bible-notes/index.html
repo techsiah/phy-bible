@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en" data-theme="day">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#1b1410">
+  <meta name="description" content="A private, offline Bible note-taking space. Your notes never leave this device.">
+  <title>Bible Notes — a quiet place for the Word</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%234b1f22'/%3E%3Cpath d='M16 7v18M10 13h12' stroke='%23d9b96a' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    try {
+      var savedTheme = localStorage.getItem('bible-notes.theme.v1');
+      if (savedTheme === 'candle' || savedTheme === 'day') {
+        document.documentElement.dataset.theme = savedTheme;
+      }
+    } catch (e) { /* storage unavailable; use daylight */ }
+  </script>
+</head>
+<body class="cover-open">
+
+  <!-- ── The cover ───────────────────────────────────────────── -->
+  <div class="cover" id="cover">
+    <div class="cover-panel" id="coverPanel">
+      <div class="cover-spine" aria-hidden="true"></div>
+      <div class="cover-grain" aria-hidden="true"></div>
+      <div class="cover-frame" aria-hidden="true"></div>
+      <div class="cover-pages" aria-hidden="true"></div>
+      <div class="ribbon" aria-hidden="true"></div>
+
+      <div class="cover-content">
+        <svg class="cover-cross" viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M24 6v36M13 18h22" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+          <path d="M24 6v4M24 38v4M13 18h4M31 18h4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity=".55"/>
+        </svg>
+        <p class="cover-kicker">Private &middot; Offline</p>
+        <h1 class="cover-title">Bible Notes</h1>
+        <p class="cover-sub">A quiet place for the Word</p>
+        <div class="cover-rule" aria-hidden="true"></div>
+        <button class="cover-open-btn" id="openBtn" type="button">Open the cover</button>
+      </div>
+
+      <p class="cover-foot">Stored only on this device</p>
+    </div>
+  </div>
+
+  <!-- ── The open book ───────────────────────────────────────── -->
+  <div class="desk" id="desk" inert>
+    <header class="topbar">
+      <div class="wordmark">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v18M6.5 9h11" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        </svg>
+        <span>Bible Notes</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to candlelight" title="Daylight / Candlelight">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="text-btn" id="settingsBtn" type="button">Settings</button>
+      </div>
+    </header>
+
+    <div class="daily" aria-label="Verse for today">
+      <span class="daily-label">Today&rsquo;s word</span>
+      <p class="daily-verse"><span id="dailyText"></span> <cite id="dailyRef"></cite></p>
+    </div>
+
+    <main class="book" aria-label="Bible notes">
+      <div class="gutter" aria-hidden="true"></div>
+
+      <!-- Left page: write -->
+      <section class="page compose" aria-labelledby="composeTitle">
+        <div class="page-head">
+          <h2 id="composeTitle">Write</h2>
+          <span class="page-date" id="todayDate"></span>
+        </div>
+
+        <form id="noteForm" autocomplete="off">
+          <label class="field" for="refInput">
+            <span class="field-label">Reference</span>
+            <input type="text" id="refInput" list="bookList" placeholder="e.g. John 3:16" spellcheck="false">
+          </label>
+
+          <label class="field grow" for="noteText">
+            <span class="field-label">Your note</span>
+            <textarea id="noteText" placeholder="What is the Lord showing you?"></textarea>
+          </label>
+
+          <label class="field" for="tagsInput">
+            <span class="field-label">Tags <span class="optional">optional</span></span>
+            <input type="text" id="tagsInput" placeholder="faith, prayer, promise">
+          </label>
+
+          <div class="compose-actions">
+            <span class="draft-status" id="draftStatus" aria-live="polite"></span>
+            <button class="btn btn-ghost" id="cancelEdit" type="button" hidden>Cancel</button>
+            <button class="btn btn-primary" id="saveBtn" type="submit">Save note</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right page: margins -->
+      <section class="page margins" aria-labelledby="marginsTitle">
+        <div class="page-head">
+          <h2 id="marginsTitle">Margins <span class="count" id="noteCount"></span></h2>
+          <div class="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.8" cy="10.8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+              <path d="m15.5 15.5 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <input type="search" id="searchInput" placeholder="Search" aria-label="Search notes">
+          </div>
+        </div>
+
+        <p class="print-head" id="printHead">Bible Notes</p>
+        <ul class="notes" id="notesList" aria-label="Saved notes"></ul>
+
+        <div class="empty" id="emptyState" hidden>
+          <div class="empty-mark" aria-hidden="true">&#10022;</div>
+          <p class="empty-title" id="emptyTitle">Your margins are waiting.</p>
+          <p class="empty-hint" id="emptyHint">Write your first note on the left.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="baseline">
+      <p class="privacy-line">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="10.5" width="14" height="9.5" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          <path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+        Your notes stay in this browser. No accounts, no cloud, no tracking.
+      </p>
+      <div class="baseline-actions">
+        <button class="link-btn" id="printBtn" type="button">Print</button>
+        <button class="link-btn" id="backupBtn" type="button">Backup</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ── Settings ────────────────────────────────────────────── -->
+  <dialog class="settings" id="settingsDialog" aria-labelledby="settingsTitle">
+    <div class="settings-inner">
+      <div class="settings-head">
+        <h2 id="settingsTitle">Settings</h2>
+        <button class="icon-btn settings-close" id="closeSettings" type="button" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <section class="settings-section">
+        <h3>Appearance</h3>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button class="seg-btn" type="button" data-theme-choice="day">Daylight</button>
+          <button class="seg-btn" type="button" data-theme-choice="candle">Candlelight</button>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h3>Your notes</h3>
+        <p class="settings-note">Everything is saved in this browser only. Keep a backup somewhere safe.</p>
+        <div class="settings-grid">
+          <button class="settings-btn" id="exportBtn" type="button">Export backup</button>
+          <button class="settings-btn" id="importBtn" type="button">Import backup</button>
+          <button class="settings-btn" id="printBtn2" type="button">Print notes</button>
+          <button class="settings-btn danger" id="clearBtn" type="button">Delete all</button>
+        </div>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </section>
+
+      <p class="settings-privacy">No accounts. No servers. No analytics. This page makes no network requests.</p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span id="toastText"></span>
+    <button id="toastAction" type="button" hidden></button>
+  </div>
+
+  <datalist id="bookList"></datalist>
+  <script src="app.js"></script>
+</body>
+</html>
