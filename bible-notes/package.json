@@ -1,0 +1,12 @@
+{
+  "name": "christmas-2026-bible-notes",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Jesus Youth · Pazhassi Raja College — Christmas 2026 Advent reading, streaks, private notes, and leaderboards.",
+  "scripts": {
+    "test": "node --test",
+    "plan": "node tools/fetch-cpdv.mjs",
+    "serve": "npx --yes http-server . -p 8080 -c-1"
+  }
+}

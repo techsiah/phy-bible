@@ -2,179 +2,576 @@
 <html lang="en" data-theme="day">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#1b1410">
-  <meta name="description" content="A private, offline Bible note-taking space. Your notes never leave this device.">
-  <title>Bible Notes — a quiet place for the Word</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%234b1f22'/%3E%3Cpath d='M16 7v18M10 13h12' stroke='%23d9b96a' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F7F5F0">
+  <meta name="description" content="Jesus Youth · Pazhassi Raja College — 25 days of Advent reading, streaks, and private notes. Christmas 2026.">
+  <title>Christmas 2026 · 25 Days of the Word</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <script>
     try {
-      var savedTheme = localStorage.getItem('bible-notes.theme.v1');
-      if (savedTheme === 'candle' || savedTheme === 'day') {
-        document.documentElement.dataset.theme = savedTheme;
-      }
-    } catch (e) { /* storage unavailable; use daylight */ }
+      var t = localStorage.getItem('xmas2026.theme.v1');
+      if (t === 'candle' || t === 'day') document.documentElement.dataset.theme = t;
+      var f = Number(localStorage.getItem('xmas2026.font.v1'));
+      if (f >= 15 && f <= 24) document.documentElement.style.setProperty('--reading-size', f + 'px');
+    } catch (e) { /* storage unavailable */ }
   </script>
 </head>
-<body class="cover-open">
+<body>
 
-  <!-- ── The cover ───────────────────────────────────────────── -->
+  <!-- ── Splash Screen (Cover) ──────────────────────────────────── -->
   <div class="cover" id="cover">
-    <div class="cover-panel" id="coverPanel">
-      <div class="cover-spine" aria-hidden="true"></div>
-      <div class="cover-grain" aria-hidden="true"></div>
-      <div class="cover-frame" aria-hidden="true"></div>
-      <div class="cover-pages" aria-hidden="true"></div>
-      <div class="ribbon" aria-hidden="true"></div>
-
-      <div class="cover-content">
-        <svg class="cover-cross" viewBox="0 0 48 48" aria-hidden="true">
-          <path d="M24 6v36M13 18h22" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
-          <path d="M24 6v4M24 38v4M13 18h4M31 18h4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity=".55"/>
-        </svg>
-        <p class="cover-kicker">Private &middot; Offline</p>
-        <h1 class="cover-title">Bible Notes</h1>
-        <p class="cover-sub">A quiet place for the Word</p>
-        <div class="cover-rule" aria-hidden="true"></div>
-        <button class="cover-open-btn" id="openBtn" type="button">Open the cover</button>
+    <div class="cover-panel">
+      <div class="cover-brand-row">
+        <img src="icon.png" alt="Jesus Youth" class="cover-brand-logo">
+        <span class="cover-brand-text" id="coverOrg">Jesus Youth · Pazhassi Raja College</span>
       </div>
 
-      <p class="cover-foot">Stored only on this device</p>
+      <!-- Hero Splash Card (Mombo-style warm illustration & title) -->
+      <div class="cover-hero-card">
+        <div class="cover-hero-head">
+          <span class="cover-tag">Advent 2026</span>
+          <h1 class="cover-hero-title" id="coverTitle">Christmas 2026</h1>
+          <p class="cover-hero-sub" id="coverSub">25 Days of the Word</p>
+        </div>
+
+        <div class="cover-hero-art" aria-hidden="true">
+          <svg viewBox="0 0 320 145" fill="none" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="covSky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#FFF8E7"/>
+                <stop offset="100%" stop-color="#FFE294"/>
+              </linearGradient>
+              <linearGradient id="covSun" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#FFA826"/>
+                <stop offset="100%" stop-color="#FF7A00"/>
+              </linearGradient>
+              <linearGradient id="covHill1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4E996B"/>
+                <stop offset="100%" stop-color="#2D724A"/>
+              </linearGradient>
+              <linearGradient id="covHill2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#69B588"/>
+                <stop offset="100%" stop-color="#3D895B"/>
+              </linearGradient>
+            </defs>
+            <rect width="320" height="145" rx="18" fill="url(#covSky)"/>
+            <!-- Starlight radiance -->
+            <path d="M225 15 L229 38 L252 42 L229 46 L225 68 L221 46 L198 42 L221 38 Z" fill="#FFE8A3" opacity="0.65"/>
+            <!-- Cute smiling morning sun -->
+            <circle cx="225" cy="56" r="23" fill="url(#covSun)"/>
+            <circle cx="218" cy="53" r="2.2" fill="#3D2005"/>
+            <circle cx="232" cy="53" r="2.2" fill="#3D2005"/>
+            <path d="M220 60 Q225 65 230 60" stroke="#3D2005" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+            <ellipse cx="215" cy="57" rx="2.5" ry="1.4" fill="#FF6B4A" opacity="0.4"/>
+            <ellipse cx="235" cy="57" rx="2.5" ry="1.4" fill="#FF6B4A" opacity="0.4"/>
+            <!-- Gentle rolling hills -->
+            <path d="M0 145 L0 115 Q65 92 135 112 Q215 130 320 86 L320 145 Z" fill="url(#covHill1)"/>
+            <path d="M60 145 L60 120 Q170 82 260 106 Q295 114 320 108 L320 145 Z" fill="url(#covHill2)"/>
+            <!-- Pine trees -->
+            <polygon points="45,112 40,128 50,128" fill="#1C5234"/>
+            <polygon points="56,106 51,124 61,124" fill="#154229"/>
+            <polygon points="280,100 275,118 285,118" fill="#1C5234"/>
+            <polygon points="292,96 287,114 297,114" fill="#154229"/>
+            <!-- Flying morning doves / birds -->
+            <path d="M108 46 Q112 42 116 46 Q120 42 124 46" stroke="#8C662E" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+            <path d="M132 36 Q135 33 138 36 Q141 33 144 36" stroke="#8C662E" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+            <path d="M92 60 Q95 57 98 60 Q101 57 104 60" stroke="#8C662E" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+          </svg>
+        </div>
+      </div>
+
+      <p class="cover-desc">One door each day. Take a quiet breath and let the Word light your path to Christmas.</p>
+
+      <div class="cover-actions">
+        <button class="cover-open-btn" id="openBtn" type="button">
+          <span>Explore the readings</span>
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+        <button class="cover-reg-btn" id="coverRegBtn" type="button">Register / Join</button>
+      </div>
+
+      <p class="cover-foot" id="coverEdition">Catholic Public Domain Version · Public domain</p>
     </div>
   </div>
 
-  <!-- ── The open book ───────────────────────────────────────── -->
-  <div class="desk" id="desk" inert>
-    <header class="topbar">
-      <div class="wordmark">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3v18M6.5 9h11" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-        </svg>
-        <span>Bible Notes</span>
+  <!-- ── App ───────────────────────────────────────────────────── -->
+  <div class="app" id="app" hidden>
+    <!-- Modern Header -->
+    <header class="app-header">
+      <div class="header-user-block">
+        <p class="header-sub-label">Jesus Youth · Pazhassi Raja College</p>
+        <h1 class="header-greeting-title">Hi, <span id="headerUserName">Friend</span> 👋</h1>
       </div>
-      <div class="topbar-actions">
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="Switch to candlelight" title="Daylight / Candlelight">
+      <div class="header-actions">
+        <span class="sync-badge" id="syncBadge" data-mode="local" title="Sync status">Local</span>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme" title="Daylight / Candlelight">
           <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           </svg>
           <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.4"/>
-            <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           </svg>
         </button>
-        <button class="text-btn" id="settingsBtn" type="button">Settings</button>
+        <button class="avatar-profile-btn" id="accountBtn" type="button" aria-label="Account">
+          <img src="icon.png" alt="Jesus Youth" class="avatar-img">
+        </button>
+        <button id="settingsBtn" type="button" hidden></button>
+        <button id="registerBtn" type="button" hidden></button>
+        <span id="accountLabel" hidden></span>
       </div>
     </header>
 
-    <div class="daily" aria-label="Verse for today">
-      <span class="daily-label">Today&rsquo;s word</span>
-      <p class="daily-verse"><span id="dailyText"></span> <cite id="dailyRef"></cite></p>
+    <!-- Guest Welcome Banner -->
+    <div class="guest-banner" id="guestBanner" hidden>
+      <div class="guest-banner-lead">
+        <img src="icon.png" class="guest-banner-logo" alt="Jesus Youth">
+        <div class="guest-banner-text">
+          <p class="guest-banner-title">Welcome to the 25-Day Journey</p>
+          <p class="guest-banner-sub">Explore all 25 days freely. Register your roll number anytime to save streaks & compete.</p>
+        </div>
+      </div>
+      <button class="btn btn-primary small" id="guestBannerBtn" type="button">Register Roll</button>
     </div>
 
-    <main class="book" aria-label="Bible notes">
-      <div class="gutter" aria-hidden="true"></div>
-
-      <!-- Left page: write -->
-      <section class="page compose" aria-labelledby="composeTitle">
-        <div class="page-head">
-          <h2 id="composeTitle">Write</h2>
-          <span class="page-date" id="todayDate"></span>
+    <!-- Main Content Views -->
+    <main class="main">
+      <!-- ── View: Today (Home) ─────────────────────────────────── -->
+      <section class="view" id="view-today" aria-label="Today's reading">
+        
+        <!-- Horizontal Calendar Week Strip -->
+        <div class="calendar-strip-wrap">
+          <div class="advent-strip" id="adventStrip" aria-label="25 Advent doors"></div>
+          <div class="calendar-strip-sub">
+            <span class="strip-hint" id="adventHint"></span>
+            <span class="strip-count" id="adventProgress">0 of 25 doors</span>
+          </div>
         </div>
 
-        <form id="noteForm" autocomplete="off">
-          <div class="field ref-group">
-            <div class="field-label">
-              <label for="bookInput">Reference</label>
-              <span class="ref-preview" id="refPreview" aria-live="polite"></span>
-            </div>
-            <div class="ref-row">
-              <div class="ref-col ref-col-book">
-                <span class="ref-sublabel">Book</span>
-                <input type="text" id="bookInput" list="bookList" placeholder="e.g. John" spellcheck="false" autocomplete="off">
-              </div>
-              <div class="ref-col ref-col-chapter">
-                <span class="ref-sublabel">Chapter</span>
-                <input type="text" id="chapterInput" list="chapterList" inputmode="numeric" placeholder="e.g. 3" spellcheck="false" autocomplete="off">
-              </div>
-              <span class="ref-colon" aria-hidden="true">:</span>
-              <div class="ref-col ref-col-verse">
-                <span class="ref-sublabel">Verse(s)</span>
-                <input type="text" id="verseInput" placeholder="e.g. 16" spellcheck="false" autocomplete="off">
-              </div>
-            </div>
-            <input type="hidden" id="refInput">
+        <!-- Section: Today's Check-in -->
+        <div class="section-title-row">
+          <h2 class="section-heading">Today's Check-in</h2>
+          <button type="button" class="section-link-btn" data-view="journey">See all</button>
+        </div>
+
+        <!-- Hero Check-in Card (Warm yellow/amber with cute sun illustration) -->
+        <div class="hero-checkin-card" id="heroCheckinCard">
+          <div class="hero-card-header">
+            <span class="hero-tag-badge" id="dailyLabel">Today's Word</span>
+            <h3 class="hero-title" id="heroCheckinPrompt">How is God speaking to you today?</h3>
+            <p class="hero-subtitle">Take a quiet breath and let the Word light your path.</p>
           </div>
 
-          <label class="field grow" for="noteText">
-            <span class="field-label">Your note</span>
-            <textarea id="noteText" placeholder="What is the Lord showing you?"></textarea>
-          </label>
-
-          <label class="field" for="tagsInput">
-            <span class="field-label">Tags <span class="optional">optional</span></span>
-            <input type="text" id="tagsInput" placeholder="faith, prayer, promise">
-          </label>
-
-          <div class="compose-actions">
-            <span class="draft-status" id="draftStatus" aria-live="polite"></span>
-            <button class="btn btn-ghost" id="cancelEdit" type="button" hidden>Cancel</button>
-            <button class="btn btn-primary" id="saveBtn" type="submit">Save note</button>
+          <!-- Cute smiling Advent Sun & rolling hills illustration -->
+          <div class="hero-card-art" aria-hidden="true">
+            <svg viewBox="0 0 320 130" fill="none" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <linearGradient id="artSky" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#FFF3DA"/>
+                  <stop offset="100%" stop-color="#FFE3A3"/>
+                </linearGradient>
+                <linearGradient id="artSun" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#FFD65C"/>
+                  <stop offset="100%" stop-color="#FF9D2E"/>
+                </linearGradient>
+                <linearGradient id="artHillA" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#4E996B"/>
+                  <stop offset="100%" stop-color="#2D724A"/>
+                </linearGradient>
+                <linearGradient id="artHillB" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#69B588"/>
+                  <stop offset="100%" stop-color="#3D895B"/>
+                </linearGradient>
+              </defs>
+              <rect width="320" height="130" fill="url(#artSky)" rx="18"/>
+              <!-- Smiling warm Advent sun -->
+              <circle cx="250" cy="50" r="26" fill="url(#artSun)"/>
+              <circle cx="242" cy="47" r="2.6" fill="#4B2700"/>
+              <circle cx="258" cy="47" r="2.6" fill="#4B2700"/>
+              <path d="M244 54 Q250 60 256 54" stroke="#4B2700" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+              <ellipse cx="237" cy="51" rx="3.2" ry="2" fill="#FF7854" opacity="0.45"/>
+              <ellipse cx="263" cy="51" rx="3.2" ry="2" fill="#FF7854" opacity="0.45"/>
+              <!-- Birds in flight -->
+              <path d="M110 32 Q114 27 118 32 Q122 27 126 32" stroke="#A88235" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.5"/>
+              <path d="M136 44 Q139 40 142 44 Q145 40 148 44" stroke="#A88235" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.4"/>
+              <!-- Rolling green hills -->
+              <path d="M0 130 Q90 85 200 110 Q265 124 320 95 L320 130 Z" fill="url(#artHillA)" opacity="0.9"/>
+              <path d="M0 130 Q105 98 195 125 L245 130 Z" fill="url(#artHillB)"/>
+              <!-- Little pine trees -->
+              <polygon points="40,110 49,90 58,110" fill="#1C4B30"/>
+              <polygon points="42,120 49,100 56,120" fill="#163E27"/>
+              <polygon points="62,118 70,102 78,118" fill="#205839"/>
+            </svg>
           </div>
-        </form>
+
+          <!-- Daily scripture verse box -->
+          <div class="daily-verse-box">
+            <p class="daily-verse" id="dailyText">“O house of Jacob, let us approach and walk in the light of the Lord.”</p>
+            <cite class="daily-ref" id="dailyRef">— Isaiah 2:5</cite>
+          </div>
+
+          <!-- Hero Action Button -->
+          <button class="hero-primary-btn" id="openReadingBtn" type="button">
+            <span>Read Today's Scripture</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- Section: Quick Actions / Quick Journal (Matching the 3 pastel cards in image) -->
+        <div class="section-title-row">
+          <h2 class="section-heading">Quick Actions</h2>
+          <button type="button" class="section-link-btn" data-view="notes">See all</button>
+        </div>
+
+        <div class="quick-journal-carousel">
+          <!-- Card 1: Pause & reflect (Pastel Peach) -->
+          <div class="quick-card card-peach" id="quickReflectBtn" role="button" tabindex="0">
+            <div class="quick-card-top">
+              <h4 class="quick-card-title">Pause & reflect 🌿</h4>
+              <p class="quick-card-desc">What are you grateful for today?</p>
+            </div>
+            <div class="quick-card-tags">
+              <span class="q-tag">Today</span>
+              <span class="q-tag highlight">Personal</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Daily Streak (Pastel Lavender) -->
+          <div class="quick-card card-lavender" id="quickStreakBtn" role="button" tabindex="0">
+            <div class="quick-card-top">
+              <h4 class="quick-card-title">Streak Fire 🔥</h4>
+              <p class="quick-card-desc"><span id="streakNumber">0</span> days streak alive.</p>
+            </div>
+            <div class="quick-card-tags">
+              <span class="q-tag" id="streakLabel">day streak</span>
+              <span class="q-tag highlight">Points</span>
+            </div>
+          </div>
+
+          <!-- Card 3: College Fellowship (Pastel Mint) -->
+          <div class="quick-card card-mint" id="quickTogetherBtn" role="button" tabindex="0">
+            <div class="quick-card-top">
+              <h4 class="quick-card-title">Together 🤝</h4>
+              <p class="quick-card-desc">College leaderboards & groups.</p>
+            </div>
+            <div class="quick-card-tags">
+              <span class="q-tag">Pazhassi</span>
+              <span class="q-tag highlight">Fellowship</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full Scripture Reading Drawer / Card -->
+        <article class="reading" id="readingCard" aria-live="polite">
+          <header class="reading-head">
+            <span class="reading-day" id="readingDay">Day 1</span>
+            <span class="reading-theme" id="readingTheme">Hope</span>
+          </header>
+          <p class="reading-ref" id="readingRef"></p>
+          <h2 class="reading-title" id="readingTitle"></h2>
+          <div class="passage" id="passageText"></div>
+          <p class="reading-prompt" id="readingPrompt"></p>
+          <div class="reading-actions">
+            <button class="btn btn-primary" id="markReadBtn" type="button" hidden>Mark as read</button>
+            <button class="btn btn-ghost" id="writeNoteBtn" type="button">Write a note</button>
+            <button class="btn btn-quiet" id="extraReadBtn" type="button" hidden>Read something else</button>
+          </div>
+          <p class="reading-status" id="readStatus" aria-live="polite"></p>
+          <p class="guest-reading-hint" id="guestReadingHint" hidden>
+            Browsing as guest · <button type="button" class="btn-quiet" id="guestInlineRegisterBtn">Register roll to track streak & earn points</button>
+          </p>
+        </article>
+
+        <!-- Streak Stats Breakdown Drawer -->
+        <aside class="streak-card" id="streakCard">
+          <div class="streak-flame" id="streakFlame" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2.8c2.6 3 1.2 4.9 2.7 6.6 1.1 1.3 2.6 1.6 2.6 4.3a5.3 5.3 0 0 1-10.6 0c0-2.1 1-3.2 2.2-4.6C10.2 7.5 12 6.1 12 2.8Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="streak-main">
+            <span class="streak-note" id="streakNote">Read today to keep your streak alive.</span>
+          </div>
+          <div class="streak-stats">
+            <div><strong id="statPoints">0</strong><span>points</span></div>
+            <div><strong id="statDays">0</strong><span>days read</span></div>
+            <div><strong id="statLongest">0</strong><span>longest</span></div>
+          </div>
+        </aside>
       </section>
 
-      <!-- Right page: margins -->
-      <section class="page margins" aria-labelledby="marginsTitle">
-        <div class="page-head">
-          <h2 id="marginsTitle">Margins <span class="count" id="noteCount"></span></h2>
-          <div class="search">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="10.8" cy="10.8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
-              <path d="m15.5 15.5 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-            <input type="search" id="searchInput" placeholder="Search" aria-label="Search notes">
+      <!-- Journey -->
+      <section class="view" id="view-journey" aria-label="Your journey" hidden>
+        <div class="section-head">
+          <h2>Your journey</h2>
+          <p class="muted">Twenty-five doors. One day at a time.</p>
+        </div>
+        <div class="hero-stats" id="journeyHero"></div>
+        <div class="journey-grid" id="journeyGrid" aria-label="All 25 days"></div>
+
+        <div class="section-head">
+          <h2>Milestones</h2>
+          <p class="muted">Earned from your longest streak.</p>
+        </div>
+        <div class="badges" id="badges"></div>
+
+        <div class="section-head">
+          <h2>How points work</h2>
+        </div>
+        <div class="points-card" id="pointsBreakdown"></div>
+      </section>
+
+      <!-- Together -->
+      <section class="view" id="view-together" aria-label="Groups and leaderboard" hidden>
+        <div class="section-head">
+          <h2>Together</h2>
+          <p class="muted">Read with friends. Groups are up to four.</p>
+        </div>
+        <div class="my-group" id="myGroup"></div>
+
+        <div class="board-head">
+          <div class="board-tabs" id="boardTabs" role="group" aria-label="Leaderboard type">
+            <button type="button" data-board="streaks" aria-pressed="true">Streaks</button>
+            <button type="button" data-board="points" aria-pressed="false">Points</button>
+            <button type="button" data-board="groups" aria-pressed="false">Groups</button>
+          </div>
+          <div class="board-tools">
+            <button class="icon-btn small" id="refreshBoard" type="button" aria-label="Refresh leaderboard" title="Refresh">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="link-btn" id="exportBoard" type="button">CSV</button>
           </div>
         </div>
+        <ol class="board-list" id="boardList"></ol>
+        <p class="board-foot" id="boardFoot"></p>
+      </section>
 
-        <p class="print-head" id="printHead">Bible Notes</p>
-        <ul class="notes" id="notesList" aria-label="Saved notes"></ul>
-
-        <div class="empty" id="emptyState" hidden>
-          <div class="empty-mark" aria-hidden="true">&#10022;</div>
-          <p class="empty-title" id="emptyTitle">Your margins are waiting.</p>
-          <p class="empty-hint" id="emptyHint">Write your first note on the left.</p>
+      <!-- Notes -->
+      <section class="view" id="view-notes" aria-label="Your notes" hidden>
+        <div class="section-head notes-head">
+          <h2>Margins</h2>
+          <button class="btn btn-primary small" id="newNoteBtn" type="button">New note</button>
+        </div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10.8" cy="10.8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+            <path d="m15.5 15.5 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <input type="search" id="noteSearch" placeholder="Search references, notes, tags" aria-label="Search notes">
+        </div>
+        <ul class="notes-list" id="notesList" aria-label="Saved notes"></ul>
+        <div class="empty" id="notesEmpty" hidden>
+          <div class="empty-mark" aria-hidden="true">✦</div>
+          <p class="empty-title">Your margins are waiting.</p>
+          <p class="empty-hint">Write your first note from Today.</p>
         </div>
       </section>
     </main>
 
-    <footer class="baseline">
+    <!-- ── Modern Fixed Bottom Navigation ───────────────────────── -->
+    <nav class="bottom-nav" aria-label="Main Navigation">
+      <button type="button" class="nav-btn" data-view="today" aria-current="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span>Home</span>
+      </button>
+      <button type="button" class="nav-btn" data-view="journey" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <span>Calendar</span>
+      </button>
+      <button type="button" class="nav-fab" id="centerActionBtn" aria-label="New Note / Action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button type="button" class="nav-btn" data-view="together" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Together</span>
+      </button>
+      <button type="button" class="nav-btn" data-view="notes" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span>Margins</span>
+      </button>
+    </nav>
+
+    <footer class="foot">
       <p class="privacy-line">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <rect x="5" y="10.5" width="14" height="9.5" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/>
           <path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" fill="none" stroke="currentColor" stroke-width="1.3"/>
         </svg>
-        Your notes stay in this browser. No accounts, no cloud, no tracking.
+        <span id="syncNote">Local mode: everything stays on this device.</span>
       </p>
-      <div class="baseline-actions">
-        <button class="link-btn" id="printBtn" type="button">Print</button>
-        <button class="link-btn" id="backupBtn" type="button">Backup</button>
+      <div class="foot-brand-row">
+        <img src="icon.png" alt="Jesus Youth" class="foot-logo">
+        <p class="foot-brand">Jesus Youth · Pazhassi Raja College · Christmas 2026</p>
       </div>
     </footer>
   </div>
 
-  <!-- ── Settings ────────────────────────────────────────────── -->
-  <dialog class="settings" id="settingsDialog" aria-labelledby="settingsTitle">
-    <div class="settings-inner">
-      <div class="settings-head">
-        <h2 id="settingsTitle">Settings</h2>
-        <button class="icon-btn settings-close" id="closeSettings" type="button" aria-label="Close settings">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
+  <!-- ── Onboarding ────────────────────────────────────────────── -->
+  <dialog class="sheet" id="onboarding" aria-labelledby="onboardTitle">
+    <div class="sheet-inner">
+      <div class="sheet-head row">
+        <div class="onboard-brand">
+          <img src="icon.png" alt="Jesus Youth" class="onboard-logo">
+          <div>
+            <p class="kicker">Jesus Youth · Pazhassi Raja College</p>
+            <h2 id="onboardTitle">Join the 25-day journey</h2>
+          </div>
+        </div>
+        <button class="icon-btn" id="closeOnboarding" type="button" aria-label="Close registration">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
       </div>
+      <p class="sheet-desc muted">Your roll number is your entry. No email, no password.</p>
+      <form id="onboardForm" class="form" autocomplete="off">
+        <label class="field" for="obRoll">
+          <span class="field-label">Roll number</span>
+          <select id="obRoll" name="roll" required>
+            <option value="" disabled selected>Select Roll No (1 - 150)</option>
+          </select>
+        </label>
+
+        <label class="field" for="obDept">
+          <span class="field-label">Department</span>
+          <select id="obDept" name="dept" required>
+            <option value="" disabled selected>Select Department</option>
+          </select>
+        </label>
+
+        <div class="field-row">
+          <label class="field" for="obYear">
+            <span class="field-label">Year of study</span>
+            <select id="obYear" name="year" required></select>
+          </label>
+          <label class="field" for="obProgram">
+            <span class="field-label">Program</span>
+            <select id="obProgram" name="program" required></select>
+          </label>
+        </div>
+
+        <fieldset class="group-choice">
+          <legend>Reading together?</legend>
+          <label class="radio"><input type="radio" name="groupMode" value="solo" checked><span>Just me</span></label>
+          <label class="radio"><input type="radio" name="groupMode" value="create"><span>Create a group</span></label>
+          <label class="radio"><input type="radio" name="groupMode" value="join"><span>Join with a code</span></label>
+        </fieldset>
+
+        <div class="field" data-group-field="create" hidden>
+          <label class="field-label" for="obGroupName">Group name</label>
+          <input type="text" id="obGroupName" maxlength="30" placeholder="e.g. The Waiting Room">
+        </div>
+        <div class="field" data-group-field="join" hidden>
+          <label class="field-label" for="obGroupCode">Group code</label>
+          <input type="text" id="obGroupCode" maxlength="6" placeholder="6 characters" autocapitalize="characters" spellcheck="false">
+        </div>
+
+        <p class="form-error" id="obError" role="alert"></p>
+        <p class="device-line" id="obDevice"></p>
+        <button class="btn btn-primary wide" type="submit">Start reading</button>
+        <button class="btn-quiet center" id="cancelOnboarding" type="button" style="margin-top:6px;">Browse first without registering</button>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ── Note editor ───────────────────────────────────────────── -->
+  <dialog class="sheet" id="noteDialog" aria-labelledby="noteDialogTitle">
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <h2 id="noteDialogTitle">New note</h2>
+      </div>
+      <form id="noteForm" class="form" autocomplete="off">
+        <label class="field" for="noteRef">
+          <span class="field-label">Reference</span>
+          <input type="text" id="noteRef" placeholder="e.g. John 3:16" spellcheck="false">
+        </label>
+        <label class="field" for="noteText">
+          <span class="field-label">Your note</span>
+          <textarea id="noteText" rows="7" placeholder="What is the Lord showing you?"></textarea>
+        </label>
+        <label class="field" for="noteTags">
+          <span class="field-label">Tags <span class="optional">optional</span></span>
+          <input type="text" id="noteTags" placeholder="faith, prayer, promise">
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="noteCancel" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save note</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ── Extra reading ─────────────────────────────────────────── -->
+  <dialog class="sheet" id="extraDialog" aria-labelledby="extraTitle">
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <h2 id="extraTitle">Log another reading</h2>
+        <p class="muted">Any passage counts. Up to three extras a day, +5 points each.</p>
+      </div>
+      <form id="extraForm" class="form" autocomplete="off">
+        <div class="field-row three">
+          <label class="field" for="extraBook">
+            <span class="field-label">Book</span>
+            <input type="text" id="extraBook" list="bookList" placeholder="John" spellcheck="false">
+          </label>
+          <label class="field" for="extraChapter">
+            <span class="field-label">Chapter</span>
+            <input type="text" id="extraChapter" list="chapterList" inputmode="numeric" placeholder="3" spellcheck="false">
+          </label>
+          <label class="field" for="extraVerse">
+            <span class="field-label">Verse</span>
+            <input type="text" id="extraVerse" placeholder="16" spellcheck="false">
+          </label>
+        </div>
+        <p class="ref-preview" id="extraPreview" aria-live="polite"></p>
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="extraCancel" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Log reading</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ── Create group ──────────────────────────────────────────── -->
+  <dialog class="sheet" id="groupDialog" aria-labelledby="groupTitle">
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <h2 id="groupTitle">Create a group</h2>
+        <p class="muted">Up to four readers. The group board uses your average.</p>
+      </div>
+      <form id="groupForm" class="form" autocomplete="off">
+        <label class="field" for="groupName">
+          <span class="field-label">Group name</span>
+          <input type="text" id="groupName" maxlength="30" required placeholder="e.g. The Waiting Room">
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-ghost" id="groupCancel" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Create group</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ── Settings ──────────────────────────────────────────────── -->
+  <dialog class="sheet" id="settingsDialog" aria-labelledby="settingsTitle">
+    <div class="sheet-inner">
+      <div class="sheet-head row">
+        <h2 id="settingsTitle">Settings</h2>
+        <button class="icon-btn" id="closeSettings" type="button" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <section class="settings-section">
+        <h3>Your entry</h3>
+        <div class="profile-summary" id="profileSummary"></div>
+        <div class="device-row">
+          <code id="deviceId">—</code>
+          <button class="link-btn" id="copyDevice" type="button">Copy device ID</button>
+        </div>
+        <p class="settings-note">Keep this device ID. An organizer can use it to restore your entry on a new phone.</p>
+      </section>
 
       <section class="settings-section">
         <h3>Appearance</h3>
@@ -182,21 +579,48 @@
           <button class="seg-btn" type="button" data-theme-choice="day">Daylight</button>
           <button class="seg-btn" type="button" data-theme-choice="candle">Candlelight</button>
         </div>
+        <label class="range-field" for="fontRange">
+          <span>Reading size</span>
+          <input type="range" id="fontRange" min="15" max="24" step="1" value="18">
+          <output id="fontValue">18px</output>
+        </label>
       </section>
 
       <section class="settings-section">
         <h3>Your notes</h3>
-        <p class="settings-note">Everything is saved in this browser only. Keep a backup somewhere safe.</p>
+        <p class="settings-note" id="syncNote2">Notes are private to your roll. Only you can read them.</p>
         <div class="settings-grid">
           <button class="settings-btn" id="exportBtn" type="button">Export backup</button>
           <button class="settings-btn" id="importBtn" type="button">Import backup</button>
-          <button class="settings-btn" id="printBtn2" type="button">Print notes</button>
-          <button class="settings-btn danger" id="clearBtn" type="button">Delete all</button>
+          <button class="settings-btn" id="printBtn" type="button">Print notes</button>
         </div>
         <input type="file" id="importFile" accept=".json,application/json" hidden>
       </section>
 
-      <p class="settings-privacy">No accounts. No servers. No analytics. This page makes no network requests.</p>
+      <section class="settings-section">
+        <h3>This device</h3>
+        <p class="settings-note">Leaving removes this student from the device. Their synced entry stays in Firebase.</p>
+        <button class="link-btn danger" id="leaveDevice" type="button">Remove student from this device</button>
+      </section>
+    </div>
+  </dialog>
+
+  <!-- ── Recovery ──────────────────────────────────────────────── -->
+  <dialog class="sheet" id="recoveryDialog" aria-labelledby="recoveryTitle">
+    <div class="sheet-inner">
+      <div class="sheet-head">
+        <h2 id="recoveryTitle">This roll is already linked</h2>
+        <p class="muted" id="recoveryText">Show the device ID below to an organizer, who can transfer your entry to this device.</p>
+      </div>
+      <div class="recovery-box">
+        <div><span>Roll number</span><strong id="recoveryRoll">—</strong></div>
+        <div><span>Device ID</span><code id="recoveryDevice">—</code></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="recoveryClose" type="button">Close</button>
+        <button class="btn btn-quiet" id="recoveryReset" type="button">Start over on this device</button>
+        <button class="btn btn-primary" id="recoveryRetry" type="button">Try again</button>
+      </div>
     </div>
   </dialog>
 
@@ -205,8 +629,18 @@
     <button id="toastAction" type="button" hidden></button>
   </div>
 
+  <datalist id="deptList"></datalist>
   <datalist id="bookList"></datalist>
   <datalist id="chapterList"></datalist>
-  <script src="app.js"></script>
+
+  <script src="firebase-config.js"></script>
+  <script type="module" src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function () { /* offline is optional */ });
+      });
+    }
+  </script>
 </body>
 </html>

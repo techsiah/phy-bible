@@ -1,0 +1,19 @@
+{
+  "name": "Christmas 2026 · 25 Days of the Word",
+  "short_name": "Christmas 2026",
+  "description": "Jesus Youth · Pazhassi Raja College — Advent readings, streaks, private notes, and a shared leaderboard.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#071711",
+  "theme_color": "#0f2a22",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
