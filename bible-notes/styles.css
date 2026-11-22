@@ -375,17 +375,134 @@ html[data-theme="candle"] .cover-reg-btn {
 
 .app-header {
   display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: -16px -16px 20px;
+  padding: 0 16px 16px;
+  background: var(--bg-app);
+}
+
+/* Space the two inner rows */
+.header-top-bar {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.header-greeting-bar {
+  padding-bottom: 4px;
+}
+
+/* ── Top bar: brand pill + icon controls ── */
+.header-top-bar {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 6px 2px 18px;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* Brand row – flat logo + org name, no border */
+.header-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.header-brand-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  object-fit: cover;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.header-brand-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--gold-deep);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.header-brand-sep {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.header-brand-college {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 360px) {
+  .header-brand-college { display: none; }
+}
+
+/* Top-right icon row (sync badge + theme toggle) */
+.header-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Greeting bar: Hi message + avatar ── */
+.header-greeting-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+html[data-theme="candle"] .app-header {
+  background: var(--bg-app);
 }
 
 .header-user-block {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
+.header-greeting-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 5.5vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-greeting-title .wave-accent {
+  display: inline-block;
+  font-style: normal;
+}
+
+.header-greeting-sub {
+  margin: 3px 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+}
+
+/* Keep the old .header-sub-label for compat elsewhere */
 .header-sub-label {
   margin: 0 0 2px;
   font-family: var(--font-sans);
@@ -395,15 +512,7 @@ html[data-theme="candle"] .cover-reg-btn {
   color: var(--ink-soft);
 }
 
-.header-greeting-title {
-  margin: 0;
-  font-size: clamp(1.5rem, 5vw, 1.85rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  line-height: 1.15;
-}
-
+/* Legacy flat layout (not used now but guard against breakage) */
 .header-actions {
   display: flex;
   align-items: center;

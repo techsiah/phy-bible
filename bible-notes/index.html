@@ -103,21 +103,32 @@
   <div class="app" id="app" hidden>
     <!-- Modern Header -->
     <header class="app-header">
-      <div class="header-user-block">
-        <p class="header-sub-label">Jesus Youth · Pazhassi Raja College</p>
-        <h1 class="header-greeting-title">Hi, <span id="headerUserName">Friend</span> 👋</h1>
+      <div class="header-top-bar">
+        <div class="header-brand-row">
+          <img src="icon.png" alt="" class="header-brand-icon" aria-hidden="true">
+          <span class="header-brand-name">Jesus Youth</span>
+          <span class="header-brand-sep" aria-hidden="true">·</span>
+          <span class="header-brand-college">Pazhassi Raja College</span>
+        </div>
+        <div class="header-top-actions">
+          <span class="sync-badge" id="syncBadge" data-mode="local" title="Sync status">Local</span>
+          <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme" title="Daylight / Candlelight">
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            </svg>
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="header-actions">
-        <span class="sync-badge" id="syncBadge" data-mode="local" title="Sync status">Local</span>
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme" title="Daylight / Candlelight">
-          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          </svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          </svg>
-        </button>
+
+      <div class="header-greeting-bar">
+        <div class="header-user-block">
+          <h1 class="header-greeting-title">Hi, <span id="headerUserName">Friend</span> <span class="wave-accent" aria-hidden="true">👋</span></h1>
+          <p class="header-greeting-sub">Advent 2026 · 25 Days of the Word</p>
+        </div>
         <button class="avatar-profile-btn" id="accountBtn" type="button" aria-label="Account">
           <img src="icon.png" alt="Jesus Youth" class="avatar-img">
         </button>
@@ -601,6 +612,12 @@
         <h3>This device</h3>
         <p class="settings-note">Leaving removes this student from the device. Their synced entry stays in Firebase.</p>
         <button class="link-btn danger" id="leaveDevice" type="button">Remove student from this device</button>
+      </section>
+
+      <section class="settings-section">
+        <h3>Organizer</h3>
+        <p class="settings-note">Access leaderboard management, analytics, and student device transfers.</p>
+        <a href="admin.html" class="settings-btn" style="display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">Organizer Portal →</a>
       </section>
     </div>
   </dialog>

@@ -98,9 +98,21 @@ If a student changes phones (or clears browser data), they will see:
 
 > This roll is already linked. Show the device ID below to an organizer.
 
-The organizer opens **Firestore → `readers/{ROLL}`** and replaces the `uid` field
-with the new device ID shown in the app. The student taps **Try again** and their
-streak and notes return. The same edit transfers an entry between devices.
+The organizer can open **`admin.html`** (or Firestore → `readers/{ROLL}`) and update the `uid` with the new device ID shown on the student's screen. The student taps **Try again** and their streak and notes return. The same edit transfers an entry between devices.
+
+---
+
+## Organizer & Admin Portal (`admin.html`)
+
+An organizer portal is included at `admin.html` (with a PIN lock, default: `JYPRC2026`).
+
+Features:
+- **College Analytics & Overview**: Live total readers, active streaks, points, top records, department breakdown bars (all 8 departments), and milestone unlock trackers.
+- **Participants Directory**: Search and filter by roll number, department, year level, streak status (active vs broken), and group membership with multi-column sorting.
+- **Teams & Groups Moderation**: View all teams, member rolls, average streaks, points, and automatic profanity check status.
+- **Student Device Recovery Tool**: Dedicated interface to look up a student's roll and link their new Device ID in one click.
+- **Export & Notice Board Reports**: One-click export for Participants CSV, Teams CSV, Full JSON snapshot, and high-contrast printable notice board sheets.
+- **Local Demo & Testing Tools**: Seed realistic sample participants or reset demo data directly in the browser.
 
 `readers/{ROLL}` also holds the profile and aggregate stats; `board/{ROLL}` is the
 public copy. Update the profile in `readers/{ROLL}` if a roll was typed wrong, and
@@ -165,6 +177,8 @@ The script downloads the public-domain CPDV text from
 
 ```
 index.html                  App shell and dialogs
+admin.html                  Organizer & admin dashboard portal
+admin.css                   Admin dashboard styling & responsive layout
 styles.css                  Evergreen / cream / gold theme, daylight + candle
 firebase-config.js          Your Firebase web config (placeholders by default)
 firebase-config.example.js  Copy of the config shape
@@ -173,6 +187,7 @@ firebase.json               Hosting + rules config
 manifest.webmanifest        Installable app metadata
 icon.svg                    App icon
 sw.js                       Offline shell cache
+js/admin.js                 Admin portal controller, analytics, and device recovery
 js/config.js                Event, points, departments, group rules
 js/plan.js                  Generated CPDV passages (25 days + daily verses)
 js/refs.js                  Bible book list, reference parsing, roll normalization

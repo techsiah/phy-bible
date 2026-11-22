@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en" data-theme="day">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F7F5F0">
+  <title>Advent 2026 · Organizer & Admin Portal</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <script>
+    try {
+      var t = localStorage.getItem('xmas2026.theme.v1');
+      if (t === 'candle' || t === 'day') document.documentElement.dataset.theme = t;
+    } catch (e) { /* storage unavailable */ }
+  </script>
+</head>
+<body class="admin-body">
+
+  <!-- ── Passcode Lock Screen ─────────────────────────────────── -->
+  <div class="lock-screen" id="lockScreen">
+    <div class="lock-card">
+      <img src="icon.png" alt="Jesus Youth" class="lock-logo">
+      <h2>Organizer Portal</h2>
+      <p>Jesus Youth · Pazhassi Raja College<br>Christmas 2026: 25 Days of the Word</p>
+
+      <form id="loginForm" autocomplete="off">
+        <div class="passcode-input-wrap">
+          <input
+            type="password"
+            id="passcodeInput"
+            class="passcode-input"
+            placeholder="Enter Admin PIN"
+            maxlength="20"
+            required
+            autofocus
+          >
+        </div>
+        <p id="passcodeError" style="color: var(--red); font-size: 0.8rem; margin: -8px 0 14px;" hidden></p>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Unlock Portal</button>
+      </form>
+      <p style="font-size: 0.74rem; color: var(--ink-faint); margin-top: 16px;">
+        Default organizer PIN: <code>JYPRC2026</code>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Main Admin Shell ─────────────────────────────────────── -->
+  <div class="admin-shell" id="adminShell" hidden>
+
+    <!-- Top Navigation Header -->
+    <header class="admin-header">
+      <div class="admin-brand">
+        <img src="icon.png" alt="Jesus Youth" class="admin-logo">
+        <div class="admin-title-wrap">
+          <h1>
+            Organizer Portal
+            <span class="admin-badge-organizer">Admin</span>
+          </h1>
+          <p>Jesus Youth · Pazhassi Raja College · Christmas 2026</p>
+        </div>
+      </div>
+
+      <div class="admin-actions">
+        <span class="sync-badge" id="syncBadge" data-mode="local">Local Demo Mode</span>
+        <button class="action-btn" id="refreshBtn" type="button" title="Reload live data">
+          <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Refresh</span>
+        </button>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme" title="Daylight / Candlelight">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" style="display: none;">
+            <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <a href="index.html" class="admin-nav-link" title="Open student app">
+          <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span>Student App</span>
+        </a>
+        <button class="action-btn" id="lockBtn" type="button" title="Lock portal session">
+          <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Lock</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="admin-tabs" aria-label="Admin Sections">
+      <button class="admin-tab active" data-tab="overview" data-pane="pane-overview" type="button">
+        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Overview</span>
+      </button>
+      <button class="admin-tab" data-tab="participants" data-pane="pane-participants" type="button">
+        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Participants</span>
+        <span class="tab-count" id="tabCountParticipants">0</span>
+      </button>
+      <button class="admin-tab" data-tab="groups" data-pane="pane-groups" type="button">
+        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7.5c-.55 0-1 .45-1 1v1h11v-1c0-.55-.45-1-1-1H15c-.55 0-1-.45-1-1v-2.34c3.27-.77 5-3.3 5-6.66V4H5v4c0 3.36 1.73 5.89 5 6.66Z"/></svg>
+        <span>Groups</span>
+        <span class="tab-count" id="tabCountGroups">0</span>
+      </button>
+      <button class="admin-tab" data-tab="recovery" data-pane="pane-recovery" type="button">
+        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span>Device Recovery</span>
+      </button>
+      <button class="admin-tab" data-tab="export" data-pane="pane-export" type="button">
+        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export & Reports</span>
+      </button>
+      <button class="admin-tab" data-tab="config" data-pane="pane-config" type="button">
+        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Event Rules</span>
+      </button>
+    </nav>
+
+    <!-- ── Pane 1: Overview & Analytics ───────────────────────── -->
+    <section class="tab-pane" id="pane-overview">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span class="stat-label">Total Readers</span>
+            <span class="stat-icon">
+              <svg class="stat-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="metricTotalReaders">0</div>
+          <div class="stat-sub">Registered across college</div>
+        </div>
+
+        <div class="stat-card green">
+          <div class="stat-card-head">
+            <span class="stat-label">Active Streaks</span>
+            <span class="stat-icon">
+              <svg class="stat-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="metricActiveStreaks">0</div>
+          <div class="stat-sub">Reading today (streak > 0)</div>
+        </div>
+
+        <div class="stat-card peach">
+          <div class="stat-card-head">
+            <span class="stat-label">College Groups</span>
+            <span class="stat-icon">
+              <svg class="stat-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="metricTotalGroups">0</div>
+          <div class="stat-sub">Max 4 members per team</div>
+        </div>
+
+        <div class="stat-card purple">
+          <div class="stat-card-head">
+            <span class="stat-label">Total Points</span>
+            <span class="stat-icon">
+              <svg class="stat-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="metricTotalPoints">0</div>
+          <div class="stat-sub">Campus cumulative score</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span class="stat-label">Longest Streak</span>
+            <span class="stat-icon">
+              <svg class="stat-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7.5c-.55 0-1 .45-1 1v1h11v-1c0-.55-.45-1-1-1H15c-.55 0-1-.45-1-1v-2.34c3.27-.77 5-3.3 5-6.66V4H5v4c0 3.36 1.73 5.89 5 6.66Z"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="metricMaxStreak">0 days</div>
+          <div class="stat-sub">Top continuous reading</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span class="stat-label">Top Score</span>
+            <span class="stat-icon">
+              <svg class="stat-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            </span>
+          </div>
+          <div class="stat-value" id="metricMaxPoints">0 pts</div>
+          <div class="stat-sub">Leaderboard peak</div>
+        </div>
+      </div>
+
+      <div class="analytics-row">
+        <!-- Department Participation Bar Chart -->
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <h2 class="admin-card-title">
+              <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 10a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v11H9V10z"/></svg>
+              <span>Department Participation</span>
+            </h2>
+            <span style="font-size: 0.8rem; color: var(--ink-faint);">8 Departments</span>
+          </div>
+          <div class="dept-bar-list" id="deptBarsList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Milestone Progress -->
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <h2 class="admin-card-title">
+              <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <span>Milestones Unlocked</span>
+            </h2>
+            <span style="font-size: 0.8rem; color: var(--ink-faint);">College Readers</span>
+          </div>
+          <div class="milestone-grid">
+            <div class="milestone-box">
+              <div class="milestone-box-head">
+                <span class="milestone-badge">Day 3 · +10pts</span>
+                <span class="milestone-count" id="mCount3">0</span>
+              </div>
+              <span class="milestone-title">First Light</span>
+            </div>
+            <div class="milestone-box">
+              <div class="milestone-box-head">
+                <span class="milestone-badge">Day 7 · +25pts</span>
+                <span class="milestone-count" id="mCount7">0</span>
+              </div>
+              <span class="milestone-title">Sevenfold</span>
+            </div>
+            <div class="milestone-box">
+              <div class="milestone-box-head">
+                <span class="milestone-badge">Day 14 · +50pts</span>
+                <span class="milestone-count" id="mCount14">0</span>
+              </div>
+              <span class="milestone-title">Halfway Star</span>
+            </div>
+            <div class="milestone-box">
+              <div class="milestone-box-head">
+                <span class="milestone-badge">Day 25 · +100pts</span>
+                <span class="milestone-count" id="mCount25">0</span>
+              </div>
+              <span class="milestone-title">Christmas Crown</span>
+            </div>
+          </div>
+
+          <h3 style="font-size: 0.92rem; margin: 20px 0 10px; color: var(--ink); display: flex; align-items: center;">
+            <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>
+            <span>Year Level Breakdown</span>
+          </h3>
+          <div class="milestone-grid" id="yearPillsContainer">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Pane 2: Participants Directory ─────────────────────── -->
+    <section class="tab-pane" id="pane-participants" hidden>
+      <div class="toolbar">
+        <div class="search-box">
+          <span class="search-icon">
+            <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input
+            type="search"
+            id="searchParticipants"
+            placeholder="Search by Roll, Dept, or Group..."
+            autocomplete="off"
+          >
+        </div>
+
+        <select id="filterDept" class="filter-select">
+          <option value="all">All Departments</option>
+        </select>
+
+        <select id="filterYear" class="filter-select">
+          <option value="all">All Years</option>
+        </select>
+
+        <select id="filterStatus" class="filter-select">
+          <option value="all">All Streaks</option>
+          <option value="active">Active Streaks (> 0)</option>
+          <option value="broken">Inactive / Missed (0)</option>
+          <option value="grouped">In a Group</option>
+          <option value="solo">Solo Readers</option>
+        </select>
+
+        <select id="sortParticipants" class="filter-select">
+          <option value="points_desc">Sort by: Points (Highest)</option>
+          <option value="streak_desc">Sort by: Current Streak</option>
+          <option value="longest_desc">Sort by: Longest Streak</option>
+          <option value="days_desc">Sort by: Total Days Read</option>
+          <option value="roll_asc">Sort by: Roll Number (A–Z)</option>
+        </select>
+
+        <button class="action-btn" id="clearFiltersBtn" type="button">Clear</button>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--ink-faint); margin-bottom: 10px;" id="filteredParticipantsCount">
+        Showing 0 participants
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Rank</th>
+              <th>Roll Number</th>
+              <th>Department & Year</th>
+              <th>Current Streak</th>
+              <th>Longest</th>
+              <th>Days</th>
+              <th>Points</th>
+              <th>Group</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="participantsTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Pane 3: Groups Management ──────────────────────────── -->
+    <section class="tab-pane" id="pane-groups" hidden>
+      <div class="admin-card-head" style="margin-bottom: 14px;">
+        <div>
+          <h2 class="admin-card-title">College Teams & Groups</h2>
+          <p style="margin: 4px 0 0; font-size: 0.82rem; color: var(--ink-soft);" id="filteredGroupsCount">
+            Teams of up to four students reading together.
+          </p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Group Code</th>
+              <th>Group Name</th>
+              <th>Members</th>
+              <th>Member Rolls</th>
+              <th>Avg Streak</th>
+              <th>Avg Points</th>
+              <th>Moderation</th>
+            </tr>
+          </thead>
+          <tbody id="groupsTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Pane 4: Device Recovery & UID Transfer ──────────────── -->
+    <section class="tab-pane" id="pane-recovery" hidden>
+      <div class="recovery-portal-card">
+        <h2 style="margin: 0 0 8px; font-size: 1.25rem; display: flex; align-items: center;">
+          <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span>Student Device Re-link & Account Transfer</span>
+        </h2>
+        <p style="margin: 0 0 16px; font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5;">
+          When a student changes phones, reinstalls their browser, or clears site data, Firestore flags their roll as already taken (<code>ROLL_TAKEN</code>).
+          Their device displays a <strong>Device ID</strong>. Enter it here to transfer and re-link their reading streak and notes.
+        </p>
+
+        <div class="callout info">
+          <strong>How it works:</strong> The student's streak and private notes are stored under their roll number. Updating their entry's <code>uid</code> immediately restores full access on their new phone.
+        </div>
+
+        <div class="recovery-form-grid">
+          <div class="input-group">
+            <label for="recoveryRollSelect">Select Registered Student Roll</label>
+            <select id="recoveryRollSelect">
+              <option value="">-- Choose student roll number --</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label for="recoveryManualRoll">Or Type Roll Number Directly</label>
+            <input type="text" id="recoveryManualRoll" placeholder="e.g. CS24-012" uppercase>
+          </div>
+        </div>
+
+        <!-- Current Entry Preview Box -->
+        <div id="recoveryPreviewBox" class="callout" style="background: var(--panel-2); border-left-color: var(--ink-soft);" hidden>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; font-size: 0.85rem;">
+            <div><span>Roll:</span> <strong id="prevRoll">—</strong></div>
+            <div><span>Department:</span> <strong id="prevDept">—</strong></div>
+            <div><span>Current Streak:</span> <strong id="prevStreak">—</strong></div>
+            <div><span>Points:</span> <strong id="prevPoints">—</strong></div>
+            <div><span>Group:</span> <strong id="prevGroup">—</strong></div>
+            <div><span>Current UID:</span> <code id="prevCurrentUid" style="font-size: 0.76rem;">—</code></div>
+          </div>
+        </div>
+
+        <div class="input-group" style="margin-bottom: 20px;">
+          <label for="recoveryNewDeviceUid">
+            New Device ID (shown on student's screen)
+          </label>
+          <input
+            type="text"
+            id="recoveryNewDeviceUid"
+            placeholder="Paste student's Device ID (e.g. aB3x... or local-...)"
+            style="font-family: var(--font-mono); font-size: 0.95rem;"
+          >
+        </div>
+
+        <button type="button" class="btn btn-primary" id="executeTransferBtn">
+          Transfer Account to New Device
+        </button>
+
+        <!-- Success Alert -->
+        <div id="transferSuccessAlert" class="callout success" style="margin-top: 18px;" hidden>
+          <div id="transferSuccessMsg"></div>
+        </div>
+
+        <!-- Firebase Console Helper Alert -->
+        <div id="transferConsoleAlert" class="callout warning" style="margin-top: 18px;" hidden>
+          <strong>Notice: Firestore rules require organizer edit in the Firebase Console:</strong>
+          <p style="margin: 6px 0 10px; font-size: 0.84rem;">
+            Because security rules restrict anonymous users from modifying another reader's UID, apply this change in the Firebase Console:
+          </p>
+          <ol style="margin: 0 0 12px; padding-left: 20px; font-size: 0.84rem;">
+            <li>Open <a href="https://console.firebase.google.com" target="_blank" rel="noopener" style="color: var(--gold-deep); font-weight: 600;">Firebase Console</a> → <strong>Firestore Database</strong></li>
+            <li>Navigate to: <code>readers / <span id="consoleTargetRoll">ROLL</span></code></li>
+            <li>Edit field <code>uid</code> to: <code><span id="consoleTargetUid">NEW_UID</span></code></li>
+            <li>Student taps <strong>"Try again"</strong> on their phone. Done!</li>
+          </ol>
+          <button type="button" class="action-btn" id="copyConsoleHelpBtn">
+            <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Copy Details to Clipboard</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Pane 5: Export & Reports ───────────────────────────── -->
+    <section class="tab-pane" id="pane-export" hidden>
+      <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+        <div class="admin-card">
+          <h3 style="margin: 0 0 8px; font-size: 1.1rem; display: flex; align-items: center;">
+            <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>Participants CSV</span>
+          </h3>
+          <p style="font-size: 0.84rem; color: var(--ink-soft); margin-bottom: 16px;">
+            Export roll numbers, departments, years, streaks, and points for spreadsheets or college prize distribution.
+          </p>
+          <button class="btn btn-primary small" id="exportParticipantsCsvBtn" type="button">
+            Download Participants CSV
+          </button>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin: 0 0 8px; font-size: 1.1rem; display: flex; align-items: center;">
+            <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Teams & Groups CSV</span>
+          </h3>
+          <p style="font-size: 0.84rem; color: var(--ink-soft); margin-bottom: 16px;">
+            Export all group codes, group names, member rolls, and registration timestamps.
+          </p>
+          <button class="btn btn-primary small" id="exportGroupsCsvBtn" type="button">
+            Download Groups CSV
+          </button>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin: 0 0 8px; font-size: 1.1rem; display: flex; align-items: center;">
+            <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Complete JSON Backup</span>
+          </h3>
+          <p style="font-size: 0.84rem; color: var(--ink-soft); margin-bottom: 16px;">
+            Full structured JSON snapshot of event config, readers, and groups for offline archiving.
+          </p>
+          <button class="btn btn-quiet small" id="exportJsonBackupBtn" type="button">
+            Download JSON Backup
+          </button>
+        </div>
+
+        <div class="admin-card">
+          <h3 style="margin: 0 0 8px; font-size: 1.1rem; display: flex; align-items: center;">
+            <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span>Printable Leaderboard</span>
+          </h3>
+          <p style="font-size: 0.84rem; color: var(--ink-soft); margin-bottom: 16px;">
+            Clean, high-contrast print layout suitable for the college notice board or prayer fellowship.
+          </p>
+          <button class="btn btn-gold small" id="printLeaderboardBtn" type="button">
+            Print Notice Board Sheet
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Pane 6: Event Settings & Demo Tools ────────────────── -->
+    <section class="tab-pane" id="pane-config" hidden>
+      <div class="admin-card" style="margin-bottom: 24px;">
+        <h2 class="admin-card-title" style="margin-bottom: 14px;">Event Configuration (from js/config.js)</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; font-size: 0.88rem;">
+          <div>
+            <span style="color: var(--ink-faint); display: block;">Organization & College</span>
+            <strong id="cfgOrg">—</strong>
+          </div>
+          <div>
+            <span style="color: var(--ink-faint); display: block;">Challenge Dates & Timezone</span>
+            <strong id="cfgDates">—</strong>
+          </div>
+          <div>
+            <span style="color: var(--ink-faint); display: block;">Points Formula</span>
+            <strong id="cfgPointsRules">—</strong>
+          </div>
+          <div>
+            <span style="color: var(--ink-faint); display: block;">Group Size Limit</span>
+            <strong id="cfgGroupMax">—</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2 class="admin-card-title" style="margin-bottom: 10px; display: flex; align-items: center;">
+          <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V2"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
+          <span>Local Demo Testing Tools</span>
+        </h2>
+        <p style="font-size: 0.84rem; color: var(--ink-soft); margin-bottom: 16px;">
+          These tools operate only in Local Demo Mode on this browser. They allow organizers to test and preview the dashboard before connecting Firebase.
+        </p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn btn-quiet small" id="seedDemoBtn" type="button">
+            <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            <span>Seed Sample College Readers</span>
+          </button>
+          <button class="btn btn-ghost small" id="clearDemoBtn" type="button" style="color: var(--red);">
+            <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Clear Local Demo Data</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ── Reader Detail Modal ──────────────────────────────────── -->
+  <div class="admin-modal-backdrop" id="readerModalBackdrop" hidden>
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Student Profile Details</h2>
+        <button class="action-btn" id="closeReaderModal" type="button">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.9rem;">
+        <div>
+          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Roll Number</span>
+          <strong id="modalRoll" style="font-size: 1.2rem; font-family: var(--font-mono);">—</strong>
+        </div>
+        <div>
+          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Department</span>
+          <span id="modalDept" style="font-weight: 600;">—</span>
+        </div>
+        <div>
+          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Year & Program</span>
+          <span id="modalYear">—</span>
+        </div>
+        <div>
+          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Group Code</span>
+          <span id="modalGroup">—</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; background: var(--panel-2); border-radius: var(--radius-sm);">
+          <div>
+            <span style="color: var(--ink-faint); display: block; font-size: 0.75rem;">Current Streak</span>
+            <strong id="modalStreak" style="color: #D35400;">—</strong>
+          </div>
+          <div>
+            <span style="color: var(--ink-faint); display: block; font-size: 0.75rem;">Total Points</span>
+            <strong id="modalPoints" style="color: var(--gold-deep);">—</strong>
+          </div>
+        </div>
+        <div>
+          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Active Days Count</span>
+          <span id="modalTotalDays">—</span>
+        </div>
+        <div>
+          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Device UID</span>
+          <code id="modalUid" style="font-size: 0.78rem; word-break: break-all;">—</code>
+        </div>
+        <div>
+          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Last Active / Synced</span>
+          <span id="modalLastUpdated" style="font-size: 0.8rem; color: var(--ink-soft);">—</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-primary small" id="modalRelinkBtn" type="button">
+          Re-link Device ID →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast Feedback ───────────────────────────────────────── -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span id="toastText"></span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="firebase-config.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>
