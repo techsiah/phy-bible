@@ -714,7 +714,6 @@ html[data-theme="candle"] .guest-banner-sub {
 }
 .sync-badge[data-mode="online"] { color: #9fe0bb; border-color: rgba(120, 220, 170, 0.35); }
 .sync-badge[data-mode="offline"] { color: #f0c98a; border-color: rgba(240, 201, 138, 0.35); }
-.sync-badge[data-mode="local"] { color: var(--on-bg-faint); }
 
 .icon-btn {
   display: grid;

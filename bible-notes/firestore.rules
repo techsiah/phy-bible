@@ -115,6 +115,12 @@ service cloud.firestore {
       allow create, update: if signedIn()
         && isOwner(roll)
         && request.resource.data.roll == roll
+        && (!request.resource.data.keys().hasAny(['name'])
+          || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
+        && (!request.resource.data.keys().hasAny(['gender'])
+          || (request.resource.data.gender is string
+            && (request.resource.data.gender == ''
+              || request.resource.data.gender in ['male', 'female', 'other', 'prefer-not'])))
         && request.resource.data.dept is string
         && request.resource.data.dept.size() <= 60
         && request.resource.data.year is string

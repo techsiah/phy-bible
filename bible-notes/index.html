@@ -111,7 +111,7 @@
           <span class="header-brand-college">Pazhassi Raja College</span>
         </div>
         <div class="header-top-actions">
-          <span class="sync-badge" id="syncBadge" data-mode="local" title="Sync status">Local</span>
+          <span class="sync-badge" id="syncBadge" data-mode="offline" title="Sync status">Connecting…</span>
           <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme" title="Daylight / Candlelight">
             <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -411,7 +411,7 @@
           <rect x="5" y="10.5" width="14" height="9.5" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/>
           <path d="M8.5 10.5V7.8a3.5 3.5 0 0 1 7 0v2.7" fill="none" stroke="currentColor" stroke-width="1.3"/>
         </svg>
-        <span id="syncNote">Local mode: everything stays on this device.</span>
+        <span id="syncNote">Connecting to the reading server…</span>
       </p>
       <div class="foot-brand-row">
         <img src="icon.png" alt="Jesus Youth" class="foot-logo">
@@ -437,12 +437,25 @@
       </div>
       <p class="sheet-desc muted">Your roll number is your entry. No email, no password.</p>
       <form id="onboardForm" class="form" autocomplete="off">
-        <label class="field" for="obRoll">
-          <span class="field-label">Roll number</span>
-          <select id="obRoll" name="roll" required>
-            <option value="" disabled selected>Select Roll No (1 - 150)</option>
-          </select>
+        <label class="field" for="obName">
+          <span class="field-label">Full name</span>
+          <input type="text" id="obName" name="name" maxlength="60" placeholder="e.g. Arshin Thomas" autocomplete="name" required>
         </label>
+
+        <div class="field-row">
+          <label class="field" for="obRoll">
+            <span class="field-label">Roll number</span>
+            <select id="obRoll" name="roll" required>
+              <option value="" disabled selected>Select Roll No (1 - 150)</option>
+            </select>
+          </label>
+          <label class="field" for="obGender">
+            <span class="field-label">Gender</span>
+            <select id="obGender" name="gender" required>
+              <option value="" disabled selected>Select Gender</option>
+            </select>
+          </label>
+        </div>
 
         <label class="field" for="obDept">
           <span class="field-label">Department</span>

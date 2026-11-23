@@ -1,6 +1,6 @@
 /* Christmas 2026 — Jesus Youth · Pazhassi Raja College
    Local-first reading, streaks, notes, groups, and a shared leaderboard. */
-import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, isCleanName } from './config.js';
+import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, isCleanName } from './config.js';
 import { PLAN, DAILY_VERSES, EDITION } from './plan.js';
 import {
   BOOKS, chaptersFor, formatBookName, parseReference, assembleReference, formatReference,
@@ -97,7 +97,9 @@ const dom = {
   guestReadingHint: $('guestReadingHint'),
   guestInlineRegisterBtn: $('guestInlineRegisterBtn'),
   onboardForm: $('onboardForm'),
+  obName: $('obName'),
   obRoll: $('obRoll'),
+  obGender: $('obGender'),
   obDept: $('obDept'),
   obYear: $('obYear'),
   obProgram: $('obProgram'),
@@ -189,10 +191,17 @@ function yearLabel(year) {
   return `${year}${suffix} Year`;
 }
 
+function genderLabel(gender) {
+  const found = GENDERS.find((item) => item.value === gender);
+  return found ? found.label : '';
+}
+
 function displayReader(reader) {
-  return [reader.roll, reader.dept, yearLabel(reader.year), reader.program]
+  const base = [reader.roll, reader.dept, yearLabel(reader.year), reader.program]
     .filter(Boolean)
     .join(' · ');
+  const name = String(reader.name || '').trim();
+  return name ? `${name} · ${base}` : base;
 }
 
 function setBusy(button, busy, label) {
@@ -293,6 +302,7 @@ function init() {
   state.today = dayKey();
   state.phase = eventPhase(state.today, EVENT.start, EVENT.end);
   state.selectedDay = state.phase === 'before' ? 1 : state.phase === 'after' ? PLAN.length : clamp(currentTodayIndex(), 1, PLAN.length);
+  store.clearDemo(); // purge legacy demo accounts from local storage
   applyTheme(store.getTheme());
   applyFont(store.getFont());
   populateStatic();
@@ -312,13 +322,21 @@ function init() {
 }
 
 async function bootBackend() {
-  state.backend = await initBackend();
-  state.warning = state.backend.warning || null;
+  try {
+    state.backend = await initBackend();
+  } catch (err) {
+    state.backend = null;
+    state.warning = err.message || 'Could not connect to the reading server. Check your connection and try again.';
+    updateSyncBadge();
+    renderCover();
+    showToast(state.warning);
+    return null;
+  }
+  state.warning = null;
   updateSyncBadge();
-  if (state.warning) showToast(state.warning);
   if (state.profile) {
     const ok = await hydrate();
-    if (!ok && state.backend.mode === 'firebase') showRecovery();
+    if (!ok && state.backend?.mode === 'firebase') showRecovery();
   }
   // Splash screen stays until user clicks 'Explore the readings' or 'Register / Join'
   renderCover();
@@ -465,6 +483,8 @@ async function syncReader() {
   if (!state.backend || !state.profile) return;
   const patch = {
     roll: state.profile.roll,
+    name: state.profile.name || '',
+    gender: state.profile.gender || '',
     dept: state.profile.dept,
     year: state.profile.year,
     program: state.profile.program,
@@ -496,23 +516,19 @@ async function saveDay(day) {
 
 function updateSyncBadge() {
   if (!dom.syncBadge) return;
-  const mode = state.backend ? state.backend.mode : 'local';
-  if (mode === 'firebase') {
-    dom.syncBadge.textContent = navigator.onLine ? 'Synced' : 'Offline';
-    dom.syncBadge.dataset.mode = navigator.onLine ? 'online' : 'offline';
-  } else {
-    dom.syncBadge.textContent = 'Local';
-    dom.syncBadge.dataset.mode = 'local';
-  }
+  const connected = Boolean(state.backend);
+  const online = connected && navigator.onLine;
+  dom.syncBadge.textContent = connected ? (online ? 'Synced' : 'Offline') : 'Not connected';
+  dom.syncBadge.dataset.mode = online ? 'online' : 'offline';
   if (dom.syncNote) {
-    dom.syncNote.textContent = mode === 'firebase'
-      ? 'Your notes and reading history sync to your private entry. Only your roll, department, year, program, group, streak and points are public.'
-      : 'Local mode: everything stays on this device. Add firebase-config.js to share the leaderboard.';
+    dom.syncNote.textContent = connected
+      ? 'Your notes and reading history sync privately. Only your name, roll, gender, department, year, program, group, streak and points are public.'
+      : 'Cannot reach the reading server. Check your connection and try again.';
   }
   if (dom.syncNote2) {
-    dom.syncNote2.textContent = mode === 'firebase'
+    dom.syncNote2.textContent = connected
       ? 'Notes and reading history sync privately to your roll. Only you can open them.'
-      : 'Local mode: notes stay on this device. Add firebase-config.js to sync them.';
+      : 'The reading server is unavailable right now.';
   }
 }
 
@@ -537,6 +553,16 @@ function populateStatic() {
       frag.append(opt);
     }
     dom.obRoll.append(frag);
+  }
+  if (dom.obGender) {
+    const frag = document.createDocumentFragment();
+    GENDERS.forEach((gender) => {
+      const opt = document.createElement('option');
+      opt.value = gender.value;
+      opt.textContent = gender.label;
+      frag.append(opt);
+    });
+    dom.obGender.append(frag);
   }
   if (dom.obDept) {
     // Populate department dropdown from DEPARTMENTS list
@@ -1126,7 +1152,7 @@ function renderBoard() {
   }
 
   if (dom.boardFoot) {
-    dom.boardFoot.textContent = `Updated ${new Date(cache.at).toLocaleTimeString()} · Only your roll, department, year, program, group, streak and points are public.`;
+    dom.boardFoot.textContent = `Updated ${new Date(cache.at).toLocaleTimeString()} · Only your name, roll, gender, department, year, program, group, streak and points are public.`;
   }
 }
 
@@ -1148,7 +1174,9 @@ function renderProfile() {
     return;
   }
   const rows = [
+    ['Name', state.profile.name || '—'],
     ['Roll number', state.profile.roll],
+    ['Gender', genderLabel(state.profile.gender) || '—'],
     ['Department', state.profile.dept],
     ['Year', yearLabel(state.profile.year)],
     ['Program', state.profile.program],
@@ -1173,7 +1201,8 @@ function renderAll() {
   updateSyncBadge();
   const isGuest = !state.profile;
   if (dom.headerUserName) {
-    dom.headerUserName.textContent = state.profile ? state.profile.roll : 'Friend';
+    const firstName = String(state.profile?.name || '').trim().split(/\s+/)[0];
+    dom.headerUserName.textContent = firstName || (state.profile ? state.profile.roll : 'Friend');
   }
   if (dom.registerBtn) dom.registerBtn.hidden = true; // always hidden – avatar btn + guest banner handle registration
   if (dom.guestBanner) dom.guestBanner.hidden = !isGuest;
@@ -1255,7 +1284,7 @@ function showOnboarding() {
   if (dom.obDevice && state.backend) dom.obDevice.textContent = `Device ID: ${state.backend.uid}`;
   dom.obError.textContent = '';
   openDialog(dom.onboarding);
-  window.setTimeout(() => dom.obRoll?.focus(), 100);
+  window.setTimeout(() => dom.obName?.focus(), 100);
 }
 
 function groupMode() {
@@ -1274,19 +1303,31 @@ async function submitOnboarding(event) {
   event.preventDefault();
   if (state.backendReady) await state.backendReady;
   if (!state.backend) {
-    dom.obError.textContent = 'The app is still starting. Try again in a moment.';
+    dom.obError.textContent = 'Cannot reach the reading server. Check your connection and try again.';
     return;
   }
 
+  const name = dom.obName.value.trim().replace(/\s+/g, ' ').slice(0, 60);
   const roll = String(dom.obRoll.value).trim();
+  const gender = dom.obGender.value;
   const dept = dom.obDept.value.trim();
   const year = dom.obYear.value;
   const program = dom.obProgram.value;
   const mode = groupMode();
 
+  if (name.length < 2) {
+    dom.obError.textContent = 'Please enter your full name.';
+    dom.obName.focus();
+    return;
+  }
   if (!isValidRoll(roll)) {
     dom.obError.textContent = 'Please select a roll number.';
     dom.obRoll.focus();
+    return;
+  }
+  if (!gender) {
+    dom.obError.textContent = 'Please select your gender.';
+    dom.obGender.focus();
     return;
   }
   if (!dept) {
@@ -1326,6 +1367,8 @@ async function submitOnboarding(event) {
   try {
     const profile = {
       roll,
+      name,
+      gender,
       dept,
       year,
       program,
@@ -1787,7 +1830,6 @@ async function leaveDevice() {
   if (!window.confirm('Remove this student from this device? Notes and streak are kept in Firebase if you are online, but local copies will be deleted. Export a backup first if you need it.')) return;
   await safe(() => state.backend && state.backend.signOut());
   store.clearData();
-  if (state.backend && state.backend.mode === 'local') store.clearDemo();
   window.location.reload();
 }
 

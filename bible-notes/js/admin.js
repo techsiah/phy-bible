@@ -3,9 +3,8 @@
    Admin & Organizer Portal Controller
    ============================================================ */
 
-import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, isCleanName } from './config.js';
+import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, isCleanName } from './config.js';
 import { initBackend } from './backend.js';
-import { readJSON, writeJSON } from './store.js';
 
 // Default organizer passcode
 const PASSCODE = 'JYPRC2026';
@@ -40,6 +39,11 @@ const adminState = {
 
 // DOM Helper
 const $ = (id) => document.getElementById(id);
+
+function genderLabel(value) {
+  const found = GENDERS.find((gender) => gender.value === value);
+  return found ? found.label : '';
+}
 
 /* ── Authentication ────────────────────────────────────────── */
 
@@ -119,7 +123,8 @@ async function bootPortal() {
     await refreshData();
   } catch (err) {
     console.error('Portal boot failed:', err);
-    showToast('Failed to load portal data. Check connection.');
+    updateModeBadge();
+    showToast(err.message || 'Failed to load portal data. Check connection.');
   } finally {
     showLoading(false);
   }
@@ -127,13 +132,11 @@ async function bootPortal() {
 
 function updateModeBadge() {
   const badge = $('syncBadge');
-  if (!badge || !adminState.backend) return;
-  const isFirebase = adminState.backend.mode === 'firebase';
-  badge.textContent = isFirebase ? 'Firebase Connected' : 'Local Demo Mode';
-  badge.dataset.mode = adminState.backend.mode;
-  badge.title = isFirebase
-    ? 'Syncing with Firestore public board and groups'
-    : 'Local demo mode (Data in localStorage)';
+  if (!badge) return;
+  const connected = Boolean(adminState.backend);
+  badge.textContent = connected ? 'Firebase Connected' : 'Not Connected';
+  badge.dataset.mode = connected ? 'firebase' : 'offline';
+  badge.title = connected ? 'Live Firestore data' : 'Could not connect to Firebase';
 }
 
 async function refreshData() {
@@ -288,10 +291,11 @@ function filterAndSortReaders() {
   let list = adminState.readers.filter((r) => {
     // Search query
     if (q) {
+      const matchName = (r.name || '').toLowerCase().includes(q);
       const matchRoll = (r.roll || '').toLowerCase().includes(q);
       const matchDept = (r.dept || '').toLowerCase().includes(q);
       const matchGroup = (r.groupCode || '').toLowerCase().includes(q);
-      if (!matchRoll && !matchDept && !matchGroup) return false;
+      if (!matchName && !matchRoll && !matchDept && !matchGroup) return false;
     }
 
     // Department filter
@@ -346,7 +350,7 @@ function renderParticipants() {
   if (!filtered.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; padding: 32px; color: var(--ink-faint);">
+        <td colspan="9" style="text-align: center; padding: 32px; color: var(--ink-faint);">
           No participants match the selected filters.
         </td>
       </tr>
@@ -370,8 +374,8 @@ function renderParticipants() {
       <tr data-roll="${r.roll}">
         <td>${rankBadge}</td>
         <td class="roll-cell">
-          <strong>${r.roll || '—'}</strong>
-          <span style="font-size: 0.74rem; color: var(--ink-faint);">${r.program || 'UG'}</span>
+          <strong>${r.name || r.roll || '—'}</strong>
+          <span style="font-size: 0.74rem; color: var(--ink-faint);">${r.roll || '—'} · ${r.program || 'UG'}</span>
         </td>
         <td>
           <div style="font-weight: 500;">${deptShort}</div>
@@ -619,50 +623,26 @@ function initRecoveryHandlers() {
     transferBtn.textContent = 'Transferring...';
 
     try {
-      const mode = adminState.backend?.mode;
-
-      if (mode === 'local') {
-        // Direct local storage update
-        const READERS_KEY = 'xmas2026.demo.readers';
-        const allReaders = readJSON(READERS_KEY, {});
-        if (!allReaders[roll]) {
-          allReaders[roll] = { roll, points: 0, currentStreak: 0, longestStreak: 0, totalDays: 0 };
+      const db = window.firebase ? window.firebase.firestore() : null;
+      if (db) {
+        try {
+          await db.collection('readers').doc(roll).set({ uid: newUid, updatedAt: Date.now() }, { merge: true });
+          showToast(`Firestore updated! Roll ${roll} linked to ${newUid}`);
+          $('transferSuccessAlert').hidden = false;
+          $('transferSuccessMsg').innerHTML = `
+            <strong>Firestore updated successfully!</strong><br>
+            Student <code>${roll}</code> can now tap <strong>"Try again"</strong> on their phone.
+          `;
+        } catch (ruleErr) {
+          console.warn('Direct client update blocked by security rules:', ruleErr);
+          // Show Firebase Console instructions
+          $('transferConsoleAlert').hidden = false;
+          $('consoleTargetRoll').textContent = roll;
+          $('consoleTargetUid').textContent = newUid;
+          showToast('Direct edit restricted by security rules. Follow console steps below.');
         }
-        allReaders[roll].uid = newUid;
-        allReaders[roll].updatedAt = Date.now();
-        writeJSON(READERS_KEY, allReaders);
-
-        await refreshData();
-        showToast(`Success! Roll ${roll} is now linked to device: ${newUid}`);
-        $('transferSuccessAlert').hidden = false;
-        $('transferSuccessMsg').innerHTML = `
-          <strong>Device transferred successfully!</strong><br>
-          Tell student <code>${roll}</code> to tap <strong>"Try again"</strong> on their phone to load their streak and notes.
-        `;
       } else {
-        // Firebase mode
-        // Attempt Firestore update
-        const db = window.firebase ? window.firebase.firestore() : null;
-        if (db) {
-          try {
-            await db.collection('readers').doc(roll).set({ uid: newUid, updatedAt: Date.now() }, { merge: true });
-            showToast(`Firestore updated! Roll ${roll} linked to ${newUid}`);
-            $('transferSuccessAlert').hidden = false;
-            $('transferSuccessMsg').innerHTML = `
-              <strong>Firestore updated successfully!</strong><br>
-              Student <code>${roll}</code> can now tap <strong>"Try again"</strong> on their phone.
-            `;
-          } catch (ruleErr) {
-            console.warn('Direct client update blocked by security rules:', ruleErr);
-            // Show Firebase Console instructions
-            $('transferConsoleAlert').hidden = false;
-            $('consoleTargetRoll').textContent = roll;
-            $('consoleTargetUid').textContent = newUid;
-            showToast('Direct edit restricted by security rules. Follow console steps below.');
-          }
-        } else {
-          showToast('Firebase connection not initialized.');
-        }
+        showToast('Firebase connection not initialized.');
       }
     } catch (err) {
       console.error('Transfer failed:', err);
@@ -689,7 +669,9 @@ function openReaderModal(roll) {
   if (!reader) return;
 
   adminState.selectedReader = reader;
+  $('modalName').textContent = reader.name || '—';
   $('modalRoll').textContent = reader.roll;
+  $('modalGender').textContent = genderLabel(reader.gender) || '—';
   $('modalDept').textContent = reader.dept || '—';
   $('modalYear').textContent = reader.year ? `${reader.year} Year (${reader.program || 'UG'})` : '—';
   $('modalGroup').textContent = reader.groupCode || 'Solo reader';
@@ -770,9 +752,11 @@ function exportParticipantsCSV() {
     return;
   }
 
-  const headers = ['Roll Number', 'Department', 'Year', 'Program', 'Group Code', 'Current Streak', 'Longest Streak', 'Total Days', 'Points', 'Last Updated'];
+  const headers = ['Roll Number', 'Name', 'Gender', 'Department', 'Year', 'Program', 'Group Code', 'Current Streak', 'Longest Streak', 'Total Days', 'Points', 'Last Updated'];
   const rows = readers.map((r) => [
     r.roll,
+    r.name || '',
+    genderLabel(r.gender) || '',
     r.dept || '',
     r.year || '',
     r.program || '',
@@ -822,52 +806,13 @@ function exportFullJSON() {
   showToast('JSON backup exported!');
 }
 
-/* ── Event Configuration & Demo Tools ───────────────────────── */
+/* ── Event Configuration ────────────────────────────────────── */
 
 function renderConfigInfo() {
   $('cfgOrg').textContent = `${EVENT.org} · ${EVENT.college}`;
   $('cfgDates').textContent = `${EVENT.start} to ${EVENT.end} (${EVENT.timezone})`;
   $('cfgPointsRules').textContent = `Plan: +${EVENT.points.plan} pts, Extras: +${EVENT.points.extra} pts (max ${EVENT.points.maxExtras}/day), Daily Cap: ${EVENT.points.dailyCap} pts`;
   $('cfgGroupMax').textContent = `Max ${EVENT.groupMax} members per group`;
-}
-
-function initConfigTools() {
-  $('seedDemoBtn')?.addEventListener('click', async () => {
-    if (!confirm('Seed sample participant and group data for local preview?')) return;
-    const READERS_KEY = 'xmas2026.demo.readers';
-    const GROUPS_KEY = 'xmas2026.demo.groups';
-
-    const sampleReaders = {
-      'CS24-012': { roll: 'CS24-012', dept: 'Department of Commerce', year: '2', program: 'UG', currentStreak: 6, longestStreak: 6, totalDays: 6, points: 85, groupCode: 'EMMANU', uid: 'demo1' },
-      'EN23-045': { roll: 'EN23-045', dept: 'Department of English', year: '3', program: 'UG', currentStreak: 5, longestStreak: 5, totalDays: 5, points: 70, groupCode: 'EMMANU', uid: 'demo2' },
-      'PH24-008': { roll: 'PH24-008', dept: 'Department of Biochemistry', year: '1', program: 'UG', currentStreak: 4, longestStreak: 4, totalDays: 4, points: 55, groupCode: 'LIGHTS', uid: 'demo3' },
-      'CM22-102': { roll: 'CM22-102', dept: 'Department of Commerce', year: '3', program: 'UG', currentStreak: 3, longestStreak: 3, totalDays: 3, points: 40, groupCode: 'LIGHTS', uid: 'demo4' },
-      'MA23-019': { roll: 'MA23-019', dept: 'Department of Economics', year: '2', program: 'UG', currentStreak: 2, longestStreak: 2, totalDays: 2, points: 25, groupCode: null, uid: 'demo5' },
-      'HS24-031': { roll: 'HS24-031', dept: 'Department of History', year: '1', program: 'UG', currentStreak: 1, longestStreak: 1, totalDays: 1, points: 10, groupCode: null, uid: 'demo6' },
-      'MB23-005': { roll: 'MB23-005', dept: 'Department of Microbiology', year: '2', program: 'UG', currentStreak: 7, longestStreak: 7, totalDays: 7, points: 120, groupCode: 'BETHLE', uid: 'demo7' },
-      'TT24-018': { roll: 'TT24-018', dept: 'Department of Travel and Tourism', year: '1', program: 'UG', currentStreak: 5, longestStreak: 5, totalDays: 5, points: 75, groupCode: 'BETHLE', uid: 'demo8' },
-      'JM22-040': { roll: 'JM22-040', dept: 'Department of Journalism and Mass Communication', year: '3', program: 'UG', currentStreak: 4, longestStreak: 4, totalDays: 4, points: 60, groupCode: null, uid: 'demo9' }
-    };
-
-    const sampleGroups = {
-      'EMMANU': { name: 'Emmanuel JY', code: 'EMMANU', members: ['demo1', 'demo2'], memberRolls: ['CS24-012', 'EN23-045'], createdAt: Date.now() },
-      'LIGHTS': { name: 'Bethlehem Lights', code: 'LIGHTS', members: ['demo3', 'demo4'], memberRolls: ['PH24-008', 'CM22-102'], createdAt: Date.now() },
-      'BETHLE': { name: 'Morning Star', code: 'BETHLE', members: ['demo7', 'demo8'], memberRolls: ['MB23-005', 'TT24-018'], createdAt: Date.now() }
-    };
-
-    writeJSON(READERS_KEY, sampleReaders);
-    writeJSON(GROUPS_KEY, sampleGroups);
-    await refreshData();
-    showToast('Sample demo participants seeded!');
-  });
-
-  $('clearDemoBtn')?.addEventListener('click', async () => {
-    if (!confirm('Are you sure you want to clear local demo data?')) return;
-    writeJSON('xmas2026.demo.readers', {});
-    writeJSON('xmas2026.demo.groups', {});
-    await refreshData();
-    showToast('Demo data cleared.');
-  });
 }
 
 /* ── UI Feedback Helpers ───────────────────────────────────── */
@@ -913,7 +858,6 @@ window.addEventListener('DOMContentLoaded', () => {
   initModals();
   initRecoveryHandlers();
   initExportHandlers();
-  initConfigTools();
 
   // Refresh button
   $('refreshBtn')?.addEventListener('click', async () => {

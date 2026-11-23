@@ -53,6 +53,13 @@ export const PROGRAMS = [
   { value: 'PG', label: 'PG' }
 ];
 
+export const GENDERS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+  { value: 'prefer-not', label: 'Prefer not to say' }
+];
+
 /* A light first line of defence for group names. The organizer can delete a
    group from the Firebase console if something unpleasant slips through. */
 export const PROFANITY = [

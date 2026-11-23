@@ -21,16 +21,16 @@ npx --yes http-server . -p 8080 -c-1
 # then visit http://localhost:8080
 ```
 
-Out of the box the app runs in **local demo mode**: notes, streaks, groups, and a
-leaderboard all live in `localStorage` on one device. That is enough to try the
-whole app before setting up Firebase.
+Out of the box the app starts in **production mode** and requires Firebase. Fill in
+`firebase-config.js` and deploy the Firestore rules before opening the app, or it
+will show “Not connected” and registration will be unavailable.
 
 > A service worker is registered when served over HTTP(S). It is skipped when the
 > page is opened as a `file://` URL.
 
 ---
 
-## Turning on sync and the shared leaderboard
+## Firebase setup (required)
 
 1. Create a Firebase project at <https://console.firebase.google.com>.
 2. **Authentication → Sign-in method → Anonymous → Enable.**
@@ -66,8 +66,9 @@ whole app before setting up Firebase.
 
 The web API key is public by design. `firestore.rules` is what protects data.
 
-If the config is missing or still contains placeholders, the app quietly falls
-back to local mode and shows a **Local** badge.
+If the config is missing or still contains placeholders, the app will not fall
+back to local storage. It shows **Not connected** and registration stays
+unavailable until a real Firebase project is configured.
 
 ---
 
@@ -75,7 +76,7 @@ back to local mode and shows a **Local** badge.
 
 | Data | Where | Who can read it |
 | --- | --- | --- |
-| Roll, department, year, program, group, streak, points | `board/{roll}` | Everyone signed in |
+| Roll, name, gender, department, year, program, group, streak, points | `board/{roll}` | Everyone signed in |
 | Group name, code, member rolls | `groups/{code}` | Everyone signed in |
 | Device UID, reading history, notes | `readers/{roll}` and its subcollections | Owner only |
 
@@ -112,7 +113,6 @@ Features:
 - **Teams & Groups Moderation**: View all teams, member rolls, average streaks, points, and automatic profanity check status.
 - **Student Device Recovery Tool**: Dedicated interface to look up a student's roll and link their new Device ID in one click.
 - **Export & Notice Board Reports**: One-click export for Participants CSV, Teams CSV, Full JSON snapshot, and high-contrast printable notice board sheets.
-- **Local Demo & Testing Tools**: Seed realistic sample participants or reset demo data directly in the browser.
 
 `readers/{ROLL}` also holds the profile and aggregate stats; `board/{ROLL}` is the
 public copy. Update the profile in `readers/{ROLL}` if a roll was typed wrong, and
@@ -194,7 +194,7 @@ js/refs.js                  Bible book list, reference parsing, roll normalizati
 js/streak.js                Pure date, streak, and points functions
 js/store.js                 localStorage, migration, backup, theme
 js/notes.js                 Note normalization and merging
-js/backend.js               Local demo backend + Firestore backend
+js/backend.js               Firestore production backend
 js/app.js                   UI controller
 tools/fetch-cpdv.mjs        Regenerates js/plan.js from sacredbible.org
 tests/streak.test.mjs       Date, streak, and points tests

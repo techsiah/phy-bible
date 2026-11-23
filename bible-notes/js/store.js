@@ -12,7 +12,6 @@ const KEYS = {
   cache: `${P}.cache.v1`,
   theme: `${P}.theme.v1`,
   font: `${P}.font.v1`,
-  uid: `${P}.uid.v1`,
   legacyNotes: 'bible-notes.notes.v1',
   legacyTheme: 'bible-notes.theme.v1'
 };
@@ -37,22 +36,6 @@ export function writeJSON(key, value) {
 
 export function removeKey(key) {
   try { localStorage.removeItem(key); } catch (err) { /* ignore */ }
-}
-
-export function uid() {
-  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-    return window.crypto.randomUUID();
-  }
-  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
-}
-
-export function localUid() {
-  let id = readJSON(KEYS.uid, null);
-  if (!id) {
-    id = 'local-' + uid();
-    writeJSON(KEYS.uid, id);
-  }
-  return id;
 }
 
 export function loadProfile() {

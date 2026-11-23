@@ -1,5 +1,4 @@
-/* Data layer. Uses Firestore when firebase-config.js is filled in, otherwise a
-   local demo backend so the app can be used and tested immediately.
+/* Data layer. Firestore only — this build is production-only.
 
    Firestore layout:
      readers/{roll}            private profile + stats (owner only)  ← organizer
@@ -13,7 +12,7 @@
    history never appear on the leaderboard.
 */
 import { EVENT } from './config.js';
-import { normalizeReads, readJSON, writeJSON, localUid } from './store.js';
+import { normalizeReads } from './store.js';
 
 export class BackendError extends Error {
   constructor(code, message) {
@@ -55,7 +54,10 @@ function loadScript(src) {
 
 export async function initBackend() {
   if (!configIsReal()) {
-    return createLocalBackend('Local mode — add firebase-config.js to share the leaderboard.');
+    throw new BackendError(
+      'CONFIG_MISSING',
+      'Firebase is not configured. Add your production project config to firebase-config.js.'
+    );
   }
 
   try {
@@ -79,155 +81,12 @@ export async function initBackend() {
     }
     return createFirestoreBackend(db, credential.user.uid);
   } catch (err) {
-    console.warn('Firebase could not start; using local mode.', err);
-    return createLocalBackend('Firebase could not start — using local mode on this device.');
+    console.error('Firebase could not start.', err);
+    throw new BackendError(
+      'CONNECT_FAILED',
+      'Could not connect to the reading server. Check your connection and try again.'
+    );
   }
-}
-
-/* ── Local demo backend ─────────────────────────────────────── */
-
-function createLocalBackend(warning) {
-  const uid = localUid();
-  const READERS = 'xmas2026.demo.readers';
-  const GROUPS = 'xmas2026.demo.groups';
-  const DEMO_SEEDED = 'xmas2026.demo.seeded.v2';
-  const notesKey = (roll) => `xmas2026.demo.notes.${roll}`;
-  const daysKey = (roll) => `xmas2026.demo.days.${roll}`;
-
-  const readers = () => readJSON(READERS, {});
-  const groups = () => readJSON(GROUPS, {});
-  const saveReaders = (value) => writeJSON(READERS, value);
-  const saveGroups = (value) => writeJSON(GROUPS, value);
-
-  // Seed initial demo participant accounts so the leaderboard and groups
-  // show realistic college participants right out of the box in local mode.
-  if (!readJSON(DEMO_SEEDED, false)) {
-    const initialReaders = {
-      'CS24-012': { roll: 'CS24-012', dept: 'Department of Commerce', year: '2', program: 'UG', currentStreak: 6, longestStreak: 6, totalDays: 6, points: 85, groupCode: 'EMMANU' },
-      'EN23-045': { roll: 'EN23-045', dept: 'Department of English', year: '3', program: 'UG', currentStreak: 5, longestStreak: 5, totalDays: 5, points: 70, groupCode: 'EMMANU' },
-      'PH24-008': { roll: 'PH24-008', dept: 'Department of Biochemistry', year: '1', program: 'UG', currentStreak: 4, longestStreak: 4, totalDays: 4, points: 55, groupCode: 'LIGHTS' },
-      'CM22-102': { roll: 'CM22-102', dept: 'Department of Commerce', year: '3', program: 'UG', currentStreak: 3, longestStreak: 3, totalDays: 3, points: 40, groupCode: 'LIGHTS' },
-      'MA23-019': { roll: 'MA23-019', dept: 'Department of Economics', year: '2', program: 'UG', currentStreak: 2, longestStreak: 2, totalDays: 2, points: 25, groupCode: null },
-      'HS24-031': { roll: 'HS24-031', dept: 'Department of History', year: '1', program: 'UG', currentStreak: 1, longestStreak: 1, totalDays: 1, points: 10, groupCode: null }
-    };
-    const initialGroups = {
-      'EMMANU': { name: 'Emmanuel JY', code: 'EMMANU', members: ['demo1', 'demo2'], memberRolls: ['CS24-012', 'EN23-045'], createdAt: Date.now() },
-      'LIGHTS': { name: 'Bethlehem Lights', code: 'LIGHTS', members: ['demo3', 'demo4'], memberRolls: ['PH24-008', 'CM22-102'], createdAt: Date.now() }
-    };
-    saveReaders({ ...initialReaders, ...readers() });
-    saveGroups({ ...initialGroups, ...groups() });
-    writeJSON(DEMO_SEEDED, true);
-  }
-
-  return {
-    mode: 'local',
-    uid,
-    warning,
-    async claimReader(profile) {
-      const all = readers();
-      const existing = all[profile.roll];
-      if (existing && existing.uid && existing.uid !== uid) {
-        throw new BackendError('ROLL_TAKEN', 'This roll number is linked to another device.');
-      }
-      all[profile.roll] = { ...(existing || {}), ...profile, uid, updatedAt: Date.now() };
-      saveReaders(all);
-      return all[profile.roll];
-    },
-    async updateReader(roll, patch) {
-      const all = readers();
-      all[roll] = { ...(all[roll] || {}), ...patch, uid, updatedAt: Date.now() };
-      saveReaders(all);
-      return all[roll];
-    },
-    async getReader(roll) {
-      return readers()[roll] || null;
-    },
-    async getDays(roll) {
-      return normalizeReads(readJSON(daysKey(roll), {}));
-    },
-    async saveDay(roll, day, data) {
-      const all = readJSON(daysKey(roll), {});
-      all[day] = data;
-      writeJSON(daysKey(roll), all);
-    },
-    async getNotes(roll) {
-      const list = readJSON(notesKey(roll), []);
-      return Array.isArray(list) ? list : [];
-    },
-    async saveNote(roll, note) {
-      const list = readJSON(notesKey(roll), []);
-      const next = Array.isArray(list) ? list.filter((n) => n.id !== note.id) : [];
-      next.push(note);
-      writeJSON(notesKey(roll), next);
-    },
-    async deleteNote(roll, id) {
-      const list = readJSON(notesKey(roll), []);
-      writeJSON(notesKey(roll), (Array.isArray(list) ? list : []).filter((n) => n.id !== id));
-    },
-    async listReaders() {
-      return Object.values(readers());
-    },
-    async listGroups() {
-      return Object.values(groups());
-    },
-    async findGroup(code) {
-      return groups()[code] || null;
-    },
-    async createGroup(name, code, profile) {
-      const all = groups();
-      if (all[code]) throw new BackendError('GROUP_EXISTS', 'That code is already taken.');
-      const group = {
-        name,
-        code,
-        members: [uid],
-        memberRolls: [profile.roll],
-        createdBy: uid,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-      all[code] = group;
-      saveGroups(all);
-      const readerList = readers();
-      readerList[profile.roll] = { ...(readerList[profile.roll] || {}), groupCode: code, uid };
-      saveReaders(readerList);
-      return group;
-    },
-    async joinGroup(code, profile) {
-      const all = groups();
-      const group = all[code];
-      if (!group) throw new BackendError('GROUP_NOT_FOUND', 'No group has that code.');
-      if (group.members.includes(uid)) return group;
-      if (group.members.length >= EVENT.groupMax) {
-        throw new BackendError('GROUP_FULL', 'That group already has four members.');
-      }
-      group.members.push(uid);
-      group.memberRolls.push(profile.roll);
-      group.updatedAt = Date.now();
-      saveGroups(all);
-      const readerList = readers();
-      readerList[profile.roll] = { ...(readerList[profile.roll] || {}), groupCode: code, uid };
-      saveReaders(readerList);
-      return group;
-    },
-    async leaveGroup(code, profile) {
-      const all = groups();
-      const group = all[code];
-      if (group) {
-        group.members = group.members.filter((id) => id !== uid);
-        group.memberRolls = group.memberRolls.filter((roll) => roll !== profile.roll);
-        group.updatedAt = Date.now();
-        if (!group.members.length) delete all[code];
-        saveGroups(all);
-      }
-      const readerList = readers();
-      if (readerList[profile.roll]) {
-        readerList[profile.roll].groupCode = null;
-        readerList[profile.roll].updatedAt = Date.now();
-        saveReaders(readerList);
-      }
-    },
-    async signOut() { /* nothing to do */ }
-  };
 }
 
 /* ── Firestore backend ──────────────────────────────────────── */
@@ -240,6 +99,8 @@ function createFirestoreBackend(db, uid) {
   function boardDoc(data) {
     return {
       roll: data.roll,
+      name: data.name || '',
+      gender: data.gender || '',
       dept: data.dept || '',
       year: data.year || '',
       program: data.program || '',
