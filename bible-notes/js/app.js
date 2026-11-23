@@ -20,6 +20,9 @@ const dom = {
   cover: $('cover'),
   openBtn: $('openBtn'),
   app: $('app'),
+  main: $('main'),
+  nav: $('bottomNav'),
+  navIndicator: $('navIndicator'),
   coverOrg: $('coverOrg'),
   coverTitle: $('coverTitle'),
   coverSub: $('coverSub'),
@@ -168,6 +171,10 @@ const state = {
 let toastTimer = null;
 let clockTimer = null;
 
+/* Tab order drives swipe direction, view transitions, and history. */
+const VIEW_ORDER = ['today', 'journey', 'together', 'notes'];
+const viewScroll = new Map();
+
 /* ── Small helpers ─────────────────────────────────────────── */
 
 function el(tag, className, text) {
@@ -248,19 +255,84 @@ function hideToast() {
   dom.toast.hidden = true;
 }
 
+/* ── App-shell behavior: history, motion, haptics ──────────── */
+
+function haptic(ms = 8) {
+  if (typeof navigator.vibrate !== 'function') return;
+  try { navigator.vibrate(ms); } catch (err) { /* unsupported */ }
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function pushViewHistory(view) {
+  if (!window.history || typeof history.pushState !== 'function') return;
+  if (history.state && (history.state.xmasView === view || history.state.xmasDialog)) return;
+  try { history.pushState({ xmasView: view }, '', location.href); } catch (err) { /* no history */ }
+}
+
+function ensureViewHistory() {
+  if (!window.history || typeof history.replaceState !== 'function') return;
+  if (history.state && history.state.xmasView) return;
+  try {
+    history.replaceState({ ...(history.state || {}), xmasView: state.view }, '', location.href);
+  } catch (err) { /* no history */ }
+}
+
+function hasDialogEntry(dialog) {
+  return Boolean(dialog && window.history && history.state && history.state.xmasDialog === dialog.id);
+}
+
 function openDialog(dialog) {
-  if (!dialog) return;
-  if (typeof dialog.showModal === 'function') {
-    if (!dialog.open) dialog.showModal();
-  } else {
-    dialog.setAttribute('open', '');
+  if (!dialog || dialog.open) return;
+  ensureViewHistory();
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+  try { history.pushState({ xmasDialog: dialog.id }, '', location.href); } catch (err) { /* no history */ }
+}
+
+function closeDialog(dialog, options = {}) {
+  if (!dialog || !dialog.open) return;
+  const hadEntry = hasDialogEntry(dialog);
+  if (typeof dialog.close === 'function') dialog.close();
+  else dialog.removeAttribute('open');
+  if (hadEntry && !options.fromHistory) {
+    // Turn the dialog's history entry into the view underneath so a later
+    // preview or navigation never resurfaces a closed sheet.
+    try { history.replaceState({ xmasView: state.view }, '', location.href); } catch (err) { /* no history */ }
   }
 }
 
-function closeDialog(dialog) {
-  if (!dialog) return;
-  if (typeof dialog.close === 'function') dialog.close();
-  else dialog.removeAttribute('open');
+function animateView(section, direction) {
+  if (!section || prefersReducedMotion() || typeof section.animate !== 'function') return;
+  const offset = direction === 'back' ? -18 : 18;
+  section.animate(
+    [
+      { opacity: 0, transform: `translate3d(${offset}px, 0, 0)` },
+      { opacity: 1, transform: 'translate3d(0, 0, 0)' }
+    ],
+    { duration: 240, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+  );
+}
+
+function positionNavIndicator() {
+  if (!dom.nav || !dom.navIndicator || !dom.nav.offsetParent) return;
+  const active = dom.nav.querySelector('.nav-btn[aria-current="true"]');
+  if (!active) return;
+  const navRect = dom.nav.getBoundingClientRect();
+  const rect = active.getBoundingClientRect();
+  const pad = 6;
+  dom.navIndicator.style.width = `${Math.max(0, rect.width - pad * 2)}px`;
+  dom.navIndicator.style.transform = `translate3d(${rect.left - navRect.left + pad}px, 0, 0)`;
+  dom.navIndicator.style.opacity = '1';
+}
+
+function scrollToTop(options = {}) {
+  window.scrollTo({
+    top: 0,
+    behavior: options.smooth && !prefersReducedMotion() ? 'smooth' : 'auto'
+  });
 }
 
 function applyTheme(theme) {
@@ -319,6 +391,13 @@ function init() {
 
   state.backendReady = bootBackend();
   startClock();
+
+  // Home-screen shortcuts and manifest shortcuts queue a view on <html>.
+  const startView = document.documentElement.dataset.startView;
+  if (startView && ['today', 'notes', 'together', 'journey'].includes(startView)) {
+    openApp();
+    switchView(startView);
+  }
 }
 
 async function bootBackend() {
@@ -1219,10 +1298,17 @@ function renderAll() {
 
 /* ── Navigation ────────────────────────────────────────────── */
 
-function switchView(view) {
+function switchView(view, options = {}) {
+  if (!view) return;
+  const previous = state.view;
+  const changed = previous !== view;
+
+  if (changed && state.entered) viewScroll.set(previous, window.scrollY);
   state.view = view;
-  document.querySelectorAll('.view').forEach((section) => {
-    section.hidden = section.id !== `view-${view}`;
+
+  const section = document.getElementById(`view-${view}`);
+  document.querySelectorAll('.view').forEach((item) => {
+    item.hidden = item !== section;
   });
   document.querySelectorAll('[data-view]').forEach((button) => {
     button.setAttribute('aria-current', String(button.dataset.view === view));
@@ -1230,7 +1316,21 @@ function switchView(view) {
   if (view === 'together') loadBoard(false);
   if (view === 'notes') renderNotes();
   if (view === 'journey') renderJourney();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const restore = changed ? (viewScroll.get(view) || 0) : 0;
+  window.scrollTo(0, restore);
+
+  if (changed && state.entered) {
+    if (!options.fromHistory && options.history !== false) pushViewHistory(view);
+    const prevIndex = VIEW_ORDER.indexOf(previous);
+    const nextIndex = VIEW_ORDER.indexOf(view);
+    if (options.animate !== false) {
+      animateView(section, options.direction || (nextIndex < prevIndex ? 'back' : 'forward'));
+    }
+    haptic(6);
+  }
+
+  requestAnimationFrame(positionNavIndicator);
 }
 
 function enterApp() {
@@ -1242,7 +1342,7 @@ function enterApp() {
   }
   if (dom.app) dom.app.hidden = false;
   renderAll();
-  switchView('today');
+  switchView('today', { history: false });
   window.setTimeout(() => dom.openBtn?.blur(), 50);
 }
 
@@ -1873,7 +1973,16 @@ function bindEvents() {
   // Splash screen stays until user clicks one of the 2 action buttons
 
   document.querySelectorAll('[data-view]').forEach((button) => {
-    button.addEventListener('click', () => switchView(button.dataset.view));
+    button.addEventListener('click', () => {
+      const view = button.dataset.view;
+      if (!view) return;
+      if (state.entered && view === state.view) {
+        haptic(5);
+        scrollToTop({ smooth: true });
+        return;
+      }
+      switchView(view);
+    });
   });
 
   if (dom.themeBtn) dom.themeBtn.addEventListener('click', () => {
@@ -2045,6 +2154,8 @@ function bindEvents() {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) updateSyncBadge();
   });
+
+  bindAppShell();
 
   document.addEventListener('keydown', (event) => {
     const mod = event.ctrlKey || event.metaKey;

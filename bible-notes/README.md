@@ -30,6 +30,25 @@ will show “Not connected” and registration will be unavailable.
 
 ---
 
+## Install it as an app
+
+The site is a full PWA. It installs to a home screen or desktop with its own icon,
+runs full screen without browser chrome, and opens offline. Installation needs
+HTTPS (or `localhost`) and the deployed site — not a `file://` page.
+
+| Platform | How |
+| --- | --- |
+| Android (Chrome, Edge) | Tap **Install app** in the app header or **Settings → Install the app**, or use the browser's *Install app* menu. |
+| iPhone / iPad (Safari) | Tap **Share**, then **Add to Home Screen**. iOS does not show an in-page install prompt. |
+| Windows / macOS (Chrome, Edge) | Click the install icon in the address bar, or **Settings → Install the app**. |
+| Firefox | Use the browser menu's **Add to Home Screen** / **Install** entry. |
+
+Once installed, long-press or right-click the icon for shortcuts to **Today**,
+**Notes**, and **Together**. The browser can also install straight from the web
+manifest, so no app store or build step is involved.
+
+---
+
 ## Firebase setup (required)
 
 1. Create a Firebase project at <https://console.firebase.google.com>.
@@ -184,9 +203,16 @@ firebase-config.js          Your Firebase web config (placeholders by default)
 firebase-config.example.js  Copy of the config shape
 firestore.rules             Security rules (deploy these)
 firebase.json               Hosting + rules config
-manifest.webmanifest        Installable app metadata
-icon.svg                    App icon
+manifest.webmanifest        Installable app metadata, icons, and shortcuts
+icon.svg                    App icon (vector source)
+icon.png                    1024px brand image used in the UI
+icon-1024.png               1024px install icon
+icon-192.png                Android install icon
+icon-512.png                High-resolution install icon
+icon-maskable-512.png       Maskable icon with safe-zone padding
+apple-touch-icon.png        iOS home-screen icon (opaque, 180px)
 sw.js                       Offline shell cache
+js/pwa.js                   Install prompt, standalone mode, shortcuts
 js/admin.js                 Admin portal controller, analytics, and device recovery
 js/config.js                Event, points, departments, group rules
 js/plan.js                  Generated CPDV passages (25 days + daily verses)
@@ -198,6 +224,7 @@ js/backend.js               Firestore production backend
 js/app.js                   UI controller
 tools/fetch-cpdv.mjs        Regenerates js/plan.js from sacredbible.org
 tests/streak.test.mjs       Date, streak, and points tests
+tests/pwa.test.mjs          Manifest, icon, and offline-shell checks
 ```
 
 ### Migrating the old notes app

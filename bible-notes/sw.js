@@ -3,7 +3,7 @@
 
    App files use network-first so a deploy is picked up on the next load. Vendor
    SDK files are versioned and immutable, so they stay cache-first. */
-const CACHE = 'xmas2026-shell-v11';
+const CACHE = 'xmas2026-shell-v12';
 
 const ASSETS = [
   './',
@@ -11,8 +11,14 @@ const ASSETS = [
   'styles.css',
   'manifest.webmanifest',
   'icon.png',
+  'icon-1024.png',
+  'icon-192.png',
+  'icon-512.png',
+  'icon-maskable-512.png',
+  'apple-touch-icon.png',
   'firebase-config.js',
   'js/app.js',
+  'js/pwa.js',
   'js/config.js',
   'js/plan.js',
   'js/refs.js',

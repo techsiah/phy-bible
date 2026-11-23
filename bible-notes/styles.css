@@ -96,13 +96,13 @@ html[data-theme="candle"] {
   color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 [hidden] { display: none !important; }
 
 html, body { min-height: 100%; }
 
-html { background-color: var(--bg-app); }
+html { background-color: var(--bg-app); -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
@@ -112,7 +112,12 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   line-height: 1.5;
+  overscroll-behavior-y: contain;
+  touch-action: manipulation;
 }
+
+html.is-standalone,
+html.is-standalone body { overscroll-behavior-y: none; }
 
 body.cover-open { overflow: hidden; }
 
@@ -367,8 +372,14 @@ html[data-theme="candle"] .cover-reg-btn {
 .app {
   width: min(520px, 100%);
   margin: 0 auto;
-  padding: 16px 16px 110px;
+  padding: 16px 16px calc(110px + env(safe-area-inset-bottom, 0px));
   position: relative;
+}
+
+.app:not([hidden]) { animation: appIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes appIn {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: none; }
 }
 
 /* ── App Header ────────────────────────────────────────────── */
@@ -380,11 +391,13 @@ html[data-theme="candle"] .cover-reg-btn {
   margin: -16px -16px 20px;
   padding: 0 16px 16px;
   background: var(--bg-app);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Space the two inner rows */
 .header-top-bar {
-  padding-top: 10px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
   padding-bottom: 10px;
 }
 
@@ -1160,7 +1173,7 @@ html[data-theme="candle"] .card-mint .quick-card-desc { color: #8EC4A3; }
   transform: translateX(-50%);
   width: 100%;
   max-width: 520px;
-  height: 68px;
+  height: calc(68px + env(safe-area-inset-bottom, 0px));
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -1171,7 +1184,27 @@ html[data-theme="candle"] .card-mint .quick-card-desc { color: #8EC4A3; }
   justify-content: space-around;
   padding: 0 12px env(safe-area-inset-bottom, 0px);
   z-index: 90;
+  -webkit-user-select: none;
+  user-select: none;
 }
+
+.nav-indicator {
+  position: absolute;
+  top: 8px;
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  width: 0;
+  border-radius: 18px;
+  background: var(--gold-soft);
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+html[data-theme="candle"] .nav-indicator { background: rgba(240, 165, 0, 0.14); }
 
 html[data-theme="candle"] .bottom-nav {
   background: rgba(18, 28, 22, 0.94);
@@ -1194,11 +1227,19 @@ html[data-theme="candle"] .bottom-nav {
   border-radius: 12px;
   transition: color 0.16s ease, transform 0.16s ease;
   flex: 1;
+  position: relative;
+  z-index: 1;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .nav-btn svg {
   width: 21px;
   height: 21px;
   transition: transform 0.16s ease;
+}
+.nav-btn:active svg {
+  transform: scale(0.88);
 }
 .nav-btn:hover {
   color: var(--ink);
@@ -1213,6 +1254,7 @@ html[data-theme="candle"] .nav-btn[aria-current="true"] {
 .nav-btn[aria-current="true"] svg {
   transform: scale(1.08);
 }
+.nav-btn[aria-current="true"]:active svg { transform: scale(0.92); }
 
 .nav-fab {
   border: 0;
@@ -1229,6 +1271,9 @@ html[data-theme="candle"] .nav-btn[aria-current="true"] {
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  touch-action: manipulation;
 }
 .nav-fab svg {
   width: 24px;
@@ -1240,6 +1285,14 @@ html[data-theme="candle"] .nav-btn[aria-current="true"] {
 }
 .nav-fab:active {
   transform: translateY(0) scale(0.96);
+}
+
+@media (hover: none) {
+  .quick-card:active,
+  .cover-open-btn:active,
+  .cover-reg-btn:active { transform: scale(0.985); }
+  .settings-btn:active,
+  .icon-btn:active { transform: scale(0.96); }
 }
 
 /* ── Tabs (Legacy / Secondary) ─────────────────────────────── */
@@ -1287,11 +1340,7 @@ html[data-theme="candle"] .tabs button[aria-current="true"] { color: #1a1409; }
 
 .main { min-height: 60vh; }
 
-.view { animation: viewIn 0.35s ease both; }
-@keyframes viewIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
+/* View changes are animated by app.js so the motion can follow tab direction. */
 
 #view-today {
   display: flex;
@@ -2106,6 +2155,7 @@ html[data-theme="candle"] .link-btn { color: var(--gold-bright); }
   color: var(--ink);
   box-shadow: 0 40px 90px -24px rgba(0, 0, 0, 0.7);
   overflow: auto;
+  overscroll-behavior: contain;
 }
 .sheet::backdrop {
   background: rgba(3, 10, 7, 0.72);
@@ -2274,6 +2324,7 @@ html[data-theme="candle"] .field select {
 }
 .settings-btn:hover { border-color: var(--gold); }
 .settings-btn.danger { color: var(--red); }
+.settings-btn.block { width: 100%; }
 
 .profile-summary { display: grid; gap: 6px; margin-bottom: 10px; }
 .profile-row {
@@ -2396,8 +2447,34 @@ html[data-theme="candle"] .field select {
   .streak-card { text-align: center; }
 }
 
+@media (max-width: 640px) {
+  .sheet {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    margin: auto 0 0;
+    border-radius: 24px 24px 0 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    animation: sheetUp 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .sheet::backdrop {
+    animation: backdropIn 0.24s ease;
+  }
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); opacity: 0.6; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 560px) {
-  .app { padding: 14px 14px 110px; }
+  .app { padding: 14px 14px calc(110px + env(safe-area-inset-bottom, 0px)); }
   .reading { padding: 20px 18px 18px; }
   .reading-actions .btn { flex: 1 1 auto; }
   .field-row,
@@ -2406,6 +2483,10 @@ html[data-theme="candle"] .field select {
   .board-row { padding: 11px 12px; gap: 9px; }
   .board-rank { width: 20px; }
   .sheet-inner { padding: 22px 18px 24px; }
+  .field input,
+  .field textarea,
+  .field select,
+  .search input { font-size: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

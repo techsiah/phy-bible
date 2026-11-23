@@ -7,7 +7,16 @@
   <meta name="theme-color" content="#F7F5F0">
   <meta name="description" content="Jesus Youth · Pazhassi Raja College — 25 days of Advent reading, streaks, and private notes. Christmas 2026.">
   <title>Christmas 2026 · 25 Days of the Word</title>
-  <link rel="icon" type="image/png" href="icon.png">
+  <meta name="application-name" content="Christmas 2026">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Christmas 2026">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="msapplication-TileColor" content="#F9A61A">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="icon" type="image/png" sizes="1024x1024" href="icon-1024.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
   <script>
@@ -41,44 +50,146 @@
           <svg viewBox="0 0 320 145" fill="none" preserveAspectRatio="xMidYMid meet">
             <defs>
               <linearGradient id="covSky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#FFF8E7"/>
-                <stop offset="100%" stop-color="#FFE294"/>
+                <stop offset="0%" stop-color="#FFF9EC"/>
+                <stop offset="55%" stop-color="#FFEBB8"/>
+                <stop offset="100%" stop-color="#FED894"/>
               </linearGradient>
               <linearGradient id="covSun" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stop-color="#FFA826"/>
                 <stop offset="100%" stop-color="#FF7A00"/>
               </linearGradient>
+              <linearGradient id="covSantaHat" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#E84435"/>
+                <stop offset="100%" stop-color="#C2281E"/>
+              </linearGradient>
               <linearGradient id="covHill1" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#4E996B"/>
-                <stop offset="100%" stop-color="#2D724A"/>
+                <stop offset="0%" stop-color="#438D60"/>
+                <stop offset="100%" stop-color="#26643F"/>
               </linearGradient>
               <linearGradient id="covHill2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#69B588"/>
-                <stop offset="100%" stop-color="#3D895B"/>
+                <stop offset="0%" stop-color="#5CA879"/>
+                <stop offset="100%" stop-color="#357D50"/>
               </linearGradient>
+              <radialGradient id="covStarAura" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#FFF3C4" stop-opacity="0.85"/>
+                <stop offset="50%" stop-color="#FFE48A" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="#FFE48A" stop-opacity="0"/>
+              </radialGradient>
             </defs>
             <rect width="320" height="145" rx="18" fill="url(#covSky)"/>
-            <!-- Starlight radiance -->
-            <path d="M225 15 L229 38 L252 42 L229 46 L225 68 L221 46 L198 42 L221 38 Z" fill="#FFE8A3" opacity="0.65"/>
-            <!-- Cute smiling morning sun -->
-            <circle cx="225" cy="56" r="23" fill="url(#covSun)"/>
-            <circle cx="218" cy="53" r="2.2" fill="#3D2005"/>
-            <circle cx="232" cy="53" r="2.2" fill="#3D2005"/>
-            <path d="M220 60 Q225 65 230 60" stroke="#3D2005" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-            <ellipse cx="215" cy="57" rx="2.5" ry="1.4" fill="#FF6B4A" opacity="0.4"/>
-            <ellipse cx="235" cy="57" rx="2.5" ry="1.4" fill="#FF6B4A" opacity="0.4"/>
-            <!-- Gentle rolling hills -->
-            <path d="M0 145 L0 115 Q65 92 135 112 Q215 130 320 86 L320 145 Z" fill="url(#covHill1)"/>
-            <path d="M60 145 L60 120 Q170 82 260 106 Q295 114 320 108 L320 145 Z" fill="url(#covHill2)"/>
-            <!-- Pine trees -->
-            <polygon points="45,112 40,128 50,128" fill="#1C5234"/>
-            <polygon points="56,106 51,124 61,124" fill="#154229"/>
-            <polygon points="280,100 275,118 285,118" fill="#1C5234"/>
-            <polygon points="292,96 287,114 297,114" fill="#154229"/>
-            <!-- Flying morning doves / birds -->
-            <path d="M108 46 Q112 42 116 46 Q120 42 124 46" stroke="#8C662E" stroke-width="1.4" stroke-linecap="round" fill="none"/>
-            <path d="M132 36 Q135 33 138 36 Q141 33 144 36" stroke="#8C662E" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-            <path d="M92 60 Q95 57 98 60 Q101 57 104 60" stroke="#8C662E" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+            <!-- Radiant Star of Bethlehem -->
+            <circle cx="102" cy="36" r="26" fill="url(#covStarAura)"/>
+            <path d="M102 12 L105 32 L125 36 L105 40 L102 60 L99 40 L79 36 L99 32 Z" fill="#FFFBE6"/>
+            <path d="M92 26 L102 34 L112 26 L104 36 L112 46 L102 38 L92 46 L100 36 Z" fill="#FFDF73" opacity="0.8"/>
+            <circle cx="102" cy="36" r="3.2" fill="#FFFFFF"/>
+
+            <!-- Gentle Floating Snowflakes & Little Twinkling Stars -->
+            <g fill="#FFFFFF" opacity="0.85">
+              <circle cx="36" cy="28" r="1.5"/>
+              <circle cx="68" cy="20" r="1.3"/>
+              <circle cx="152" cy="22" r="1.6"/>
+              <circle cx="178" cy="38" r="1.2"/>
+              <circle cx="196" cy="24" r="1.5"/>
+              <circle cx="288" cy="24" r="1.4"/>
+              <circle cx="304" cy="46" r="1.2"/>
+              <circle cx="138" cy="54" r="1.3"/>
+              <circle cx="25" cy="56" r="1.2"/>
+            </g>
+            <path d="M152 18 v8 M148 22 h8" stroke="#FFFFFF" stroke-width="0.9" stroke-linecap="round" opacity="0.75"/>
+            <path d="M36 24 v8 M32 28 h8" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+
+            <!-- Gentle Morning Doves -->
+            <path d="M138 38 Q142 34 146 38 Q150 34 154 38" stroke="#8C662E" stroke-width="1.3" stroke-linecap="round" fill="none" opacity="0.7"/>
+            <path d="M164 48 Q167 44 170 48 Q173 44 176 48" stroke="#8C662E" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.55"/>
+
+            <!-- Cute Smiling Sun wearing a cozy Santa Hat -->
+            <g class="cov-festive-sun">
+              <!-- Golden Sun Glow & Body -->
+              <circle cx="236" cy="62" r="23" fill="url(#covSun)"/>
+              <!-- Cheerful Face -->
+              <circle cx="229" cy="61" r="2.2" fill="#3D2005"/>
+              <circle cx="243" cy="61" r="2.2" fill="#3D2005"/>
+              <path d="M231 68 Q236 73 241 68" stroke="#3D2005" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+              <ellipse cx="225" cy="65" rx="2.8" ry="1.5" fill="#FF6B4A" opacity="0.45"/>
+              <ellipse cx="247" cy="65" rx="2.8" ry="1.5" fill="#FF6B4A" opacity="0.45"/>
+
+              <!-- Santa Hat -->
+              <!-- Red curved cap -->
+              <path d="M219 49 C220 31 236 19 252 20 C264 21 275 30 273 43 C274 51 267 56 266 59 Z" fill="url(#covSantaHat)"/>
+              <!-- Fluffy white trim -->
+              <rect x="216" y="44" width="45" height="9.5" rx="4.75" fill="#FFFFFF"/>
+              <!-- Fluffy white pom-pom -->
+              <circle cx="269" cy="60" r="5.2" fill="#FFFFFF"/>
+            </g>
+
+            <!-- Rolling Green Hills -->
+            <path d="M0 145 L0 115 Q65 88 145 110 Q225 128 320 86 L320 145 Z" fill="url(#covHill1)"/>
+            <!-- Snow Cap on Background Hill -->
+            <path d="M0 115 Q40 98 85 96 Q125 94 150 111 Q190 120 225 128 Q275 106 320 86 L320 93 Q275 112 225 133 Q190 125 150 117 Q125 101 85 102 Q40 105 0 121 Z" fill="#E8F4EC" opacity="0.8"/>
+
+            <!-- Foreground Rolling Hill -->
+            <path d="M30 145 L30 120 Q155 84 250 108 Q290 116 320 110 L320 145 Z" fill="url(#covHill2)"/>
+            <!-- Snow Cap on Foreground Hill -->
+            <path d="M55 124 Q155 84 250 108 Q290 116 320 110 L320 116 Q290 121 250 114 Q155 91 65 129 Z" fill="#FFFFFF" opacity="0.88"/>
+
+            <!-- Snowy Pine Trees on Right -->
+            <polygon points="282,92 273,116 291,116" fill="#1C5234"/>
+            <path d="M282 92 L277 100 Q282 102 287 100 Z" fill="#FFFFFF"/>
+            <polygon points="296,87 288,112 304,112" fill="#154229"/>
+            <path d="M296 87 L291 95 Q296 97 301 95 Z" fill="#FFFFFF"/>
+            <circle cx="296" cy="85" r="1.5" fill="#FFC72C"/>
+
+            <!-- Main Decorated Christmas Tree -->
+            <g class="cov-xmas-tree">
+              <!-- Trunk -->
+              <rect x="45" y="126" width="6" height="8" rx="1.5" fill="#4A2E16"/>
+              <!-- Tier 3 (Bottom) -->
+              <polygon points="48,98 24,127 72,127" fill="#1B4D31"/>
+              <path d="M24 127 Q36 123 48 123 Q60 123 72 127 Q62 122 48 121 Q34 122 24 127 Z" fill="#FFFFFF"/>
+              <!-- Tier 2 (Middle) -->
+              <polygon points="48,84 29,108 67,108" fill="#245F3D"/>
+              <path d="M29 108 Q38 104 48 104 Q58 104 67 108 Q59 104 48 102 Q37 104 29 108 Z" fill="#FFFFFF"/>
+              <!-- Tier 1 (Top) -->
+              <polygon points="48,70 35,92 61,92" fill="#2E754C"/>
+              <path d="M48 70 L42 81 Q48 83 54 81 Z" fill="#FFFFFF"/>
+
+              <!-- Golden Tree Topper Star -->
+              <polygon points="48,63 49.8,67.6 54.8,67.6 50.8,70.5 52.3,75.2 48,72.4 43.7,75.2 45.2,70.5 41.2,67.6 46.2,67.6" fill="#FFC72C"/>
+
+              <!-- Christmas Tree Baubles -->
+              <circle cx="39" cy="116" r="2.5" fill="#E63946"/>
+              <circle cx="57" cy="118" r="2.5" fill="#FFB703"/>
+              <circle cx="48" cy="111" r="2.2" fill="#48CAE4"/>
+              <circle cx="41" cy="100" r="2.3" fill="#FFB703"/>
+              <circle cx="55" cy="101" r="2.3" fill="#E63946"/>
+              <circle cx="48" cy="87" r="2.1" fill="#FFFFFF"/>
+            </g>
+
+            <!-- Secondary Snowy Tree -->
+            <polygon points="80,94 69,122 91,122" fill="#1C5234"/>
+            <polygon points="80,83 72,104 88,104" fill="#286944"/>
+            <path d="M80 83 L76 91 Q80 93 84 91 Z" fill="#FFFFFF"/>
+            <path d="M69 122 Q79 119 91 122 Q84 119 80 118 Q75 119 69 122 Z" fill="#FFFFFF" opacity="0.9"/>
+            <circle cx="78" cy="111" r="1.8" fill="#FFD166"/>
+            <circle cx="83" cy="116" r="1.8" fill="#E63946"/>
+
+            <!-- Festive Christmas Gift Boxes under Tree -->
+            <!-- Red Present with Gold Ribbon -->
+            <rect x="58" y="125" width="11" height="11" rx="1.5" fill="#D93829"/>
+            <rect x="62.5" y="125" width="2" height="11" fill="#FFD166"/>
+            <rect x="58" y="129.5" width="11" height="2" fill="#FFD166"/>
+            <ellipse cx="61.5" cy="124" rx="2.2" ry="1.3" fill="#FFE27A"/>
+            <ellipse cx="65.5" cy="124" rx="2.2" ry="1.3" fill="#FFE27A"/>
+
+            <!-- Gold Present with Red Ribbon -->
+            <rect x="71" y="127" width="9" height="9" rx="1.2" fill="#FFB703"/>
+            <rect x="74.6" y="127" width="1.8" height="9" fill="#D93829"/>
+            <rect x="71" y="130.6" width="9" height="1.8" fill="#D93829"/>
+            <circle cx="75.5" cy="126" r="1.4" fill="#D93829"/>
+
+            <!-- Snow on Ground Base -->
+            <path d="M10 145 Q50 134 95 137 Q125 139 150 145 Z" fill="#FFFFFF" opacity="0.6"/>
           </svg>
         </div>
       </div>
@@ -112,6 +223,11 @@
         </div>
         <div class="header-top-actions">
           <span class="sync-badge" id="syncBadge" data-mode="offline" title="Sync status">Connecting…</span>
+          <button class="icon-btn" id="installBtn" type="button" aria-label="Install app" title="Install app" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3.5v11m0 0 4-4m-4 4-4-4M5 17.5v1.2A1.8 1.8 0 0 0 6.8 20.5h10.4a1.8 1.8 0 0 0 1.8-1.8v-1.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme" title="Daylight / Candlelight">
             <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -151,7 +267,7 @@
     </div>
 
     <!-- Main Content Views -->
-    <main class="main">
+    <main class="main" id="main">
       <!-- ── View: Today (Home) ─────────────────────────────────── -->
       <section class="view" id="view-today" aria-label="Today's reading">
         
@@ -178,45 +294,145 @@
             <p class="hero-subtitle">Take a quiet breath and let the Word light your path.</p>
           </div>
 
-          <!-- Cute smiling Advent Sun & rolling hills illustration -->
+          <!-- Festive Christmas Sun, Star of Bethlehem & snowy hills illustration -->
           <div class="hero-card-art" aria-hidden="true">
             <svg viewBox="0 0 320 130" fill="none" preserveAspectRatio="xMidYMid meet">
               <defs>
                 <linearGradient id="artSky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#FFF3DA"/>
-                  <stop offset="100%" stop-color="#FFE3A3"/>
+                  <stop offset="0%" stop-color="#FFF9ED"/>
+                  <stop offset="60%" stop-color="#FFEBB8"/>
+                  <stop offset="100%" stop-color="#FED996"/>
                 </linearGradient>
                 <linearGradient id="artSun" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#FFD65C"/>
-                  <stop offset="100%" stop-color="#FF9D2E"/>
+                  <stop offset="0%" stop-color="#FFA826"/>
+                  <stop offset="100%" stop-color="#FF7A00"/>
+                </linearGradient>
+                <linearGradient id="artSantaHat" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#E84435"/>
+                  <stop offset="100%" stop-color="#C2281E"/>
                 </linearGradient>
                 <linearGradient id="artHillA" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#4E996B"/>
-                  <stop offset="100%" stop-color="#2D724A"/>
+                  <stop offset="0%" stop-color="#438D60"/>
+                  <stop offset="100%" stop-color="#26643F"/>
                 </linearGradient>
                 <linearGradient id="artHillB" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#69B588"/>
-                  <stop offset="100%" stop-color="#3D895B"/>
+                  <stop offset="0%" stop-color="#5CA879"/>
+                  <stop offset="100%" stop-color="#357D50"/>
                 </linearGradient>
+                <radialGradient id="artStarAura" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#FFF3C4" stop-opacity="0.85"/>
+                  <stop offset="50%" stop-color="#FFE48A" stop-opacity="0.35"/>
+                  <stop offset="100%" stop-color="#FFE48A" stop-opacity="0"/>
+                </radialGradient>
               </defs>
               <rect width="320" height="130" fill="url(#artSky)" rx="18"/>
-              <!-- Smiling warm Advent sun -->
-              <circle cx="250" cy="50" r="26" fill="url(#artSun)"/>
-              <circle cx="242" cy="47" r="2.6" fill="#4B2700"/>
-              <circle cx="258" cy="47" r="2.6" fill="#4B2700"/>
-              <path d="M244 54 Q250 60 256 54" stroke="#4B2700" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-              <ellipse cx="237" cy="51" rx="3.2" ry="2" fill="#FF7854" opacity="0.45"/>
-              <ellipse cx="263" cy="51" rx="3.2" ry="2" fill="#FF7854" opacity="0.45"/>
-              <!-- Birds in flight -->
-              <path d="M110 32 Q114 27 118 32 Q122 27 126 32" stroke="#A88235" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.5"/>
-              <path d="M136 44 Q139 40 142 44 Q145 40 148 44" stroke="#A88235" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.4"/>
-              <!-- Rolling green hills -->
-              <path d="M0 130 Q90 85 200 110 Q265 124 320 95 L320 130 Z" fill="url(#artHillA)" opacity="0.9"/>
-              <path d="M0 130 Q105 98 195 125 L245 130 Z" fill="url(#artHillB)"/>
-              <!-- Little pine trees -->
-              <polygon points="40,110 49,90 58,110" fill="#1C4B30"/>
-              <polygon points="42,120 49,100 56,120" fill="#163E27"/>
-              <polygon points="62,118 70,102 78,118" fill="#205839"/>
+
+              <!-- Radiant Star of Bethlehem -->
+              <circle cx="102" cy="32" r="24" fill="url(#artStarAura)"/>
+              <path d="M102 10 L105 28 L123 32 L105 36 L102 54 L99 36 L81 32 L99 28 Z" fill="#FFFBE6"/>
+              <path d="M93 23 L102 30 L111 23 L104 32 L111 41 L102 34 L93 41 L100 32 Z" fill="#FFDF73" opacity="0.8"/>
+              <circle cx="102" cy="32" r="2.8" fill="#FFFFFF"/>
+
+              <!-- Gentle Falling Snowflakes & Star Twinkles -->
+              <g fill="#FFFFFF" opacity="0.85">
+                <circle cx="34" cy="24" r="1.4"/>
+                <circle cx="65" cy="18" r="1.2"/>
+                <circle cx="150" cy="20" r="1.5"/>
+                <circle cx="176" cy="34" r="1.2"/>
+                <circle cx="194" cy="22" r="1.4"/>
+                <circle cx="288" cy="20" r="1.3"/>
+                <circle cx="304" cy="40" r="1.1"/>
+                <circle cx="138" cy="48" r="1.2"/>
+                <circle cx="24" cy="50" r="1.2"/>
+              </g>
+              <path d="M150 16 v7 M146.5 19.5 h7" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" opacity="0.75"/>
+              <path d="M34 20 v7 M30.5 23.5 h7" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+
+              <!-- Gentle Morning Doves -->
+              <path d="M136 34 Q140 30 144 34 Q148 30 152 34" stroke="#8C662E" stroke-width="1.3" stroke-linecap="round" fill="none" opacity="0.65"/>
+              <path d="M162 44 Q165 40 168 44 Q171 40 174 44" stroke="#8C662E" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+              <!-- Cute Smiling Sun wearing cozy Santa Hat -->
+              <g class="art-festive-sun">
+                <circle cx="244" cy="54" r="22" fill="url(#artSun)"/>
+                <circle cx="237" cy="53" r="2.2" fill="#3D2005"/>
+                <circle cx="251" cy="53" r="2.2" fill="#3D2005"/>
+                <path d="M239 60 Q244 65 249 60" stroke="#3D2005" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+                <ellipse cx="233" cy="57" rx="2.8" ry="1.5" fill="#FF6B4A" opacity="0.45"/>
+                <ellipse cx="255" cy="57" rx="2.8" ry="1.5" fill="#FF6B4A" opacity="0.45"/>
+
+                <!-- Santa Hat -->
+                <path d="M227 41 C228 24 244 13 259 14 C270 15 281 24 279 36 C280 44 273 49 272 52 Z" fill="url(#artSantaHat)"/>
+                <rect x="224" y="37" width="44" height="9" rx="4.5" fill="#FFFFFF"/>
+                <circle cx="275" cy="53" r="5" fill="#FFFFFF"/>
+              </g>
+
+              <!-- Rolling Green Hills with Snow -->
+              <path d="M0 130 L0 102 Q65 76 145 98 Q225 114 320 76 L320 130 Z" fill="url(#artHillA)"/>
+              <!-- Snow cap on background hill -->
+              <path d="M0 102 Q40 86 85 84 Q125 82 150 99 Q190 107 225 114 Q275 94 320 76 L320 83 Q275 100 225 119 Q190 112 150 104 Q125 89 85 90 Q40 93 0 108 Z" fill="#E8F4EC" opacity="0.8"/>
+
+              <!-- Foreground hill -->
+              <path d="M25 130 Q145 74 240 96 Q285 104 320 98 L320 130 Z" fill="url(#artHillB)"/>
+              <!-- Snow cap on foreground hill -->
+              <path d="M50 110 Q145 74 240 96 Q285 104 320 98 L320 104 Q285 109 240 102 Q145 81 60 115 Z" fill="#FFFFFF" opacity="0.88"/>
+
+              <!-- Right-side snowy pines -->
+              <polygon points="280,82 272,104 288,104" fill="#1C5234"/>
+              <path d="M280 82 L275 89 Q280 91 285 89 Z" fill="#FFFFFF"/>
+              <polygon points="294,78 286,100 302,100" fill="#154229"/>
+              <path d="M294 78 L290 85 Q294 87 298 85 Z" fill="#FFFFFF"/>
+              <circle cx="294" cy="76" r="1.4" fill="#FFC72C"/>
+
+              <!-- Main Decorated Christmas Tree -->
+              <g class="art-xmas-tree">
+                <rect x="45" y="114" width="6" height="8" rx="1.5" fill="#4A2E16"/>
+                <!-- Tier 3 -->
+                <polygon points="48,88 25,115 71,115" fill="#1B4D31"/>
+                <path d="M25 115 Q36 111 48 111 Q60 111 71 115 Q62 110 48 109 Q34 110 25 115 Z" fill="#FFFFFF"/>
+                <!-- Tier 2 -->
+                <polygon points="48,74 30,97 66,97" fill="#245F3D"/>
+                <path d="M30 97 Q38 93 48 93 Q58 93 66 97 Q58 93 48 91 Q38 93 30 97 Z" fill="#FFFFFF"/>
+                <!-- Tier 1 -->
+                <polygon points="48,61 36,82 60,82" fill="#2E754C"/>
+                <path d="M48 61 L42 71 Q48 73 54 71 Z" fill="#FFFFFF"/>
+
+                <!-- Star topper -->
+                <polygon points="48,54 49.8,58.6 54.8,58.6 50.8,61.5 52.3,66.2 48,63.4 43.7,66.2 45.2,61.5 41.2,58.6 46.2,58.6" fill="#FFC72C"/>
+
+                <!-- Ornaments -->
+                <circle cx="39" cy="105" r="2.4" fill="#E63946"/>
+                <circle cx="57" cy="107" r="2.4" fill="#FFB703"/>
+                <circle cx="48" cy="100" r="2.1" fill="#48CAE4"/>
+                <circle cx="41" cy="89" r="2.2" fill="#FFB703"/>
+                <circle cx="55" cy="90" r="2.2" fill="#E63946"/>
+                <circle cx="48" cy="77" r="2" fill="#FFFFFF"/>
+              </g>
+
+              <!-- Secondary snowy tree -->
+              <polygon points="78,84 68,110 88,110" fill="#1C5234"/>
+              <polygon points="78,74 71,94 85,94" fill="#286944"/>
+              <path d="M78 74 L74 81 Q78 83 82 81 Z" fill="#FFFFFF"/>
+              <path d="M68 110 Q77 107 88 110 Q82 107 78 106 Q74 107 68 110 Z" fill="#FFFFFF" opacity="0.9"/>
+              <circle cx="76" cy="100" r="1.7" fill="#FFD166"/>
+              <circle cx="81" cy="105" r="1.7" fill="#E63946"/>
+
+              <!-- Festive Gift Boxes -->
+              <!-- Red Present -->
+              <rect x="58" y="113" width="10" height="10" rx="1.5" fill="#D93829"/>
+              <rect x="62" y="113" width="1.8" height="10" fill="#FFD166"/>
+              <rect x="58" y="117" width="10" height="1.8" fill="#FFD166"/>
+              <ellipse cx="61.2" cy="112" rx="2" ry="1.2" fill="#FFE27A"/>
+              <ellipse cx="64.8" cy="112" rx="2" ry="1.2" fill="#FFE27A"/>
+
+              <!-- Gold Present -->
+              <rect x="70" y="115" width="8" height="8" rx="1.2" fill="#FFB703"/>
+              <rect x="73.2" y="115" width="1.6" height="8" fill="#D93829"/>
+              <rect x="70" y="118.2" width="8" height="1.6" fill="#D93829"/>
+              <circle cx="74" cy="114" r="1.3" fill="#D93829"/>
+
+              <!-- Snow on ground base -->
+              <path d="M10 130 Q48 120 90 123 Q120 125 145 130 Z" fill="#FFFFFF" opacity="0.6"/>
             </svg>
           </div>
 
@@ -383,7 +599,8 @@
     </main>
 
     <!-- ── Modern Fixed Bottom Navigation ───────────────────────── -->
-    <nav class="bottom-nav" aria-label="Main Navigation">
+    <nav class="bottom-nav" id="bottomNav" aria-label="Main Navigation">
+      <span class="nav-indicator" id="navIndicator" aria-hidden="true"></span>
       <button type="button" class="nav-btn" data-view="today" aria-current="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
         <span>Home</span>
@@ -610,6 +827,12 @@
         </label>
       </section>
 
+      <section class="settings-section" id="installSection">
+        <h3>Install the app</h3>
+        <p class="settings-note" id="installNote">Add this to your home screen for a full-screen, offline-ready app.</p>
+        <button class="settings-btn block" id="installSettingsBtn" type="button" hidden>Install app</button>
+      </section>
+
       <section class="settings-section">
         <h3>Your notes</h3>
         <p class="settings-note" id="syncNote2">Notes are private to your roll. Only you can read them.</p>
@@ -664,13 +887,7 @@
   <datalist id="chapterList"></datalist>
 
   <script src="firebase-config.js"></script>
+  <script type="module" src="js/pwa.js"></script>
   <script type="module" src="js/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('sw.js').catch(function () { /* offline is optional */ });
-      });
-    }
-  </script>
 </body>
 </html>
