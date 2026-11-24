@@ -109,6 +109,7 @@ function createFirestoreBackend(db, uid) {
     return {
       roll: data.roll,
       name: data.name || '',
+      phone: data.phone || '',
       gender: data.gender || '',
       dept: data.dept || '',
       year: data.year || '',

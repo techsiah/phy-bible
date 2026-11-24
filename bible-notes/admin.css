@@ -575,6 +575,20 @@ body.admin-body {
   text-transform: uppercase;
 }
 
+.phone-link {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.phone-link:hover {
+  color: var(--gold-deep);
+  text-decoration: underline;
+}
+
 .action-btn-row {
   display: flex;
   align-items: center;

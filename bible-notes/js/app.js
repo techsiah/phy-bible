@@ -110,6 +110,7 @@ const dom = {
   guestInlineRegisterBtn: $('guestInlineRegisterBtn'),
   onboardForm: $('onboardForm'),
   obName: $('obName'),
+  obPhone: $('obPhone'),
   obRoll: $('obRoll'),
   obGender: $('obGender'),
   obDept: $('obDept'),
@@ -206,6 +207,11 @@ function yearLabel(year) {
   if (year === 'PG') return 'PG';
   const suffix = year === '1' ? 'st' : year === '2' ? 'nd' : year === '3' ? 'rd' : 'th';
   return `${year}${suffix} Year`;
+}
+
+function normalizePhone(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  return digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
 }
 
 function genderLabel(gender) {
@@ -672,6 +678,7 @@ async function syncReader() {
   const patch = {
     roll: state.profile.roll,
     name: state.profile.name || '',
+    phone: state.profile.phone || '',
     gender: state.profile.gender || '',
     dept: state.profile.dept,
     year: state.profile.year,
@@ -1413,6 +1420,7 @@ function renderProfile() {
   }
   const rows = [
     ['Name', state.profile.name || '—'],
+    ['Phone', state.profile.phone || '—'],
     ['Roll number', state.profile.roll],
     ['Gender', genderLabel(state.profile.gender) || '—'],
     ['Department', state.profile.dept],
@@ -1567,6 +1575,7 @@ async function submitOnboarding(event) {
   }
 
   const name = dom.obName.value.trim().replace(/\s+/g, ' ').slice(0, 60);
+  const phone = normalizePhone(dom.obPhone.value);
   const roll = String(dom.obRoll.value).trim();
   const gender = dom.obGender.value;
   const dept = dom.obDept.value.trim();
@@ -1582,6 +1591,11 @@ async function submitOnboarding(event) {
   if (!isValidRoll(roll)) {
     dom.obError.textContent = 'Please select a roll number.';
     dom.obRoll.focus();
+    return;
+  }
+  if (!/^[6-9]\d{9}$/.test(phone)) {
+    dom.obError.textContent = 'Enter a 10-digit mobile number starting with 6–9.';
+    dom.obPhone.focus();
     return;
   }
   if (!gender) {
@@ -1627,6 +1641,7 @@ async function submitOnboarding(event) {
     const profile = {
       roll,
       name,
+      phone,
       gender,
       dept,
       year,

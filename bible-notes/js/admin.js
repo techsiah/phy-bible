@@ -302,9 +302,10 @@ function filterAndSortReaders() {
     if (q) {
       const matchName = (r.name || '').toLowerCase().includes(q);
       const matchRoll = (r.roll || '').toLowerCase().includes(q);
+      const matchPhone = String(r.phone || '').includes(q);
       const matchDept = (r.dept || '').toLowerCase().includes(q);
       const matchGroup = (r.groupCode || '').toLowerCase().includes(q);
-      if (!matchName && !matchRoll && !matchDept && !matchGroup) return false;
+      if (!matchName && !matchRoll && !matchPhone && !matchDept && !matchGroup) return false;
     }
 
     // Department filter
@@ -375,6 +376,10 @@ function renderParticipants() {
 
     const deptShort = (r.dept || '—').replace(/^Department of\s+/i, '');
     const yrLabel = r.year === 'PG' ? 'PG' : (r.year ? `${r.year}Y` : '—');
+    const phoneDigits = String(r.phone || '').replace(/\D/g, '');
+    const phoneLine = phoneDigits.length === 10
+      ? `<a class="phone-link" href="tel:+91${phoneDigits}">${phoneDigits}</a>`
+      : '';
     const groupBadge = r.groupCode
       ? `<span class="group-badge" title="Group: ${r.groupCode}">${ICONS.users}${r.groupCode}</span>`
       : `<span style="color: var(--ink-faint); font-size: 0.75rem;">Solo</span>`;
@@ -385,6 +390,7 @@ function renderParticipants() {
         <td class="roll-cell">
           <strong>${r.name || r.roll || '—'}</strong>
           <span style="font-size: 0.74rem; color: var(--ink-faint);">${r.roll || '—'} · ${r.program || 'UG'}</span>
+          ${phoneLine}
           ${r.earlyAccess ? '<span class="early-pill" title="Early access to the calendar">Early</span>' : ''}
         </td>
         <td>
@@ -707,6 +713,8 @@ function openReaderModal(roll) {
   adminState.selectedReader = reader;
   $('modalName').textContent = reader.name || '—';
   $('modalRoll').textContent = reader.roll;
+  const modalPhoneDigits = String(reader.phone || '').replace(/\D/g, '');
+  $('modalPhone').textContent = modalPhoneDigits.length === 10 ? modalPhoneDigits : '—';
   $('modalGender').textContent = genderLabel(reader.gender) || '—';
   $('modalDept').textContent = reader.dept || '—';
   $('modalYear').textContent = reader.year ? `${reader.year} Year (${reader.program || 'UG'})` : '—';
@@ -788,10 +796,11 @@ function exportParticipantsCSV() {
     return;
   }
 
-  const headers = ['Roll Number', 'Name', 'Gender', 'Department', 'Year', 'Program', 'Group Code', 'Current Streak', 'Longest Streak', 'Total Days', 'Points', 'Last Updated'];
+  const headers = ['Roll Number', 'Name', 'Phone', 'Gender', 'Department', 'Year', 'Program', 'Group Code', 'Current Streak', 'Longest Streak', 'Total Days', 'Points', 'Last Updated'];
   const rows = readers.map((r) => [
     r.roll,
     r.name || '',
+    String(r.phone || '').replace(/\D/g, ''),
     genderLabel(r.gender) || '',
     r.dept || '',
     r.year || '',

@@ -63,6 +63,8 @@ service cloud.firestore {
         && request.resource.data.roll == roll
         && request.resource.data.roll.size() >= 1
         && request.resource.data.roll.size() <= 24
+        && (!request.resource.data.keys().hasAny(['phone'])
+          || (request.resource.data.phone is string && request.resource.data.phone.size() <= 16))
         && request.resource.data.createdAt is number
         && request.resource.data.updatedAt is number;
 
@@ -117,6 +119,8 @@ service cloud.firestore {
         && request.resource.data.roll == roll
         && (!request.resource.data.keys().hasAny(['name'])
           || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
+        && (!request.resource.data.keys().hasAny(['phone'])
+          || (request.resource.data.phone is string && request.resource.data.phone.size() <= 16))
         && (!request.resource.data.keys().hasAny(['gender'])
           || (request.resource.data.gender is string
             && (request.resource.data.gender == ''
@@ -154,6 +158,8 @@ service cloud.firestore {
             && request.resource.data.roll == roll
             && (!request.resource.data.keys().hasAny(['name'])
               || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
+            && (!request.resource.data.keys().hasAny(['phone'])
+              || (request.resource.data.phone is string && request.resource.data.phone.size() <= 16))
             && (!request.resource.data.keys().hasAny(['gender'])
               || (request.resource.data.gender is string
                 && (request.resource.data.gender == ''
