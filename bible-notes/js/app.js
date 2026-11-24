@@ -93,6 +93,15 @@ const dom = {
   accountBtn: $('accountBtn'),
   accountLabel: $('accountLabel'),
   coverRegBtn: $('coverRegBtn'),
+  coverThemeBtn: $('coverThemeBtn'),
+  coverAvatar: $('coverAvatar'),
+  coverIdentityName: $('coverIdentityName'),
+  coverIdentitySub: $('coverIdentitySub'),
+  coverStats: $('coverStats'),
+  coverStreak: $('coverStreak'),
+  coverPoints: $('coverPoints'),
+  coverDays: $('coverDays'),
+  coverCountdown: $('coverCountdown'),
   closeOnboarding: $('closeOnboarding'),
   cancelOnboarding: $('cancelOnboarding'),
   guestBanner: $('guestBanner'),
@@ -401,6 +410,9 @@ function applyTheme(theme) {
   store.setTheme(next);
   if (dom.themeBtn) {
     dom.themeBtn.setAttribute('aria-label', next === 'day' ? 'Switch to candlelight' : 'Switch to daylight');
+  }
+  if (dom.coverThemeBtn) {
+    dom.coverThemeBtn.setAttribute('aria-label', next === 'day' ? 'Switch to candlelight' : 'Switch to daylight');
   }
   document.querySelectorAll('[data-theme-choice]').forEach((btn) => {
     btn.setAttribute('aria-pressed', String(btn.dataset.themeChoice === next));
@@ -786,14 +798,55 @@ function renderCover() {
   if (dom.coverTitle) dom.coverTitle.textContent = EVENT.title;
   if (dom.coverSub) dom.coverSub.textContent = EVENT.tagline;
   if (dom.coverEdition) dom.coverEdition.textContent = `${EDITION.name} · ${EDITION.license}`;
-  if (dom.openBtn) {
-    const span = dom.openBtn.querySelector('span');
-    const label = state.profile ? 'Continue reading' : 'Explore the readings';
-    if (span) span.textContent = label;
-    else dom.openBtn.textContent = label;
+
+  const profile = state.profile;
+  const name = String(profile?.name || '').trim();
+  if (dom.coverAvatar) {
+    dom.coverAvatar.textContent = profile ? (name.charAt(0).toUpperCase() || profile.roll) : '+';
+  }
+  if (dom.coverIdentityName) {
+    dom.coverIdentityName.textContent = profile ? (name || `Roll ${profile.roll}`) : 'Register / Join';
+  }
+  if (dom.coverIdentitySub) {
+    const year = profile?.year ? yearLabel(profile.year) : '';
+    dom.coverIdentitySub.textContent = profile
+      ? [`Roll ${profile.roll}`, year].filter(Boolean).join(' · ')
+      : 'Create your reading pass in 20 seconds';
   }
   if (dom.coverRegBtn) {
-    dom.coverRegBtn.textContent = state.profile ? `Signed in (${state.profile.roll})` : 'Register / Join';
+    dom.coverRegBtn.setAttribute(
+      'aria-label',
+      profile ? `Signed in as ${name || profile.roll}. Tap to edit your registration.` : 'Register or join a group'
+    );
+  }
+
+  if (dom.coverStats) dom.coverStats.hidden = !profile;
+  if (dom.coverStreak) dom.coverStreak.textContent = String(state.stats.currentStreak || 0);
+  if (dom.coverPoints) dom.coverPoints.textContent = String(state.stats.points || 0);
+  if (dom.coverDays) dom.coverDays.textContent = String(state.stats.totalDays || 0);
+
+  if (dom.coverCountdown) {
+    let label;
+    if (state.phase === 'before') {
+      if (earlyOpen()) {
+        label = 'Early access open';
+      } else {
+        const days = daysUntil(EVENT.start, state.today);
+        label = days === 1 ? 'Opens tomorrow' : `Opens in ${days} days`;
+      }
+    } else if (state.phase === 'after') {
+      label = 'The 25 days are complete';
+    } else {
+      label = `Day ${currentTodayIndex()} of 25`;
+    }
+    dom.coverCountdown.textContent = label;
+  }
+
+  if (dom.openBtn) {
+    const span = dom.openBtn.querySelector('span');
+    const label = profile ? 'Continue reading' : 'Explore the readings';
+    if (span) span.textContent = label;
+    else dom.openBtn.textContent = label;
   }
 }
 
@@ -2093,6 +2146,11 @@ function bindEvents() {
   });
 
   if (dom.themeBtn) dom.themeBtn.addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme;
+    applyTheme(current === 'candle' ? 'day' : 'candle');
+  });
+
+  if (dom.coverThemeBtn) dom.coverThemeBtn.addEventListener('click', () => {
     const current = document.documentElement.dataset.theme;
     applyTheme(current === 'candle' ? 'day' : 'candle');
   });
