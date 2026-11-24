@@ -106,10 +106,6 @@
         <span>Groups</span>
         <span class="tab-count" id="tabCountGroups">0</span>
       </button>
-      <button class="admin-tab" data-tab="recovery" data-pane="pane-recovery" type="button">
-        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-        <span>Device Recovery</span>
-      </button>
       <button class="admin-tab" data-tab="export" data-pane="pane-export" type="button">
         <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span>Export & Reports</span>
@@ -266,7 +262,7 @@
           <input
             type="search"
             id="searchParticipants"
-            placeholder="Search by Name, Roll, Phone, Dept, or Group..."
+            placeholder="Search by Name, Roll, Dept, or Group..."
             autocomplete="off"
           >
         </div>
@@ -355,90 +351,7 @@
       </div>
     </section>
 
-    <!-- ── Pane 4: Device Recovery & UID Transfer ──────────────── -->
-    <section class="tab-pane" id="pane-recovery" hidden>
-      <div class="recovery-portal-card">
-        <h2 style="margin: 0 0 8px; font-size: 1.25rem; display: flex; align-items: center;">
-          <svg class="heading-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-          <span>Student Device Re-link & Account Transfer</span>
-        </h2>
-        <p style="margin: 0 0 16px; font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5;">
-          When a student changes phones, reinstalls their browser, or clears site data, Firestore flags their roll as already taken (<code>ROLL_TAKEN</code>).
-          Their device displays a <strong>Device ID</strong>. Enter it here to transfer and re-link their reading streak and notes.
-        </p>
-
-        <div class="callout info">
-          <strong>How it works:</strong> The student's streak and private notes are stored under their roll number. Updating their entry's <code>uid</code> immediately restores full access on their new phone.
-        </div>
-
-        <div class="recovery-form-grid">
-          <div class="input-group">
-            <label for="recoveryRollSelect">Select Registered Student Roll</label>
-            <select id="recoveryRollSelect">
-              <option value="">-- Choose student roll number --</option>
-            </select>
-          </div>
-
-          <div class="input-group">
-            <label for="recoveryManualRoll">Or Type Roll Number Directly</label>
-            <input type="text" id="recoveryManualRoll" placeholder="e.g. CS24-012" uppercase>
-          </div>
-        </div>
-
-        <!-- Current Entry Preview Box -->
-        <div id="recoveryPreviewBox" class="callout" style="background: var(--panel-2); border-left-color: var(--ink-soft);" hidden>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; font-size: 0.85rem;">
-            <div><span>Roll:</span> <strong id="prevRoll">—</strong></div>
-            <div><span>Department:</span> <strong id="prevDept">—</strong></div>
-            <div><span>Current Streak:</span> <strong id="prevStreak">—</strong></div>
-            <div><span>Points:</span> <strong id="prevPoints">—</strong></div>
-            <div><span>Group:</span> <strong id="prevGroup">—</strong></div>
-            <div><span>Current UID:</span> <code id="prevCurrentUid" style="font-size: 0.76rem;">—</code></div>
-          </div>
-        </div>
-
-        <div class="input-group" style="margin-bottom: 20px;">
-          <label for="recoveryNewDeviceUid">
-            New Device ID (shown on student's screen)
-          </label>
-          <input
-            type="text"
-            id="recoveryNewDeviceUid"
-            placeholder="Paste student's Device ID (e.g. aB3x... or local-...)"
-            style="font-family: var(--font-mono); font-size: 0.95rem;"
-          >
-        </div>
-
-        <button type="button" class="btn btn-primary" id="executeTransferBtn">
-          Transfer Account to New Device
-        </button>
-
-        <!-- Success Alert -->
-        <div id="transferSuccessAlert" class="callout success" style="margin-top: 18px;" hidden>
-          <div id="transferSuccessMsg"></div>
-        </div>
-
-        <!-- Firebase Console Helper Alert -->
-        <div id="transferConsoleAlert" class="callout warning" style="margin-top: 18px;" hidden>
-          <strong>Notice: Firestore rules require organizer edit in the Firebase Console:</strong>
-          <p style="margin: 6px 0 10px; font-size: 0.84rem;">
-            Because security rules restrict anonymous users from modifying another reader's UID, apply this change in the Firebase Console:
-          </p>
-          <ol style="margin: 0 0 12px; padding-left: 20px; font-size: 0.84rem;">
-            <li>Open <a href="https://console.firebase.google.com" target="_blank" rel="noopener" style="color: var(--gold-deep); font-weight: 600;">Firebase Console</a> → <strong>Firestore Database</strong></li>
-            <li>Navigate to: <code>readers / <span id="consoleTargetRoll">ROLL</span></code></li>
-            <li>Edit field <code>uid</code> to: <code><span id="consoleTargetUid">NEW_UID</span></code></li>
-            <li>Student taps <strong>"Try again"</strong> on their phone. Done!</li>
-          </ol>
-          <button type="button" class="action-btn" id="copyConsoleHelpBtn">
-            <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            <span>Copy Details to Clipboard</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── Pane 5: Export & Reports ───────────────────────────── -->
+    <!-- ── Pane 4: Export & Reports ───────────────────────────── -->
     <section class="tab-pane" id="pane-export" hidden>
       <div class="stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
         <div class="admin-card">
@@ -540,10 +453,6 @@
           <strong id="modalRoll" style="font-size: 1.2rem; font-family: var(--font-mono);">—</strong>
         </div>
         <div>
-          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Phone</span>
-          <span id="modalPhone" style="font-weight: 600;">—</span>
-        </div>
-        <div>
           <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Gender</span>
           <span id="modalGender" style="font-weight: 600;">—</span>
         </div>
@@ -574,19 +483,9 @@
           <span id="modalTotalDays">—</span>
         </div>
         <div>
-          <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Device UID</span>
-          <code id="modalUid" style="font-size: 0.78rem; word-break: break-all;">—</code>
-        </div>
-        <div>
           <span style="color: var(--ink-faint); display: block; font-size: 0.78rem;">Last Active / Synced</span>
           <span id="modalLastUpdated" style="font-size: 0.8rem; color: var(--ink-soft);">—</span>
         </div>
-      </div>
-
-      <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-        <button class="btn btn-primary small" id="modalRelinkBtn" type="button">
-          Re-link Device ID →
-        </button>
       </div>
     </div>
   </div>

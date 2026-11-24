@@ -97,28 +97,33 @@ unavailable until a real Firebase project is configured.
 | --- | --- | --- |
 | Roll, name, gender, department, year, program, group, streak, points | `board/{roll}` | Everyone signed in |
 | Group name, code, member rolls | `groups/{code}` | Everyone signed in |
-| Device UID, reading history, notes | `readers/{roll}` and its subcollections | Owner only |
+| Roll, phone, reading history, notes | `readers/{roll}` and its subcollections | Owner only |
 
 Notes and reading history are **never** included in the leaderboard. The public
-board is a separate projection, so the device UID and private entries stay out of
-it.
+board is a separate projection, so the phone number and private entries stay out
+of it.
 
-The app uses Firebase **Anonymous Auth**. The anonymous user is stored in the
-browser, so a returning student keeps the same identity. Clearing site data,
-switching phones, or reinstalling the browser creates a new identity.
+The app signs each browser in anonymously only so it can reach Firestore. That
+session is not the student's identity and is never shown. A student's entry is
+opened by their **roll number** plus the **phone number, department, and year**
+they registered with. Entering the same details on another device transfers the
+private entry to that device, so streaks and notes follow the student.
 
 ---
 
-## Recovering or transferring an entry
+## Moving to a new device
 
-Every entry is keyed by the normalized roll number. The first device to register
-a roll owns it.
+Every entry is keyed by the roll number and protected by the registration
+details. On a new phone (or after clearing site data), open the app, tap
+**Already registered? Restore my entry**, choose the roll number, and enter the
+same phone number, department, and year. The streak, notes, and profile come
+back.
 
-If a student changes phones (or clears browser data), they will see:
-
-> This roll is already linked. Show the device ID below to an organizer.
-
-The organizer can open **`admin.html`** (or Firestore → `readers/{ROLL}`) and update the `uid` with the new device ID shown on the student's screen. The student taps **Try again** and their streak and notes return. The same edit transfers an entry between devices.
+The server checks all four values (roll, phone, department, year) before it
+transfers the entry. If any of them is different, the transfer is refused, so a
+student cannot accidentally create a second entry or take over someone else's.
+An organizer can correct a stored value in Firestore at `readers/{ROLL}` after
+verifying the student in person. No device ID is needed anywhere.
 
 ---
 
@@ -130,7 +135,6 @@ Features:
 - **College Analytics & Overview**: Live total readers, active streaks, points, top records, department breakdown bars (all 8 departments), and milestone unlock trackers.
 - **Participants Directory**: Search and filter by roll number, department, year level, streak status (active vs broken), and group membership with multi-column sorting.
 - **Teams & Groups Moderation**: View all teams, member rolls, average streaks, points, and automatic profanity check status.
-- **Student Device Recovery Tool**: Dedicated interface to look up a student's roll and link their new Device ID in one click.
 - **Export & Notice Board Reports**: One-click export for Participants CSV, Teams CSV, Full JSON snapshot, and high-contrast printable notice board sheets.
 
 `readers/{ROLL}` also holds the profile and aggregate stats; `board/{ROLL}` is the
@@ -213,7 +217,7 @@ icon-maskable-512.png       Maskable icon with safe-zone padding
 apple-touch-icon.png        iOS home-screen icon (opaque, 180px)
 sw.js                       Offline shell cache
 js/pwa.js                   Install prompt, standalone mode, shortcuts
-js/admin.js                 Admin portal controller, analytics, and device recovery
+js/admin.js                 Admin portal controller, analytics, and reports
 js/config.js                Event, points, departments, group rules
 js/plan.js                  Generated CPDV passages (25 days + daily verses)
 js/refs.js                  Bible book list, reference parsing, roll normalization

@@ -5,14 +5,17 @@ rules_version = '2';
 
    Model
    -----
-   readers/{roll}            owner-only. Organizer edits `uid` here to recover
-                             or transfer a student's entry.
+   readers/{roll}            owner-only. A student signs in with their roll
+                             number plus the phone, department, and year used
+                             at registration; a full match transfers the entry
+                             to the new browser.
    readers/{roll}/days/{d}   owner-only reading history (one doc per day).
    readers/{roll}/notes/{n}  owner-only notes.
    board/{roll}              public projection used by the leaderboard.
-   groups/{code}             public read, max four members, members only edit.
+   groups/{code}             public read, max four member rolls.
 
-   The public board deliberately has no UID, notes, or reading history.
+   The public board deliberately has no phone number, UID, notes, or reading
+   history, so the sign-in pair and private entries stay private.
 */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -35,20 +38,6 @@ service cloud.firestore {
         && day <= '2026-12-25';
     }
 
-    /* Every member UID must point at a reader whose roll is the matching entry.
-       The group has at most four members, so this costs at most four reads. */
-    function alignedMembers(data) {
-      return data.members is list
-        && data.memberRolls is list
-        && data.members.size() == data.memberRolls.size()
-        && data.members.size() >= 1
-        && data.members.size() <= 4
-        && (data.members.size() < 1 || get(readerDoc(data.memberRolls[0])).data.uid == data.members[0])
-        && (data.members.size() < 2 || get(readerDoc(data.memberRolls[1])).data.uid == data.members[1])
-        && (data.members.size() < 3 || get(readerDoc(data.memberRolls[2])).data.uid == data.members[2])
-        && (data.members.size() < 4 || get(readerDoc(data.memberRolls[3])).data.uid == data.members[3]);
-    }
-
     /* ── Private reader entry ───────────────────────────────── */
 
     match /readers/{roll} {
@@ -63,15 +52,39 @@ service cloud.firestore {
         && request.resource.data.roll == roll
         && request.resource.data.roll.size() >= 1
         && request.resource.data.roll.size() <= 24
-        && (!request.resource.data.keys().hasAny(['phone'])
-          || (request.resource.data.phone is string && request.resource.data.phone.size() <= 16))
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 10
+        && request.resource.data.phone.size() <= 16
         && request.resource.data.createdAt is number
         && request.resource.data.updatedAt is number;
 
+      /* Two ways to write:
+         1. The browser already owns the entry.
+         2. The browser submitted the same roll number, phone number,
+            department, and year as the stored entry. That is the sign-in on
+            a new device: the write transfers ownership (uid) to this browser.
+         The phone number is a credential: it may be added to a legacy entry,
+         but it can never be changed. */
       allow update: if signedIn()
-        && resource.data.uid == request.auth.uid
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.roll == roll;
+        && request.resource.data.roll == roll
+        && request.resource.data.uid == request.auth.uid
+        && (
+          !resource.data.keys().hasAny(['phone'])
+          || (request.resource.data.phone is string
+            && request.resource.data.phone == resource.data.phone)
+        )
+        && (
+          resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAll(['phone', 'dept', 'year'])
+            && resource.data.phone is string
+            && resource.data.phone != ''
+            && request.resource.data.phone is string
+            && request.resource.data.phone == resource.data.phone
+            && request.resource.data.dept == resource.data.dept
+            && request.resource.data.year == resource.data.year
+          )
+        );
 
       allow delete: if false;
 
@@ -119,8 +132,6 @@ service cloud.firestore {
         && request.resource.data.roll == roll
         && (!request.resource.data.keys().hasAny(['name'])
           || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
-        && (!request.resource.data.keys().hasAny(['phone'])
-          || (request.resource.data.phone is string && request.resource.data.phone.size() <= 16))
         && (!request.resource.data.keys().hasAny(['gender'])
           || (request.resource.data.gender is string
             && (request.resource.data.gender == ''
@@ -158,8 +169,6 @@ service cloud.firestore {
             && request.resource.data.roll == roll
             && (!request.resource.data.keys().hasAny(['name'])
               || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
-            && (!request.resource.data.keys().hasAny(['phone'])
-              || (request.resource.data.phone is string && request.resource.data.phone.size() <= 16))
             && (!request.resource.data.keys().hasAny(['gender'])
               || (request.resource.data.gender is string
                 && (request.resource.data.gender == ''
@@ -206,36 +215,34 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.createdAt is number
         && request.resource.data.updatedAt is number
-        && alignedMembers(request.resource.data)
-        && request.resource.data.members.size() == 1
-        && request.resource.data.members[0] == request.auth.uid;
+        && request.resource.data.memberRolls is list
+        && request.resource.data.memberRolls.size() == 1
+        && request.resource.data.memberRolls[0] is string
+        && request.resource.data.memberRolls[0].size() >= 1
+        && request.resource.data.memberRolls[0].size() <= 24;
 
+      /* Membership is stored as roll numbers, so it follows a student from
+         device to device. Only one member may be added or removed at a time. */
       allow update: if signedIn()
         && request.resource.data.code == resource.data.code
         && request.resource.data.name == resource.data.name
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.updatedAt is number
-        && alignedMembers(request.resource.data)
+        && request.resource.data.memberRolls is list
+        && resource.data.memberRolls is list
+        && request.resource.data.memberRolls.size() >= 1
+        && request.resource.data.memberRolls.size() <= 4
         && (
-          // A member removing themselves. The remaining rolls must still line
-          // up with the remaining UIDs, which forces the caller's own roll out.
-          (request.resource.data.members.size() == resource.data.members.size() - 1
-            && resource.data.members.hasAll(request.resource.data.members)
-            && resource.data.memberRolls.hasAll(request.resource.data.memberRolls)
-            && !(request.auth.uid in request.resource.data.members))
-          // A reader joining: existing members kept, exactly one added, and it
-          // is the caller. alignedMembers checks the new roll belongs to them.
-          || (request.resource.data.members.size() == resource.data.members.size() + 1
-            && request.resource.data.members.hasAll(resource.data.members)
-            && request.resource.data.memberRolls.hasAll(resource.data.memberRolls)
-            && request.resource.data.members.hasAny([request.auth.uid])
-            && !(request.auth.uid in resource.data.members))
+          (request.resource.data.memberRolls.size() == resource.data.memberRolls.size() + 1
+            && request.resource.data.memberRolls.hasAll(resource.data.memberRolls))
+          || (request.resource.data.memberRolls.size() + 1 == resource.data.memberRolls.size()
+            && resource.data.memberRolls.hasAll(request.resource.data.memberRolls))
         );
 
       allow delete: if signedIn()
-        && resource.data.members.size() == 1
-        && resource.data.members[0] == request.auth.uid;
+        && resource.data.memberRolls is list
+        && resource.data.memberRolls.size() <= 1;
     }
   }
 }

@@ -1,14 +1,18 @@
 /* Data layer. Firestore only — this build is production-only.
 
    Firestore layout:
-     readers/{roll}            private profile + stats (owner only)  ← organizer
-                               edits `uid` here to recover/transfer
+     readers/{roll}            private profile + stats (owner only)
      readers/{roll}/days/{d}   reading history (owner only)
      readers/{roll}/notes/{n}  private notes (owner only)
      board/{roll}              public projection for the leaderboard
-     groups/{code}             { name, code, members[<=4], ... } (public read)
+     groups/{code}             { name, code, memberRolls[<=4], ... } (public read)
 
-   Keeping the public projection in `board` means the device UID and private
+   A student signs in with their roll number and the phone number they
+   registered with. There is no device code: registering that pair on a new
+   device transfers the private entry to it automatically, so the same
+   student gets the same streak and notes on any device.
+
+   The public projection in `board` means the phone number and private
    history never appear on the leaderboard.
 */
 import { EVENT } from './config.js';
@@ -72,6 +76,8 @@ export async function initBackend() {
     try {
       await auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);
     } catch (err) { /* ignore */ }
+    // Anonymous auth is only the gate that lets a signed-in browser reach
+    // Firestore. It is never shown to students and is not their identity.
     const credential = await auth.signInAnonymously();
     const db = window.firebase.firestore();
     try {
@@ -100,6 +106,22 @@ export async function initBackend() {
 
 /* ── Firestore backend ──────────────────────────────────────── */
 
+function errorCode(err) {
+  return String((err && (err.code || err.message)) || '');
+}
+
+function isPermissionDenied(err) {
+  return /permission|insufficient/i.test(errorCode(err));
+}
+
+function isNotFound(err) {
+  return /not-found|notfound|no document/i.test(errorCode(err));
+}
+
+function isAlreadyExists(err) {
+  return /already-exists|alreadyexists/i.test(errorCode(err));
+}
+
 function createFirestoreBackend(db, uid) {
   const readerRef = (roll) => db.collection('readers').doc(roll);
   const boardRef = (roll) => db.collection('board').doc(roll);
@@ -109,7 +131,6 @@ function createFirestoreBackend(db, uid) {
     return {
       roll: data.roll,
       name: data.name || '',
-      phone: data.phone || '',
       gender: data.gender || '',
       dept: data.dept || '',
       year: data.year || '',
@@ -125,38 +146,86 @@ function createFirestoreBackend(db, uid) {
 
   async function writeBoard(roll, data) {
     try {
-      await boardRef(roll).set(boardDoc({ ...data, roll }), { merge: true });
+      const doc = boardDoc({ ...data, roll });
+      // The phone number is part of the sign-in pair, so it is never
+      // projected. The delete also clears it from older board documents.
+      doc.phone = window.firebase.firestore.FieldValue.delete();
+      await boardRef(roll).set(doc, { merge: true });
     } catch (err) {
       console.warn('Board sync deferred', err);
     }
   }
 
+  function phoneMismatch() {
+    return new BackendError(
+      'PHONE_MISMATCH',
+      'This roll number is registered with a different phone number.'
+    );
+  }
+
+  /* Attach this browser to an existing entry when the roll number and the
+     registration details all match. The security rules allow the write only
+     if the submitted phone, department, and year equal the stored ones, so the
+     check happens on the server and a wrong entry cannot be taken over. */
+  async function transferReader(roll, phone, dept, year) {
+    const now = Date.now();
+    const patch = { uid, phone: String(phone || ''), updatedAt: now };
+    if (dept) patch.dept = String(dept);
+    if (year) patch.year = String(year);
+    try {
+      await readerRef(roll).update(patch);
+    } catch (err) {
+      if (isNotFound(err)) {
+        throw new BackendError('NOT_FOUND', 'No entry was found for that roll number.');
+      }
+      if (isPermissionDenied(err)) throw phoneMismatch();
+      throw err;
+    }
+    const snap = await readerRef(roll).get();
+    if (!snap.exists) {
+      throw new BackendError('NOT_FOUND', 'No entry was found for that roll number.');
+    }
+    return snap.data();
+  }
+
   return {
     mode: 'firebase',
-    uid,
     warning: null,
     async claimReader(profile) {
+      const now = Date.now();
+      const phone = String(profile.phone || '');
+      let reader = null;
       try {
-        await db.runTransaction(async (tx) => {
-          const ref = readerRef(profile.roll);
-          const snap = await tx.get(ref);
-          if (snap.exists && snap.data().uid !== uid) {
-            throw new BackendError('ROLL_TAKEN', 'This roll number is linked to another device.');
-          }
-          tx.set(ref, { ...profile, uid, updatedAt: Date.now() }, { merge: true });
+        await readerRef(profile.roll).create({
+          ...profile,
+          phone,
+          uid,
+          createdAt: now,
+          updatedAt: now
         });
       } catch (err) {
-        if (err instanceof BackendError) throw err;
-        const code = err && (err.code || '');
-        if (code === 'permission-denied' || /permission/i.test(err && err.message || '')) {
-          throw new BackendError('ROLL_TAKEN', 'This roll number is linked to another device.');
+        if (isAlreadyExists(err)) {
+          // The roll is already registered. The phone, department, and year
+          // decide whether this is the same student.
+          reader = await transferReader(profile.roll, phone, profile.dept, profile.year);
+        } else if (isPermissionDenied(err)) {
+          throw phoneMismatch();
+        } else {
+          throw err;
         }
-        throw err;
       }
-      const snap = await readerRef(profile.roll).get();
-      const data = snap.exists ? snap.data() : { ...profile };
-      await writeBoard(profile.roll, data);
-      return data;
+
+      if (!reader) {
+        const snap = await readerRef(profile.roll).get();
+        reader = snap.exists ? snap.data() : { ...profile, phone, uid, createdAt: now, updatedAt: now };
+      }
+      await writeBoard(profile.roll, reader);
+      return reader;
+    },
+    async restoreReader(roll, phone, dept, year) {
+      const reader = await transferReader(roll, phone, dept, year);
+      await writeBoard(roll, reader);
+      return reader;
     },
     async updateReader(roll, patch) {
       await readerRef(roll).set({ ...patch, uid, updatedAt: Date.now() }, { merge: true });
@@ -218,7 +287,6 @@ function createFirestoreBackend(db, uid) {
         tx.set(ref, {
           name,
           code,
-          members: [uid],
           memberRolls: [profile.roll],
           createdBy: uid,
           createdAt: Date.now(),
@@ -226,7 +294,7 @@ function createFirestoreBackend(db, uid) {
         });
         tx.set(readerRef(profile.roll), { groupCode: code, updatedAt: Date.now() }, { merge: true });
       });
-      return { name, code, members: [uid], memberRolls: [profile.roll], createdBy: uid };
+      return { name, code, memberRolls: [profile.roll], createdBy: uid };
     },
     async joinGroup(code, profile) {
       let result = null;
@@ -235,18 +303,18 @@ function createFirestoreBackend(db, uid) {
         const snap = await tx.get(ref);
         if (!snap.exists) throw new BackendError('GROUP_NOT_FOUND', 'No group has that code.');
         const data = snap.data();
-        if (data.members.includes(uid)) {
-          result = { ...data, code };
+        const memberRolls = Array.isArray(data.memberRolls) ? data.memberRolls : [];
+        if (memberRolls.includes(profile.roll)) {
+          result = { ...data, memberRolls, code };
           return;
         }
-        if (data.members.length >= EVENT.groupMax) {
+        if (memberRolls.length >= EVENT.groupMax) {
           throw new BackendError('GROUP_FULL', 'That group already has four members.');
         }
-        const members = [...data.members, uid];
-        const memberRolls = [...data.memberRolls, profile.roll];
-        tx.update(ref, { members, memberRolls, updatedAt: Date.now() });
+        const next = [...memberRolls, profile.roll];
+        tx.update(ref, { memberRolls: next, updatedAt: Date.now() });
         tx.set(readerRef(profile.roll), { groupCode: code, updatedAt: Date.now() }, { merge: true });
-        result = { ...data, members, memberRolls, code };
+        result = { ...data, memberRolls: next, code };
       });
       return result;
     },
@@ -256,10 +324,12 @@ function createFirestoreBackend(db, uid) {
         const snap = await tx.get(ref);
         if (snap.exists) {
           const data = snap.data();
-          const members = data.members.filter((id) => id !== uid);
-          const memberRolls = data.memberRolls.filter((roll) => roll !== profile.roll);
-          if (!members.length) tx.delete(ref);
-          else tx.update(ref, { members, memberRolls, updatedAt: Date.now() });
+          const current = Array.isArray(data.memberRolls) ? data.memberRolls : [];
+          if (current.includes(profile.roll)) {
+            const memberRolls = current.filter((roll) => roll !== profile.roll);
+            if (!memberRolls.length) tx.delete(ref);
+            else tx.update(ref, { memberRolls, updatedAt: Date.now() });
+          }
         }
         tx.set(readerRef(profile.roll), { groupCode: null, updatedAt: Date.now() }, { merge: true });
       });

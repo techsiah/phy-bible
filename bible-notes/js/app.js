@@ -13,6 +13,7 @@ import {
 import * as store from './store.js';
 import { normalizeNote, mergeNotes, noteMatches } from './notes.js';
 import { initBackend } from './backend.js';
+import { enhanceSelects } from './select.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -30,7 +31,6 @@ const dom = {
   coverEdition: $('coverEdition'),
   themeBtn: $('themeBtn'),
   settingsBtn: $('settingsBtn'),
-  syncBadge: $('syncBadge'),
   dailyText: $('dailyText'),
   dailyRef: $('dailyRef'),
   adventStrip: $('adventStrip'),
@@ -71,8 +71,6 @@ const dom = {
   settingsDialog: $('settingsDialog'),
   closeSettings: $('closeSettings'),
   profileSummary: $('profileSummary'),
-  deviceId: $('deviceId'),
-  copyDevice: $('copyDevice'),
   fontRange: $('fontRange'),
   fontValue: $('fontValue'),
   exportBtn: $('exportBtn'),
@@ -110,6 +108,9 @@ const dom = {
   guestReadingHint: $('guestReadingHint'),
   guestInlineRegisterBtn: $('guestInlineRegisterBtn'),
   onboardForm: $('onboardForm'),
+  onboardDesc: $('onboardDesc'),
+  onboardSubmit: $('onboardSubmit'),
+  obRestoreToggle: $('obRestoreToggle'),
   obName: $('obName'),
   obPhone: $('obPhone'),
   obRoll: $('obRoll'),
@@ -120,7 +121,6 @@ const dom = {
   obGroupName: $('obGroupName'),
   obGroupCode: $('obGroupCode'),
   obError: $('obError'),
-  obDevice: $('obDevice'),
   deptList: $('deptList'),
   bookList: $('bookList'),
   chapterList: $('chapterList'),
@@ -146,7 +146,7 @@ const dom = {
   recoveryTitle: $('recoveryTitle'),
   recoveryText: $('recoveryText'),
   recoveryRoll: $('recoveryRoll'),
-  recoveryDevice: $('recoveryDevice'),
+  recoveryPhone: $('recoveryPhone'),
   recoveryRetry: $('recoveryRetry'),
   recoveryReset: $('recoveryReset'),
   recoveryClose: $('recoveryClose'),
@@ -182,6 +182,7 @@ const state = {
 
 let toastTimer = null;
 let clockTimer = null;
+let onboardingRestore = false;
 
 /* Tab order drives swipe direction, view transitions, and history. */
 const VIEW_ORDER = ['today', 'journey', 'together', 'notes'];
@@ -215,6 +216,12 @@ function normalizePhone(value) {
   return digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
 }
 
+function maskPhone(value) {
+  const digits = normalizePhone(value);
+  if (digits.length < 4) return digits || '—';
+  return `••••••${digits.slice(-4)}`;
+}
+
 function genderLabel(gender) {
   const found = GENDERS.find((item) => item.value === gender);
   return found ? found.label : '';
@@ -239,6 +246,14 @@ function setBusy(button, busy, label) {
     if (button.dataset.label) button.textContent = button.dataset.label;
     delete button.dataset.label;
   }
+}
+
+/* Custom dropdowns hide the native select, so validation should focus the
+   visible trigger instead of the invisible control. */
+function focusField(control) {
+  if (!control) return;
+  const target = control._focusTarget || control;
+  target.focus();
 }
 
 async function safe(fn, fallback = null) {
@@ -369,12 +384,6 @@ function bindAppShell() {
 
   window.addEventListener('scroll', updateHeaderElevation, { passive: true });
 
-  if (dom.syncBadge) {
-    dom.syncBadge.addEventListener('click', () => {
-      if (!state.backend) retryBackend();
-    });
-  }
-
   window.addEventListener('resize', () => requestAnimationFrame(positionNavIndicator));
   window.addEventListener('orientationchange', () => requestAnimationFrame(positionNavIndicator));
 
@@ -489,6 +498,7 @@ function init() {
   applyTheme(store.getTheme());
   applyFont(store.getFont());
   populateStatic();
+  enhanceSelects();
   bindEvents();
 
   state.profile = store.loadProfile();
@@ -517,13 +527,13 @@ async function bootBackend() {
   } catch (err) {
     state.backend = null;
     state.warning = err.message || 'Could not connect to the reading server. Check your connection and try again.';
-    updateSyncBadge();
+    updateSyncNotes();
     renderCover();
     showToast(state.warning);
     return null;
   }
   state.warning = null;
-  updateSyncBadge();
+  updateSyncNotes();
   if (state.profile) {
     const ok = await hydrate();
     if (!ok && state.backend?.mode === 'firebase') showRecovery();
@@ -535,22 +545,6 @@ async function bootBackend() {
   return state.backend;
 }
 
-let backendRetrying = false;
-
-async function retryBackend() {
-  if (state.backend || backendRetrying) return;
-  backendRetrying = true;
-  if (dom.syncBadge) dom.syncBadge.textContent = 'Connecting…';
-  state.backendReady = bootBackend();
-  await state.backendReady;
-  backendRetrying = false;
-  if (state.backend) {
-    recompute();
-    renderAll();
-    renderCover();
-  }
-}
-
 async function hydrate(options = {}) {
   if (!state.profile || !state.backend) return false;
   const claim = options.claim !== false;
@@ -559,8 +553,8 @@ async function hydrate(options = {}) {
     try {
       await state.backend.claimReader(state.profile);
     } catch (err) {
-      state.recoveryReason = err.code === 'ROLL_TAKEN' ? 'taken' : 'offline';
-      if (err.code !== 'ROLL_TAKEN') showToast(err.message || 'Could not reach the reading server.');
+      state.recoveryReason = err.code === 'PHONE_MISMATCH' ? 'phone' : 'offline';
+      if (err.code !== 'PHONE_MISMATCH') showToast(err.message || 'Could not reach the reading server.');
       return false;
     }
   }
@@ -711,7 +705,7 @@ async function syncReader() {
   } catch (err) {
     console.warn('Reader sync deferred', err);
   }
-  updateSyncBadge();
+  updateSyncNotes();
 }
 
 async function saveDay(day) {
@@ -723,14 +717,8 @@ async function saveDay(day) {
   }
 }
 
-function updateSyncBadge() {
-  if (!dom.syncBadge) return;
+function updateSyncNotes() {
   const connected = Boolean(state.backend);
-  const online = connected && navigator.onLine;
-  dom.syncBadge.textContent = connected ? (online ? 'Synced' : 'Offline') : 'Not connected';
-  dom.syncBadge.dataset.mode = online ? 'online' : 'offline';
-  dom.syncBadge.title = connected ? 'Sync status' : 'Tap to retry the connection';
-  dom.syncBadge.style.cursor = connected ? '' : 'pointer';
   if (dom.syncNote) {
     dom.syncNote.textContent = connected
       ? 'Your notes and reading history sync privately. Only your name, roll, gender, department, year, program, group, streak and points are public.'
@@ -738,7 +726,7 @@ function updateSyncBadge() {
   }
   if (dom.syncNote2) {
     dom.syncNote2.textContent = connected
-      ? 'Notes and reading history sync privately to your roll. Only you can open them.'
+      ? 'Notes and reading history sync privately to your roll number and registration details. Only you can open them.'
       : (state.warning || 'The reading server is unavailable right now.');
   }
 }
@@ -1447,7 +1435,6 @@ function renderProfile() {
     row.append(el('span', '', label), el('strong', '', value));
     dom.profileSummary.append(row);
   });
-  if (dom.deviceId) dom.deviceId.textContent = state.backend ? state.backend.uid : '—';
 }
 
 function renderAll() {
@@ -1458,7 +1445,7 @@ function renderAll() {
   renderProfile();
   renderMyGroup();
   renderBoard();
-  updateSyncBadge();
+  updateSyncNotes();
   const isGuest = !state.profile;
   if (dom.headerUserName) {
     const firstName = String(state.profile?.name || '').trim().split(/\s+/)[0];
@@ -1562,10 +1549,42 @@ function requireProfile() {
 
 function showOnboarding() {
   if (!dom.onboarding) return;
-  if (dom.obDevice && state.backend) dom.obDevice.textContent = `Device ID: ${state.backend.uid}`;
+  setRestoreMode(false);
   dom.obError.textContent = '';
   openDialog(dom.onboarding);
   window.setTimeout(() => dom.obName?.focus(), 100);
+}
+
+/* Restore mode asks for the roll number and the details used at
+   registration (phone, department, year), so a returning student can pull
+   their streak and notes onto a new device. */
+function setRestoreMode(on) {
+  onboardingRestore = on;
+  document.querySelectorAll('[data-register-only]').forEach((node) => {
+    node.hidden = on;
+  });
+  ['obName', 'obGender'].forEach((id) => {
+    const node = $(id);
+    if (node) node.required = !on;
+  });
+  if (on) {
+    document.querySelectorAll('[data-group-field]').forEach((node) => { node.hidden = true; });
+  } else {
+    syncGroupFields();
+  }
+  if (dom.onboardDesc) {
+    dom.onboardDesc.textContent = on
+      ? 'Enter your roll number, phone number, department, and year exactly as you registered.'
+      : 'Your roll number and phone number are your entry. No email, no password.';
+  }
+  if (dom.onboardSubmit) dom.onboardSubmit.textContent = on ? 'Restore my entry' : 'Start reading';
+  if (dom.onboardForm) dom.onboardForm.classList.toggle('is-restore', on);
+  if (dom.obRestoreToggle) {
+    dom.obRestoreToggle.textContent = on
+      ? 'New here? Register instead'
+      : 'Already registered? Restore my entry';
+  }
+  if (dom.obError) dom.obError.textContent = '';
 }
 
 function groupMode() {
@@ -1588,12 +1607,64 @@ async function submitOnboarding(event) {
     return;
   }
 
-  const name = dom.obName.value.trim().replace(/\s+/g, ' ').slice(0, 60);
   const phone = normalizePhone(dom.obPhone.value);
   const roll = String(dom.obRoll.value).trim();
-  const gender = dom.obGender.value;
-  const dept = dom.obDept.value.trim();
+  const dept = dom.obDept.value;
   const year = dom.obYear.value;
+
+  if (!isValidRoll(roll)) {
+    dom.obError.textContent = 'Please select a roll number.';
+    focusField(dom.obRoll);
+    return;
+  }
+  if (!/^[6-9]\d{9}$/.test(phone)) {
+    dom.obError.textContent = 'Enter a 10-digit mobile number starting with 6–9.';
+    dom.obPhone.focus();
+    return;
+  }
+  if (!dept) {
+    dom.obError.textContent = 'Please select your department.';
+    focusField(dom.obDept);
+    return;
+  }
+  if (!year) {
+    dom.obError.textContent = 'Please select your year of study.';
+    focusField(dom.obYear);
+    return;
+  }
+
+  const submit = dom.onboardSubmit || dom.onboardForm.querySelector('button[type="submit"]');
+  dom.obError.textContent = '';
+
+  /* Returning student: roll + phone + department + year restore the same entry. */
+  if (onboardingRestore) {
+    setBusy(submit, true, 'Restoring…');
+    try {
+      const reader = await state.backend.restoreReader(roll, phone, dept, year);
+      state.profile = { ...reader, roll: reader.roll || roll, phone: reader.phone || phone };
+      store.saveProfile(state.profile);
+      const restored = await hydrate({ claim: false });
+      if (!restored) throw new Error('Could not load your saved entry. Try again.');
+      await loadEarlyAccess();
+      closeDialog(dom.onboarding);
+      enterApp();
+      showToast('Welcome back. Your streak and notes are restored.');
+    } catch (err) {
+      if (err.code === 'PHONE_MISMATCH') {
+        dom.obError.textContent = 'Those details do not match the registration: the phone number, department, or year is different. Check them and try again.';
+      } else if (err.code === 'NOT_FOUND') {
+        dom.obError.textContent = 'No entry was found for that roll number. Check it, or register as a new reader.';
+      } else {
+        dom.obError.textContent = err.message || 'Could not restore your entry. Check your connection and try again.';
+      }
+    } finally {
+      setBusy(submit, false);
+    }
+    return;
+  }
+
+  const name = dom.obName.value.trim().replace(/\s+/g, ' ').slice(0, 60);
+  const gender = dom.obGender.value;
   const program = dom.obProgram.value;
   const mode = groupMode();
 
@@ -1602,24 +1673,14 @@ async function submitOnboarding(event) {
     dom.obName.focus();
     return;
   }
-  if (!isValidRoll(roll)) {
-    dom.obError.textContent = 'Please select a roll number.';
-    dom.obRoll.focus();
-    return;
-  }
-  if (!/^[6-9]\d{9}$/.test(phone)) {
-    dom.obError.textContent = 'Enter a 10-digit mobile number starting with 6–9.';
-    dom.obPhone.focus();
-    return;
-  }
   if (!gender) {
     dom.obError.textContent = 'Please select your gender.';
-    dom.obGender.focus();
+    focusField(dom.obGender);
     return;
   }
-  if (!dept) {
-    dom.obError.textContent = 'Please select your department.';
-    dom.obDept.focus();
+  if (!program) {
+    dom.obError.textContent = 'Please select your program.';
+    focusField(dom.obProgram);
     return;
   }
 
@@ -1647,9 +1708,7 @@ async function submitOnboarding(event) {
     }
   }
 
-  const submit = dom.onboardForm.querySelector('button[type="submit"]');
   setBusy(submit, true, 'Registering…');
-  dom.obError.textContent = '';
 
   try {
     const profile = {
@@ -1660,7 +1719,6 @@ async function submitOnboarding(event) {
       dept,
       year,
       program,
-      uid: state.backend.uid,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
@@ -1686,9 +1744,8 @@ async function submitOnboarding(event) {
     state.profile = profile;
     store.saveProfile(profile);
 
-    // Load any entry that already belongs to this device, so re-registering a
-    // roll after removing the local profile restores its streak and notes
-    // instead of overwriting them with an empty local copy.
+    // Load the synced entry for this roll. On a returning student this
+    // restores the existing streak, notes, and profile details.
     const restored = await hydrate({ claim: false });
     if (!restored) throw new Error('Could not load your saved entry. Try again.');
     await loadEarlyAccess();
@@ -1697,8 +1754,8 @@ async function submitOnboarding(event) {
     enterApp();
     showToast('Welcome to the 25-day journey.');
   } catch (err) {
-    if (err.code === 'ROLL_TAKEN') {
-      dom.obError.textContent = `That roll number is linked to another device. Show this device ID to an organizer: ${state.backend.uid}`;
+    if (err.code === 'PHONE_MISMATCH') {
+      dom.obError.textContent = 'That roll number is already registered with different details. Use the same phone number, department, and year as the first time, or use “Restore my entry”.';
     } else if (err.code === 'GROUP_FULL') {
       dom.obError.textContent = 'That group already has four members.';
     } else if (err.code === 'GROUP_NOT_FOUND') {
@@ -2082,17 +2139,17 @@ async function importBackup(file) {
 
 function showRecovery() {
   if (!state.profile) return;
-  const taken = state.recoveryReason === 'taken';
+  const mismatch = state.recoveryReason === 'phone';
   if (dom.recoveryTitle) {
-    dom.recoveryTitle.textContent = taken ? 'This roll is already linked' : 'We could not reach your entry';
+    dom.recoveryTitle.textContent = mismatch ? 'Those details do not match' : 'We could not open your entry';
   }
   if (dom.recoveryText) {
-    dom.recoveryText.textContent = taken
-      ? `“${state.profile.roll}” is linked to another device. Show the device ID below to an organizer, who can transfer it to you.`
-      : 'Your notes are safe on this device. Check your connection and try again, or show the device ID below to an organizer.';
+    dom.recoveryText.textContent = mismatch
+      ? `“${state.profile.roll}” is registered with different details. Start over and enter the same phone number, department, and year you used the first time.`
+      : 'Your notes are safe on this device. Check your connection and try again.';
   }
   dom.recoveryRoll.textContent = state.profile.roll;
-  dom.recoveryDevice.textContent = state.backend ? state.backend.uid : '—';
+  if (dom.recoveryPhone) dom.recoveryPhone.textContent = maskPhone(state.profile.phone);
   openDialog(dom.recoveryDialog);
 }
 
@@ -2137,7 +2194,7 @@ function startClock() {
       renderAll();
       if (state.profile) syncReader();
     }
-    updateSyncBadge();
+    updateSyncNotes();
   }, 30000);
 }
 
@@ -2238,13 +2295,14 @@ function bindEvents() {
     if (file) await importBackup(file);
   });
   if (dom.printBtn) dom.printBtn.addEventListener('click', () => window.print());
-  if (dom.copyDevice) dom.copyDevice.addEventListener('click', async () => {
-    if (!state.backend) return;
-    const ok = await store.copyText(state.backend.uid);
-    showToast(ok ? 'Device ID copied.' : 'Could not copy the device ID.');
-  });
   if (dom.leaveDevice) dom.leaveDevice.addEventListener('click', leaveDevice);
 
+  if (dom.obRestoreToggle) dom.obRestoreToggle.addEventListener('click', () => {
+    setRestoreMode(!onboardingRestore);
+    window.setTimeout(() => {
+      focusField(onboardingRestore ? dom.obRoll : dom.obName);
+    }, 50);
+  });
   if (dom.onboardForm) dom.onboardForm.addEventListener('submit', submitOnboarding);
   document.querySelectorAll('input[name="groupMode"]').forEach((radio) => {
     radio.addEventListener('change', syncGroupFields);
@@ -2343,10 +2401,10 @@ function bindEvents() {
   if (dom.recoveryReset) dom.recoveryReset.addEventListener('click', resetThisDevice);
   if (dom.recoveryClose) dom.recoveryClose.addEventListener('click', () => closeDialog(dom.recoveryDialog));
 
-  window.addEventListener('online', updateSyncBadge);
-  window.addEventListener('offline', updateSyncBadge);
+  window.addEventListener('online', updateSyncNotes);
+  window.addEventListener('offline', updateSyncNotes);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) updateSyncBadge();
+    if (!document.hidden) updateSyncNotes();
   });
 
   bindAppShell();

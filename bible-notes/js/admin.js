@@ -170,7 +170,6 @@ function renderAll() {
   renderOverview();
   renderParticipants();
   renderGroups();
-  renderRecoveryDropdown();
   renderConfigInfo();
 }
 
@@ -302,10 +301,9 @@ function filterAndSortReaders() {
     if (q) {
       const matchName = (r.name || '').toLowerCase().includes(q);
       const matchRoll = (r.roll || '').toLowerCase().includes(q);
-      const matchPhone = String(r.phone || '').includes(q);
       const matchDept = (r.dept || '').toLowerCase().includes(q);
       const matchGroup = (r.groupCode || '').toLowerCase().includes(q);
-      if (!matchName && !matchRoll && !matchPhone && !matchDept && !matchGroup) return false;
+      if (!matchName && !matchRoll && !matchDept && !matchGroup) return false;
     }
 
     // Department filter
@@ -376,10 +374,6 @@ function renderParticipants() {
 
     const deptShort = (r.dept || '—').replace(/^Department of\s+/i, '');
     const yrLabel = r.year === 'PG' ? 'PG' : (r.year ? `${r.year}Y` : '—');
-    const phoneDigits = String(r.phone || '').replace(/\D/g, '');
-    const phoneLine = phoneDigits.length === 10
-      ? `<a class="phone-link" href="tel:+91${phoneDigits}">${phoneDigits}</a>`
-      : '';
     const groupBadge = r.groupCode
       ? `<span class="group-badge" title="Group: ${r.groupCode}">${ICONS.users}${r.groupCode}</span>`
       : `<span style="color: var(--ink-faint); font-size: 0.75rem;">Solo</span>`;
@@ -390,7 +384,6 @@ function renderParticipants() {
         <td class="roll-cell">
           <strong>${r.name || r.roll || '—'}</strong>
           <span style="font-size: 0.74rem; color: var(--ink-faint);">${r.roll || '—'} · ${r.program || 'UG'}</span>
-          ${phoneLine}
           ${r.earlyAccess ? '<span class="early-pill" title="Early access to the calendar">Early</span>' : ''}
         </td>
         <td>
@@ -410,7 +403,6 @@ function renderParticipants() {
           <div class="action-btn-row">
             <button class="action-btn" data-action="view-reader" data-roll="${r.roll}">Details</button>
             <button class="action-btn${r.earlyAccess ? ' primary' : ''}" data-action="toggle-early" data-roll="${r.roll}" aria-pressed="${r.earlyAccess ? 'true' : 'false'}" title="Open the calendar before December 1">${r.earlyAccess ? 'Early ✓' : 'Early'}</button>
-            <button class="action-btn primary" data-action="relink-reader" data-roll="${r.roll}">Relink</button>
           </div>
         </td>
       </tr>
@@ -420,15 +412,6 @@ function renderParticipants() {
   // Attach button listeners
   tbody.querySelectorAll('button[data-action="view-reader"]').forEach((btn) => {
     btn.addEventListener('click', () => openReaderModal(btn.dataset.roll));
-  });
-
-  tbody.querySelectorAll('button[data-action="relink-reader"]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      $('recoveryRollSelect').value = btn.dataset.roll;
-      $('recoveryRollSelect').dispatchEvent(new Event('change'));
-      // Switch to recovery tab
-      document.querySelector('.admin-tab[data-tab="recovery"]')?.click();
-    });
   });
 
   tbody.querySelectorAll('button[data-action="toggle-early"]').forEach((btn) => {
@@ -586,124 +569,6 @@ function renderGroups() {
   }).join('');
 }
 
-/* ── Device Recovery / Account Transfer ─────────────────────── */
-
-function renderRecoveryDropdown() {
-  const select = $('recoveryRollSelect');
-  if (!select) return;
-
-  const currentVal = select.value;
-  select.innerHTML = `<option value="">-- Choose student roll number --</option>` +
-    adminState.readers
-      .map((r) => `<option value="${r.roll}">${r.roll} — ${r.dept ? r.dept.replace(/^Department of\s+/i, '') : 'Unknown'} (${r.points || 0} pts)</option>`)
-      .join('');
-
-  if (currentVal) select.value = currentVal;
-}
-
-function initRecoveryHandlers() {
-  const select = $('recoveryRollSelect');
-  const preview = $('recoveryPreviewBox');
-  const rollInput = $('recoveryManualRoll');
-  const deviceInput = $('recoveryNewDeviceUid');
-  const transferBtn = $('executeTransferBtn');
-  const copyConsoleBtn = $('copyConsoleHelpBtn');
-
-  select?.addEventListener('change', () => {
-    const roll = select.value;
-    if (roll) rollInput.value = roll;
-    updateRecoveryPreview(roll);
-  });
-
-  rollInput?.addEventListener('input', () => {
-    updateRecoveryPreview(rollInput.value.trim());
-  });
-
-  function updateRecoveryPreview(roll) {
-    if (!roll) {
-      preview.hidden = true;
-      return;
-    }
-
-    const reader = adminState.readers.find((r) => r.roll.toLowerCase() === roll.toLowerCase());
-    if (reader) {
-      preview.hidden = false;
-      $('prevRoll').textContent = reader.roll;
-      $('prevDept').textContent = reader.dept || '—';
-      $('prevStreak').textContent = `${reader.currentStreak || 0} days (longest: ${reader.longestStreak || 0})`;
-      $('prevPoints').textContent = `${reader.points || 0} pts`;
-      $('prevGroup').textContent = reader.groupCode || 'Solo';
-      $('prevCurrentUid').textContent = reader.uid || '(Firestore private)';
-    } else {
-      preview.hidden = false;
-      $('prevRoll').textContent = roll;
-      $('prevDept').textContent = 'Not registered yet';
-      $('prevStreak').textContent = '—';
-      $('prevPoints').textContent = '—';
-      $('prevGroup').textContent = '—';
-      $('prevCurrentUid').textContent = 'None';
-    }
-  }
-
-  transferBtn?.addEventListener('click', async () => {
-    const roll = (rollInput.value || select.value || '').trim();
-    const newUid = (deviceInput.value || '').trim();
-
-    if (!roll) {
-      showToast('Please specify a roll number.');
-      rollInput.focus();
-      return;
-    }
-
-    if (!newUid) {
-      showToast('Please enter the student\'s new Device ID.');
-      deviceInput.focus();
-      return;
-    }
-
-    transferBtn.disabled = true;
-    transferBtn.textContent = 'Transferring...';
-
-    try {
-      const db = window.firebase ? window.firebase.firestore() : null;
-      if (db) {
-        try {
-          await db.collection('readers').doc(roll).set({ uid: newUid, updatedAt: Date.now() }, { merge: true });
-          showToast(`Firestore updated! Roll ${roll} linked to ${newUid}`);
-          $('transferSuccessAlert').hidden = false;
-          $('transferSuccessMsg').innerHTML = `
-            <strong>Firestore updated successfully!</strong><br>
-            Student <code>${roll}</code> can now tap <strong>"Try again"</strong> on their phone.
-          `;
-        } catch (ruleErr) {
-          console.warn('Direct client update blocked by security rules:', ruleErr);
-          // Show Firebase Console instructions
-          $('transferConsoleAlert').hidden = false;
-          $('consoleTargetRoll').textContent = roll;
-          $('consoleTargetUid').textContent = newUid;
-          showToast('Direct edit restricted by security rules. Follow console steps below.');
-        }
-      } else {
-        showToast('Firebase connection not initialized.');
-      }
-    } catch (err) {
-      console.error('Transfer failed:', err);
-      showToast('Transfer failed: ' + (err.message || 'Unknown error'));
-    } finally {
-      transferBtn.disabled = false;
-      transferBtn.textContent = 'Transfer Account to New Device';
-    }
-  });
-
-  copyConsoleBtn?.addEventListener('click', () => {
-    const roll = (rollInput.value || select.value || '').trim();
-    const newUid = (deviceInput.value || '').trim();
-    const snippet = `Collection: readers\nDocument: ${roll}\nField: uid\nNew Value: ${newUid}`;
-    navigator.clipboard.writeText(snippet);
-    showToast('Copied Firestore instructions to clipboard!');
-  });
-}
-
 /* ── Participant Details Modal ─────────────────────────────── */
 
 function openReaderModal(roll) {
@@ -713,8 +578,6 @@ function openReaderModal(roll) {
   adminState.selectedReader = reader;
   $('modalName').textContent = reader.name || '—';
   $('modalRoll').textContent = reader.roll;
-  const modalPhoneDigits = String(reader.phone || '').replace(/\D/g, '');
-  $('modalPhone').textContent = modalPhoneDigits.length === 10 ? modalPhoneDigits : '—';
   $('modalGender').textContent = genderLabel(reader.gender) || '—';
   $('modalDept').textContent = reader.dept || '—';
   $('modalYear').textContent = reader.year ? `${reader.year} Year (${reader.program || 'UG'})` : '—';
@@ -722,7 +585,6 @@ function openReaderModal(roll) {
   $('modalStreak').textContent = `${reader.currentStreak || 0} days (Record: ${reader.longestStreak || 0} days)`;
   $('modalTotalDays').textContent = `${reader.totalDays || 0} days active`;
   $('modalPoints').textContent = `${reader.points || 0} points`;
-  $('modalUid').textContent = reader.uid || '(Firestore private)';
   $('modalLastUpdated').textContent = reader.updatedAt ? new Date(reader.updatedAt).toLocaleString() : '—';
 
   $('readerModalBackdrop').hidden = false;
@@ -731,15 +593,6 @@ function openReaderModal(roll) {
 function initModals() {
   $('closeReaderModal')?.addEventListener('click', () => {
     $('readerModalBackdrop').hidden = true;
-  });
-
-  $('modalRelinkBtn')?.addEventListener('click', () => {
-    if (adminState.selectedReader) {
-      $('readerModalBackdrop').hidden = true;
-      $('recoveryRollSelect').value = adminState.selectedReader.roll;
-      $('recoveryRollSelect').dispatchEvent(new Event('change'));
-      document.querySelector('.admin-tab[data-tab="recovery"]')?.click();
-    }
   });
 
   $('readerModalBackdrop')?.addEventListener('click', (e) => {
@@ -796,11 +649,10 @@ function exportParticipantsCSV() {
     return;
   }
 
-  const headers = ['Roll Number', 'Name', 'Phone', 'Gender', 'Department', 'Year', 'Program', 'Group Code', 'Current Streak', 'Longest Streak', 'Total Days', 'Points', 'Last Updated'];
+  const headers = ['Roll Number', 'Name', 'Gender', 'Department', 'Year', 'Program', 'Group Code', 'Current Streak', 'Longest Streak', 'Total Days', 'Points', 'Last Updated'];
   const rows = readers.map((r) => [
     r.roll,
     r.name || '',
-    String(r.phone || '').replace(/\D/g, ''),
     genderLabel(r.gender) || '',
     r.dept || '',
     r.year || '',
@@ -901,7 +753,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Modals & Handlers
   initModals();
-  initRecoveryHandlers();
   initExportHandlers();
 
   // Refresh button
