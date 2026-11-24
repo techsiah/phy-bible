@@ -333,7 +333,7 @@ function animateView(section, direction) {
 }
 
 function positionNavIndicator() {
-  if (!dom.nav || !dom.navIndicator || !dom.nav.offsetParent) return;
+  if (!dom.nav || !dom.navIndicator || !dom.nav.getClientRects().length) return;
   const active = dom.nav.querySelector('.nav-btn[aria-current="true"]');
   if (!active) return;
   const navRect = dom.nav.getBoundingClientRect();
