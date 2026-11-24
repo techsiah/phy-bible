@@ -22,6 +22,7 @@ const ICONS = {
 // Global Admin State
 const adminState = {
   backend: null,
+  warning: null,
   authenticated: false,
   readers: [],
   groups: [],
@@ -119,12 +120,14 @@ async function bootPortal() {
     if (!adminState.backend) {
       adminState.backend = await initBackend();
     }
+    adminState.warning = null;
     updateModeBadge();
     await refreshData();
   } catch (err) {
     console.error('Portal boot failed:', err);
+    adminState.warning = err.message || 'Failed to load portal data. Check connection.';
     updateModeBadge();
-    showToast(err.message || 'Failed to load portal data. Check connection.');
+    showToast(adminState.warning);
   } finally {
     showLoading(false);
   }
@@ -136,7 +139,13 @@ function updateModeBadge() {
   const connected = Boolean(adminState.backend);
   badge.textContent = connected ? 'Firebase Connected' : 'Not Connected';
   badge.dataset.mode = connected ? 'firebase' : 'offline';
-  badge.title = connected ? 'Live Firestore data' : 'Could not connect to Firebase';
+  badge.title = connected ? 'Live Firestore data' : (adminState.warning || 'Could not connect to Firebase');
+
+  const note = $('connectNote');
+  if (note) {
+    note.hidden = connected;
+    if (!connected) note.textContent = adminState.warning || 'Could not connect to Firebase.';
+  }
 }
 
 async function refreshData() {
@@ -861,6 +870,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Refresh button
   $('refreshBtn')?.addEventListener('click', async () => {
+    if (!adminState.backend) {
+      await bootPortal();
+      return;
+    }
     showToast('Refreshing data...');
     await refreshData();
     showToast('Data refreshed!');

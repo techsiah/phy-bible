@@ -82,9 +82,18 @@ export async function initBackend() {
     return createFirestoreBackend(db, credential.user.uid);
   } catch (err) {
     console.error('Firebase could not start.', err);
+    const code = err && err.code;
+    const hints = {
+      'auth/admin-restricted-operation': 'Firebase sign-in is disabled. Enable Anonymous authentication in Firebase Console → Authentication → Sign-in method.',
+      'auth/operation-not-allowed': 'Firebase sign-in is disabled. Enable Anonymous authentication in Firebase Console → Authentication → Sign-in method.',
+      'auth/configuration-not-found': 'Firebase Authentication is not set up for this project. Enable Anonymous sign-in in the Firebase Console.',
+      'auth/invalid-api-key': 'The Firebase API key is invalid. Check firebase-config.js.',
+      'auth/unauthorized-domain': 'This domain is not authorised. Add it under Firebase Console → Authentication → Settings → Authorized domains.',
+      'auth/network-request-failed': 'Cannot reach Firebase. Check your internet connection and try again.'
+    };
     throw new BackendError(
-      'CONNECT_FAILED',
-      'Could not connect to the reading server. Check your connection and try again.'
+      code || 'CONNECT_FAILED',
+      hints[code] || 'Could not connect to the reading server. Check your connection and try again.'
     );
   }
 }

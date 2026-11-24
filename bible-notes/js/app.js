@@ -335,6 +335,65 @@ function scrollToTop(options = {}) {
   });
 }
 
+function bindAppShell() {
+  ensureViewHistory();
+  requestAnimationFrame(positionNavIndicator);
+
+  if (dom.syncBadge) {
+    dom.syncBadge.addEventListener('click', () => {
+      if (!state.backend) retryBackend();
+    });
+  }
+
+  window.addEventListener('resize', () => requestAnimationFrame(positionNavIndicator));
+  window.addEventListener('orientationchange', () => requestAnimationFrame(positionNavIndicator));
+
+  window.addEventListener('popstate', () => {
+    const dialogId = history.state && history.state.xmasDialog;
+    if (!dialogId) {
+      document.querySelectorAll('dialog[open]').forEach((dialog) => {
+        closeDialog(dialog, { fromHistory: true });
+      });
+    }
+    const view = history.state && history.state.xmasView;
+    if (view && view !== state.view) {
+      switchView(view, { fromHistory: true, history: false });
+    }
+  });
+
+  // Swipe left/right between tabs, ignoring form controls and horizontal scrollers.
+  const main = dom.main;
+  if (!main) return;
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  main.addEventListener('touchstart', (event) => {
+    if (!state.entered || event.touches.length !== 1) return;
+    if (event.target.closest('input, textarea, select, [contenteditable="true"], dialog, .advent-strip, .board-tabs')) return;
+    startX = event.touches[0].clientX;
+    startY = event.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  main.addEventListener('touchend', (event) => {
+    if (!tracking) return;
+    tracking = false;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const current = VIEW_ORDER.indexOf(state.view);
+    if (current < 0) return;
+    const next = dx < 0 ? current + 1 : current - 1;
+    if (next < 0 || next >= VIEW_ORDER.length) return;
+    switchView(VIEW_ORDER[next], { direction: dx < 0 ? 'forward' : 'back' });
+  }, { passive: true });
+
+  main.addEventListener('touchcancel', () => { tracking = false; }, { passive: true });
+}
+
 function applyTheme(theme) {
   const next = theme === 'candle' ? 'candle' : 'day';
   document.documentElement.dataset.theme = next;
@@ -420,6 +479,22 @@ async function bootBackend() {
   // Splash screen stays until user clicks 'Explore the readings' or 'Register / Join'
   renderCover();
   return state.backend;
+}
+
+let backendRetrying = false;
+
+async function retryBackend() {
+  if (state.backend || backendRetrying) return;
+  backendRetrying = true;
+  if (dom.syncBadge) dom.syncBadge.textContent = 'Connecting…';
+  state.backendReady = bootBackend();
+  await state.backendReady;
+  backendRetrying = false;
+  if (state.backend) {
+    recompute();
+    renderAll();
+    renderCover();
+  }
 }
 
 async function hydrate(options = {}) {
@@ -599,15 +674,17 @@ function updateSyncBadge() {
   const online = connected && navigator.onLine;
   dom.syncBadge.textContent = connected ? (online ? 'Synced' : 'Offline') : 'Not connected';
   dom.syncBadge.dataset.mode = online ? 'online' : 'offline';
+  dom.syncBadge.title = connected ? 'Sync status' : 'Tap to retry the connection';
+  dom.syncBadge.style.cursor = connected ? '' : 'pointer';
   if (dom.syncNote) {
     dom.syncNote.textContent = connected
       ? 'Your notes and reading history sync privately. Only your name, roll, gender, department, year, program, group, streak and points are public.'
-      : 'Cannot reach the reading server. Check your connection and try again.';
+      : (state.warning || 'Cannot reach the reading server. Check your connection and try again.');
   }
   if (dom.syncNote2) {
     dom.syncNote2.textContent = connected
       ? 'Notes and reading history sync privately to your roll. Only you can open them.'
-      : 'The reading server is unavailable right now.';
+      : (state.warning || 'The reading server is unavailable right now.');
   }
 }
 

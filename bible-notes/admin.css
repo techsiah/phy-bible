@@ -782,6 +782,10 @@ body.admin-body {
   color: var(--pastel-peach-ink);
 }
 
+.admin-connect-note {
+  margin: 16px 24px 0;
+}
+
 /* Print Styles */
 @media print {
   body {
