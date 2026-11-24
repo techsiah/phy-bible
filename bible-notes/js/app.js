@@ -20,6 +20,7 @@ const dom = {
   cover: $('cover'),
   openBtn: $('openBtn'),
   app: $('app'),
+  appHeader: $('appHeader'),
   main: $('main'),
   nav: $('bottomNav'),
   navIndicator: $('navIndicator'),
@@ -351,9 +352,22 @@ function scrollToTop(options = {}) {
   });
 }
 
+/* Elevate the app bar once content scrolls beneath it, like a native title bar.
+   Hysteresis keeps the bar from flickering around the threshold. */
+function updateHeaderElevation() {
+  if (!dom.appHeader) return;
+  const y = window.scrollY;
+  const scrolled = dom.appHeader.dataset.scrolled === 'true';
+  if (!scrolled && y > 48) dom.appHeader.dataset.scrolled = 'true';
+  else if (scrolled && y < 12) dom.appHeader.dataset.scrolled = 'false';
+}
+
 function bindAppShell() {
   ensureViewHistory();
   requestAnimationFrame(positionNavIndicator);
+  requestAnimationFrame(updateHeaderElevation);
+
+  window.addEventListener('scroll', updateHeaderElevation, { passive: true });
 
   if (dom.syncBadge) {
     dom.syncBadge.addEventListener('click', () => {

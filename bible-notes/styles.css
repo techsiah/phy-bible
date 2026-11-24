@@ -557,8 +557,43 @@ html[data-theme="candle"] .cover-chip.is-quiet {
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
   backdrop-filter: blur(20px) saturate(1.6);
   border-bottom: 1px solid var(--line-soft);
+  transition: box-shadow 0.22s ease, border-color 0.22s ease;
   -webkit-user-select: none;
   user-select: none;
+}
+
+/* Raised edge once content scrolls beneath the bar */
+.app-header[data-scrolled="true"] {
+  padding-bottom: 10px;
+  border-bottom-color: transparent;
+  box-shadow: 0 1px 0 rgba(28, 20, 8, 0.06), 0 10px 24px -20px rgba(28, 20, 8, 0.5);
+}
+
+html[data-theme="candle"] .app-header[data-scrolled="true"] {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4), 0 10px 24px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* Collapse the greeting row while scrolling so the bar stays one compact row */
+.app-header .header-greeting-bar {
+  max-height: 92px;
+  overflow: hidden;
+  transition: max-height 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-header[data-scrolled="true"] .header-greeting-bar {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+.app-header[data-scrolled="true"] .header-top-bar {
+  padding-bottom: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header .header-greeting-bar { transition: none; }
 }
 
 /* Top row: brand mark + circular app controls */
@@ -2729,6 +2764,7 @@ html[data-theme="candle"] .field select {
 
 @media (max-width: 560px) {
   .app { padding: 14px 14px calc(110px + env(safe-area-inset-bottom, 0px)); }
+  .app-header { margin: -14px -14px 18px; }
   .reading { padding: 20px 18px 18px; }
   .reading-actions .btn { flex: 1 1 auto; }
   .field-row,
