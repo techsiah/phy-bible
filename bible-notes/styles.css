@@ -315,10 +315,14 @@ html[data-theme="candle"] .cover-hero-sub {
   overflow: hidden;
 }
 
-.cover-hero-art svg {
+.cover-hero-art img {
   width: 100%;
   height: auto;
   display: block;
+}
+
+html[data-theme="candle"] .cover-hero-art img {
+  filter: brightness(0.88) saturate(0.94);
 }
 
 .cover-hero-meta {
