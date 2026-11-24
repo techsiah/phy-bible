@@ -110,14 +110,14 @@ export function computeStats(reads, today, config) {
   };
 }
 
-export function buildDayStates(reads, today, config) {
+export function buildDayStates(reads, today, config, options = {}) {
   const total = daysBetween(config.start, config.end) + 1;
   const states = [];
   for (let day = 1; day <= total; day += 1) {
     const date = dateForDay(config.start, day);
     const read = isReadDay(reads[date]);
     let state;
-    if (date > today) state = 'future';
+    if (date > today) state = options.openAll ? 'open' : 'future';
     else if (date === today) state = read ? 'done' : 'today';
     else state = read ? 'done' : 'missed';
     states.push({ day, date, read, state });

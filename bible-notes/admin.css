@@ -561,6 +561,20 @@ body.admin-body {
   font-family: var(--font-mono);
 }
 
+.early-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(245, 166, 35, 0.16);
+  color: var(--gold-deep);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .action-btn-row {
   display: flex;
   align-items: center;

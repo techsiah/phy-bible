@@ -165,6 +165,13 @@ function createFirestoreBackend(db, uid) {
       const snap = await readerRef(roll).get();
       return snap.exists ? snap.data() : null;
     },
+    async getBoard(roll) {
+      const snap = await boardRef(roll).get();
+      return snap.exists ? snap.data() : null;
+    },
+    async setEarlyAccess(roll, enabled) {
+      await boardRef(roll).set({ earlyAccess: Boolean(enabled) }, { merge: true });
+    },
     async getDays(roll) {
       const snap = await readerRef(roll).collection('days').get();
       const out = {};

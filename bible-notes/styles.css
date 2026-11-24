@@ -872,6 +872,11 @@ html[data-theme="candle"] .icon-moon { display: none; }
   opacity: 0.36;
 }
 
+.door-open {
+  border-style: dashed;
+  border-color: rgba(245, 166, 35, 0.35);
+}
+
 .calendar-strip-sub {
   display: flex;
   align-items: baseline;
@@ -1741,6 +1746,7 @@ html[data-theme="candle"] .link-btn { color: var(--gold-bright); }
 .journey-today { border-color: var(--gold-bright); box-shadow: 0 0 0 3px rgba(232, 197, 106, 0.12); }
 .journey-missed { opacity: 0.6; border-style: dashed; }
 .journey-future { opacity: 0.36; }
+.journey-open { border-style: dashed; border-color: rgba(217, 178, 95, 0.45); }
 
 .badges {
   display: grid;

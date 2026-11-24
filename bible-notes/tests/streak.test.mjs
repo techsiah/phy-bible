@@ -162,6 +162,12 @@ test('before the event every door is closed', () => {
   assert.ok(states.every((entry) => entry.state === 'future'));
 });
 
+test('early access opens the doors before the event', () => {
+  const states = buildDayStates({}, '2026-11-21', EVENT, { openAll: true });
+  assert.equal(states.length, 25);
+  assert.ok(states.every((entry) => entry.state === 'open'));
+});
+
 test('an extra reading alone keeps the streak alive', () => {
   const reads = {
     '2026-12-01': { planRead: false, extraReads: 1, refs: ['Romans 8'] }

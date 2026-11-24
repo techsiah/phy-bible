@@ -112,7 +112,7 @@ service cloud.firestore {
     match /board/{roll} {
       allow read: if signedIn();
 
-      allow create, update: if signedIn()
+      allow create: if signedIn()
         && isOwner(roll)
         && request.resource.data.roll == roll
         && (!request.resource.data.keys().hasAny(['name'])
@@ -143,6 +143,46 @@ service cloud.firestore {
         && request.resource.data.points >= 0
         && request.resource.data.points <= 810
         && request.resource.data.updatedAt is number;
+
+      /* The organizer portal toggles early access on a student's projection.
+         Board docs hold no private data, and the flag only opens the
+         pre-event preview, so a field-only update is allowed for any
+         signed-in device (anonymous auth cannot identify the organizer). */
+      allow update: if signedIn()
+        && (
+          (isOwner(roll)
+            && request.resource.data.roll == roll
+            && (!request.resource.data.keys().hasAny(['name'])
+              || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
+            && (!request.resource.data.keys().hasAny(['gender'])
+              || (request.resource.data.gender is string
+                && (request.resource.data.gender == ''
+                  || request.resource.data.gender in ['male', 'female', 'other', 'prefer-not'])))
+            && request.resource.data.dept is string
+            && request.resource.data.dept.size() <= 60
+            && request.resource.data.year is string
+            && request.resource.data.year.size() <= 8
+            && request.resource.data.program is string
+            && request.resource.data.program.size() <= 8
+            && (request.resource.data.groupCode == null
+              || (request.resource.data.groupCode is string
+                && request.resource.data.groupCode.size() == 6))
+            && request.resource.data.currentStreak is int
+            && request.resource.data.currentStreak >= 0
+            && request.resource.data.currentStreak <= 25
+            && request.resource.data.longestStreak is int
+            && request.resource.data.longestStreak >= 0
+            && request.resource.data.longestStreak <= 25
+            && request.resource.data.totalDays is int
+            && request.resource.data.totalDays >= 0
+            && request.resource.data.totalDays <= 25
+            && request.resource.data.points is int
+            && request.resource.data.points >= 0
+            && request.resource.data.points <= 810
+            && request.resource.data.updatedAt is number)
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['earlyAccess'])
+            && request.resource.data.earlyAccess is bool)
+        );
 
       allow delete: if false;
     }

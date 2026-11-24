@@ -385,6 +385,7 @@ function renderParticipants() {
         <td class="roll-cell">
           <strong>${r.name || r.roll || '—'}</strong>
           <span style="font-size: 0.74rem; color: var(--ink-faint);">${r.roll || '—'} · ${r.program || 'UG'}</span>
+          ${r.earlyAccess ? '<span class="early-pill" title="Early access to the calendar">Early</span>' : ''}
         </td>
         <td>
           <div style="font-weight: 500;">${deptShort}</div>
@@ -402,6 +403,7 @@ function renderParticipants() {
         <td>
           <div class="action-btn-row">
             <button class="action-btn" data-action="view-reader" data-roll="${r.roll}">Details</button>
+            <button class="action-btn${r.earlyAccess ? ' primary' : ''}" data-action="toggle-early" data-roll="${r.roll}" aria-pressed="${r.earlyAccess ? 'true' : 'false'}" title="Open the calendar before December 1">${r.earlyAccess ? 'Early ✓' : 'Early'}</button>
             <button class="action-btn primary" data-action="relink-reader" data-roll="${r.roll}">Relink</button>
           </div>
         </td>
@@ -422,6 +424,31 @@ function renderParticipants() {
       document.querySelector('.admin-tab[data-tab="recovery"]')?.click();
     });
   });
+
+  tbody.querySelectorAll('button[data-action="toggle-early"]').forEach((btn) => {
+    btn.addEventListener('click', () => toggleEarlyAccess(btn.dataset.roll, btn));
+  });
+}
+
+async function toggleEarlyAccess(roll, btn) {
+  const reader = adminState.readers.find((r) => r.roll === roll);
+  if (!reader) return;
+  if (!adminState.backend) {
+    showToast('Connect to Firebase before changing early access.');
+    return;
+  }
+  const next = !reader.earlyAccess;
+  btn.disabled = true;
+  try {
+    await adminState.backend.setEarlyAccess(roll, next);
+    reader.earlyAccess = next;
+    renderParticipants();
+    showToast(next ? `Early access enabled for ${roll}.` : `Early access removed for ${roll}.`);
+  } catch (err) {
+    showToast(err.message || 'Could not update early access.');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function initParticipantsFilters() {

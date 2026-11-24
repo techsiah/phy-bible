@@ -158,6 +158,7 @@ const state = {
   selectedDay: 1,
   view: 'today',
   board: 'streaks',
+  earlyAccess: false,
   cache: null,
   group: null,
   noteQuery: '',
@@ -423,6 +424,25 @@ function currentTodayIndex() {
   return todayIndex(state.today, EVENT.start, EVENT.end);
 }
 
+/* Preview mode: the organizer can open the calendar early for one reader.
+   It only shows the readings; points and streaks still start on December 1. */
+function earlyOpen() {
+  return state.phase === 'before' && state.earlyAccess && Boolean(state.profile);
+}
+
+async function loadEarlyAccess() {
+  if (!state.backend || !state.profile || state.phase !== 'before') {
+    state.earlyAccess = false;
+    return;
+  }
+  try {
+    const board = await state.backend.getBoard(state.profile.roll);
+    state.earlyAccess = Boolean(board && board.earlyAccess);
+  } catch (err) {
+    state.earlyAccess = false;
+  }
+}
+
 function readState(day) {
   return state.reads[day] || { planRead: false, extraReads: 0, refs: [] };
 }
@@ -475,6 +495,8 @@ async function bootBackend() {
   if (state.profile) {
     const ok = await hydrate();
     if (!ok && state.backend?.mode === 'firebase') showRecovery();
+    await loadEarlyAccess();
+    renderAll();
   }
   // Splash screen stays until user clicks 'Explore the readings' or 'Register / Join'
   renderCover();
@@ -799,7 +821,7 @@ function renderToday() {
 
 function renderAdvent() {
   if (!dom.adventStrip) return;
-  const states = buildDayStates(state.reads, state.today, EVENT);
+  const states = buildDayStates(state.reads, state.today, EVENT, { openAll: earlyOpen() });
   const fragment = document.createDocumentFragment();
   states.forEach((entry) => {
     const button = document.createElement('button');
@@ -809,7 +831,7 @@ function renderAdvent() {
     button.disabled = entry.state === 'future';
     button.setAttribute(
       'aria-label',
-      `Day ${entry.day}${entry.read ? ', read' : ''}${entry.state === 'future' ? ', locked' : ''}`
+      `Day ${entry.day}${entry.read ? ', read' : ''}${entry.state === 'future' ? ', locked' : ''}${entry.state === 'open' ? ', early access' : ''}`
     );
     if (entry.day === state.selectedDay) button.classList.add('is-selected');
 
@@ -841,8 +863,12 @@ function renderAdvent() {
   if (dom.adventProgress) dom.adventProgress.textContent = `${read} of ${states.length} doors`;
   if (dom.adventHint) {
     if (state.phase === 'before') {
-      const days = daysUntil(EVENT.start, state.today);
-      dom.adventHint.textContent = `The calendar opens in ${days} day${days === 1 ? '' : 's'}.`;
+      if (earlyOpen()) {
+        dom.adventHint.textContent = 'Early access · every door is open. Points begin December 1.';
+      } else {
+        const days = daysUntil(EVENT.start, state.today);
+        dom.adventHint.textContent = `The calendar opens in ${days} day${days === 1 ? '' : 's'}.`;
+      }
     } else if (state.phase === 'after') {
       dom.adventHint.textContent = 'The calendar is complete. Every door stays open for reading.';
     } else {
@@ -853,16 +879,17 @@ function renderAdvent() {
 
 function renderReading() {
   if (!dom.readingCard) return;
+  const preview = earlyOpen();
   const plan = currentPlan();
   const selectedDate = dateForDay(EVENT.start, state.selectedDay);
   const today = state.selectedDay === currentTodayIndex() && state.phase === 'during';
-  const isFuture = selectedDate > state.today;
+  const isFuture = !preview && selectedDate > state.today;
 
   dom.readingCard.classList.toggle('is-today', today);
   dom.readingCard.classList.toggle('is-future', isFuture);
   dom.readingCard.classList.toggle('is-past', selectedDate < state.today);
 
-  if (state.phase === 'before') {
+  if (state.phase === 'before' && !preview) {
     if (dom.readingDay) dom.readingDay.textContent = 'Advent';
     if (dom.readingTheme) dom.readingTheme.textContent = 'Get ready';
     if (dom.readingRef) dom.readingRef.textContent = '';
@@ -941,7 +968,9 @@ function renderReading() {
   }
 
   if (dom.readStatus) {
-    if (today) {
+    if (preview) {
+      dom.readStatus.textContent = `Early access · reading only. Points and streaks begin ${formatLongDate(EVENT.start)}.`;
+    } else if (today) {
       dom.readStatus.textContent = data.planRead
         ? `Read today · ${dayPoints(data, EVENT.points)} points · ${state.stats.currentStreak} day streak`
         : 'Not yet read today. Mark it to keep your streak.';
@@ -999,7 +1028,7 @@ function renderJourney() {
   }
 
   if (dom.journeyGrid) {
-    const states = buildDayStates(state.reads, state.today, EVENT);
+    const states = buildDayStates(state.reads, state.today, EVENT, { openAll: earlyOpen() });
     const fragment = document.createDocumentFragment();
     states.forEach((entry) => {
       const button = document.createElement('button');
@@ -1480,7 +1509,7 @@ async function submitOnboarding(event) {
   event.preventDefault();
   if (state.backendReady) await state.backendReady;
   if (!state.backend) {
-    dom.obError.textContent = 'Cannot reach the reading server. Check your connection and try again.';
+    dom.obError.textContent = state.warning || 'Cannot reach the reading server. Check your connection and try again.';
     return;
   }
 
@@ -1580,6 +1609,7 @@ async function submitOnboarding(event) {
     // instead of overwriting them with an empty local copy.
     const restored = await hydrate({ claim: false });
     if (!restored) throw new Error('Could not load your saved entry. Try again.');
+    await loadEarlyAccess();
 
     closeDialog(dom.onboarding);
     enterApp();
