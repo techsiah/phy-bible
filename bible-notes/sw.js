@@ -21,6 +21,7 @@ const ASSETS = [
   'js/pwa.js',
   'js/config.js',
   'js/plan.js',
+  'js/plan-ml.js',
   'js/refs.js',
   'js/streak.js',
   'js/store.js',

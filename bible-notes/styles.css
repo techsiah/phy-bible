@@ -1754,6 +1754,42 @@ html[data-theme="candle"] .reading {
   gap: 12px;
   margin-bottom: 12px;
 }
+.reading-head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.bible-lang-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line-soft);
+}
+.lang-pill {
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1.2;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.lang-pill.is-active {
+  background: var(--gold);
+  color: #FFFFFF;
+}
+.passage.is-ml p {
+  line-height: 1.85;
+  font-size: 0.98rem;
+}
 .reading-day {
   font-family: var(--font-sans);
   font-size: 0.68rem;

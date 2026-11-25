@@ -253,7 +253,13 @@
         <article class="reading" id="readingCard" aria-live="polite">
           <header class="reading-head">
             <span class="reading-day" id="readingDay">Day 1</span>
-            <span class="reading-theme" id="readingTheme">Hope</span>
+            <div class="reading-head-right">
+              <div class="bible-lang-switch" id="bibleLangSwitch" role="group" aria-label="Bible language">
+                <button type="button" class="lang-pill is-active" data-bible-lang="en" aria-pressed="true">EN</button>
+                <button type="button" class="lang-pill" data-bible-lang="ml" aria-pressed="false">മലയാളം</button>
+              </div>
+              <span class="reading-theme" id="readingTheme">Hope</span>
+            </div>
           </header>
           <p class="reading-ref" id="readingRef"></p>
           <h2 class="reading-title" id="readingTitle"></h2>

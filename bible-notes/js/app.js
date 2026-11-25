@@ -2,6 +2,7 @@
    Local-first reading, streaks, notes, groups, and a shared leaderboard. */
 import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, COUNTER_ACTIVITIES, isCleanName, yearLabel, readerKey } from './config.js';
 import { PLAN, DAILY_VERSES, EDITION } from './plan.js';
+import { PLAN_ML } from './plan-ml.js';
 import {
   BOOKS, chaptersFor, formatBookName, parseReference, assembleReference, formatReference,
   parseTags, normalizeRoll, isValidRoll, normalizeGroupCode
@@ -37,6 +38,7 @@ const dom = {
   adventProgress: $('adventProgress'),
   adventHint: $('adventHint'),
   readingCard: $('readingCard'),
+  bibleLangSwitch: $('bibleLangSwitch'),
   readingDay: $('readingDay'),
   readingTheme: $('readingTheme'),
   readingRef: $('readingRef'),
@@ -955,6 +957,61 @@ function renderAdvent() {
   }
 }
 
+const READ_TIMER_SECONDS = 15;
+const unlockedReadDays = new Set();
+let readTimerInterval = null;
+let readTimerState = { dayKey: null, remaining: 0 };
+
+function stopReadTimer() {
+  if (readTimerInterval) {
+    window.clearInterval(readTimerInterval);
+    readTimerInterval = null;
+  }
+}
+
+function updateMarkReadButton(selectedDate, data, today, gain) {
+  if (!dom.markReadBtn) return;
+  dom.markReadBtn.hidden = false;
+  if (data.planRead) {
+    dom.markReadBtn.disabled = true;
+    dom.markReadBtn.textContent = 'Completed ✓';
+    return;
+  }
+  const remaining = readTimerState.dayKey === selectedDate ? readTimerState.remaining : 0;
+  if (!unlockedReadDays.has(selectedDate) && remaining > 0) {
+    dom.markReadBtn.disabled = true;
+    dom.markReadBtn.textContent = `Completed (${remaining}s)`;
+  } else {
+    dom.markReadBtn.disabled = false;
+    dom.markReadBtn.textContent = today ? `Completed (+${gain})` : 'Completed';
+  }
+}
+
+function ensureReadTimer(selectedDate, data, today, gain) {
+  if (data.planRead || unlockedReadDays.has(selectedDate)) {
+    stopReadTimer();
+    readTimerState = { dayKey: selectedDate, remaining: 0 };
+    return;
+  }
+  if (readTimerState.dayKey === selectedDate && readTimerInterval) {
+    return;
+  }
+  stopReadTimer();
+  readTimerState = { dayKey: selectedDate, remaining: READ_TIMER_SECONDS };
+  readTimerInterval = window.setInterval(() => {
+    if (readTimerState.dayKey !== selectedDate) {
+      stopReadTimer();
+      return;
+    }
+    readTimerState.remaining = Math.max(0, readTimerState.remaining - 1);
+    if (readTimerState.remaining <= 0) {
+      unlockedReadDays.add(selectedDate);
+      stopReadTimer();
+    }
+    updateMarkReadButton(selectedDate, readState(selectedDate), today, gain);
+  }, 1000);
+}
+
 function renderReading() {
   if (!dom.readingCard) return;
   const preview = earlyOpen();
@@ -968,6 +1025,8 @@ function renderReading() {
   dom.readingCard.classList.toggle('is-past', selectedDate < state.today);
 
   if (state.phase === 'before' && !preview) {
+    stopReadTimer();
+    if (dom.bibleLangSwitch) dom.bibleLangSwitch.hidden = true;
     if (dom.readingDay) dom.readingDay.textContent = 'Advent';
     if (dom.readingTheme) dom.readingTheme.textContent = 'Get ready';
     if (dom.readingRef) dom.readingRef.textContent = '';
@@ -987,6 +1046,8 @@ function renderReading() {
   }
 
   if (isFuture) {
+    stopReadTimer();
+    if (dom.bibleLangSwitch) dom.bibleLangSwitch.hidden = true;
     if (dom.readingDay) dom.readingDay.textContent = `Day ${state.selectedDay}`;
     if (dom.readingTheme) dom.readingTheme.textContent = plan.theme;
     if (dom.readingRef) dom.readingRef.textContent = plan.ref;
@@ -1005,13 +1066,27 @@ function renderReading() {
     return;
   }
 
+  const bibleLang = getBibleLang();
+  const mlPlan = bibleLang === 'ml' ? PLAN_ML.find((entry) => entry.day === plan.day) : null;
+
+  if (dom.bibleLangSwitch) {
+    dom.bibleLangSwitch.hidden = false;
+    dom.bibleLangSwitch.querySelectorAll('[data-bible-lang]').forEach((btn) => {
+      const active = btn.dataset.bibleLang === bibleLang;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', String(active));
+    });
+  }
+
   if (dom.readingDay) dom.readingDay.textContent = `Day ${state.selectedDay}`;
   if (dom.readingTheme) dom.readingTheme.textContent = plan.theme;
-  if (dom.readingRef) dom.readingRef.textContent = plan.ref;
-  if (dom.readingTitle) dom.readingTitle.textContent = plan.title;
+  if (dom.readingRef) dom.readingRef.textContent = mlPlan ? mlPlan.ref : plan.ref;
+  if (dom.readingTitle) dom.readingTitle.textContent = mlPlan ? mlPlan.title : plan.title;
   if (dom.passageText) {
+    dom.passageText.classList.toggle('is-ml', Boolean(mlPlan));
+    const verses = mlPlan ? mlPlan.verses : plan.verses;
     const fragment = document.createDocumentFragment();
-    plan.verses.forEach((verse) => {
+    verses.forEach((verse) => {
       const p = document.createElement('p');
       const sup = el('sup', '', String(verse.v));
       p.append(sup, document.createTextNode(` ${verse.t}`));
@@ -1027,10 +1102,8 @@ function renderReading() {
   const gain = Math.max(0, after - before);
 
   if (dom.markReadBtn) {
-    const show = today && !data.planRead;
-    dom.markReadBtn.hidden = !show;
-    dom.markReadBtn.disabled = !show;
-    dom.markReadBtn.textContent = data.planRead ? 'Read today ✓' : `Mark as read (+${gain})`;
+    ensureReadTimer(selectedDate, data, today, gain);
+    updateMarkReadButton(selectedDate, data, today, gain);
   }
   if (dom.writeNoteBtn) {
     dom.writeNoteBtn.hidden = false;
@@ -1831,11 +1904,19 @@ async function generateGroupCode() {
 
 async function markRead() {
   if (!requireProfile()) return;
-  if (state.phase !== 'during' || state.selectedDay !== currentTodayIndex()) return;
-  const day = state.today;
+  const preview = earlyOpen();
+  const day = dateForDay(EVENT.start, state.selectedDay);
+  const today = state.selectedDay === currentTodayIndex() && state.phase === 'during';
+  const isFuture = !preview && day > state.today;
+  if ((state.phase === 'before' && !preview) || isFuture) return;
+
   const data = readState(day);
   if (data.planRead) {
-    showToast('Today is already marked.');
+    showToast('Already marked as completed.');
+    return;
+  }
+  if (!unlockedReadDays.has(day)) {
+    showToast('Please finish reading the passage first.');
     return;
   }
   const beforeStreak = state.stats.currentStreak;
@@ -1848,16 +1929,22 @@ async function markRead() {
   };
   recompute();
   persist();
-  await saveDay(day);
-  await syncReader();
+  if (!preview && day >= EVENT.start && day <= EVENT.end && state.phase !== 'before') {
+    await saveDay(day);
+    await syncReader();
+  }
   renderAll();
-  const gained = Math.max(0, dayPoints(state.reads[day], EVENT.points) - beforePoints);
-  const streak = state.stats.currentStreak;
-  showToast(
-    streak > beforeStreak
-      ? `+${gained} points · ${streak} day streak`
-      : `+${gained} points`
-  );
+  if (today) {
+    const gained = Math.max(0, dayPoints(state.reads[day], EVENT.points) - beforePoints);
+    const streak = state.stats.currentStreak;
+    showToast(
+      streak > beforeStreak
+        ? `+${gained} points · ${streak} day streak`
+        : `+${gained} points`
+    );
+  } else {
+    showToast('Reading marked as completed!');
+  }
 }
 
 async function toggleCounterActivity() {
@@ -2395,6 +2482,26 @@ function startClock() {
 
 /* ── Events ────────────────────────────────────────────────── */
 
+const BIBLE_LANG_KEY = 'xmas2026.bibleLang.v1';
+
+function getBibleLang() {
+  try {
+    return localStorage.getItem(BIBLE_LANG_KEY) === 'ml' ? 'ml' : 'en';
+  } catch (err) {
+    return 'en';
+  }
+}
+
+function setBibleLang(lang) {
+  const next = lang === 'ml' ? 'ml' : 'en';
+  try {
+    localStorage.setItem(BIBLE_LANG_KEY, next);
+  } catch (err) {
+    /* ignore */
+  }
+  renderReading();
+}
+
 function isTyping(target) {
   if (!target) return false;
   const tag = target.tagName;
@@ -2416,6 +2523,14 @@ function bindEvents() {
     }
   });
   // Splash screen stays until user clicks one of the 2 action buttons
+
+  if (dom.bibleLangSwitch) {
+    dom.bibleLangSwitch.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-bible-lang]');
+      if (!btn) return;
+      setBibleLang(btn.dataset.bibleLang);
+    });
+  }
 
   document.querySelectorAll('[data-view]').forEach((button) => {
     button.addEventListener('click', () => {
