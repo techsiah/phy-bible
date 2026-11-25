@@ -79,7 +79,8 @@ export function normalizeReads(raw) {
     out[key] = {
       planRead: Boolean(value.planRead),
       extraReads,
-      refs
+      refs,
+      counterDone: Boolean(value.counterDone)
     };
   }
   return out;

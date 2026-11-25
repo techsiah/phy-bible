@@ -265,6 +265,15 @@
             <button class="btn btn-quiet" id="extraReadBtn" type="button" hidden>Read something else</button>
           </div>
           <p class="reading-status" id="readStatus" aria-live="polite"></p>
+          <div class="counter-activity" id="counterActivityBox" hidden>
+            <div class="counter-activity-head">
+              <span class="counter-activity-kicker">Counter Activity</span>
+              <span class="counter-activity-badge" id="counterActivityBadge">After reading</span>
+            </div>
+            <h3 class="counter-activity-title" id="counterActivityTitle"></h3>
+            <p class="counter-activity-desc" id="counterActivityDesc"></p>
+            <button class="btn btn-ghost counter-activity-btn" id="counterActivityBtn" type="button">Mark as done</button>
+          </div>
           <p class="guest-reading-hint" id="guestReadingHint" hidden>
             Browsing as guest · <button type="button" class="btn-quiet" id="guestInlineRegisterBtn">Register roll to track streak & earn points</button>
           </p>

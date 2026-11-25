@@ -1,6 +1,6 @@
 /* Christmas 2026 — Jesus Youth · Pazhassi Raja College
    Local-first reading, streaks, notes, groups, and a shared leaderboard. */
-import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, isCleanName, yearLabel, readerKey } from './config.js';
+import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, COUNTER_ACTIVITIES, isCleanName, yearLabel, readerKey } from './config.js';
 import { PLAN, DAILY_VERSES, EDITION } from './plan.js';
 import {
   BOOKS, chaptersFor, formatBookName, parseReference, assembleReference, formatReference,
@@ -47,6 +47,11 @@ const dom = {
   writeNoteBtn: $('writeNoteBtn'),
   extraReadBtn: $('extraReadBtn'),
   readStatus: $('readStatus'),
+  counterActivityBox: $('counterActivityBox'),
+  counterActivityBadge: $('counterActivityBadge'),
+  counterActivityTitle: $('counterActivityTitle'),
+  counterActivityDesc: $('counterActivityDesc'),
+  counterActivityBtn: $('counterActivityBtn'),
   streakNumber: $('streakNumber'),
   streakLabel: $('streakLabel'),
   streakNote: $('streakNote'),
@@ -967,6 +972,7 @@ function renderReading() {
     if (dom.markReadBtn) dom.markReadBtn.hidden = true;
     if (dom.writeNoteBtn) dom.writeNoteBtn.hidden = true;
     if (dom.extraReadBtn) dom.extraReadBtn.hidden = true;
+    if (dom.counterActivityBox) dom.counterActivityBox.hidden = true;
     if (dom.readStatus) dom.readStatus.textContent = `Begins in ${daysUntil(EVENT.start, state.today)} days.`;
     return;
   }
@@ -985,6 +991,7 @@ function renderReading() {
     if (dom.markReadBtn) dom.markReadBtn.hidden = true;
     if (dom.writeNoteBtn) dom.writeNoteBtn.hidden = true;
     if (dom.extraReadBtn) dom.extraReadBtn.hidden = true;
+    if (dom.counterActivityBox) dom.counterActivityBox.hidden = true;
     if (dom.readStatus) dom.readStatus.textContent = `Opens ${formatLongDate(selectedDate)}.`;
     return;
   }
@@ -1048,6 +1055,23 @@ function renderReading() {
       }
     } else {
       dom.readStatus.textContent = `Opens ${formatLongDate(selectedDate)}.`;
+    }
+  }
+
+  if (dom.counterActivityBox) {
+    const activity = COUNTER_ACTIVITIES[state.selectedDay - 1] || COUNTER_ACTIVITIES[0];
+    const showActivity = Boolean(activity) && (data.planRead || preview);
+    dom.counterActivityBox.hidden = !showActivity;
+    if (showActivity) {
+      const done = Boolean(data.counterDone);
+      dom.counterActivityBox.classList.toggle('is-done', done);
+      if (dom.counterActivityTitle) dom.counterActivityTitle.textContent = activity.title;
+      if (dom.counterActivityDesc) dom.counterActivityDesc.textContent = activity.detail;
+      if (dom.counterActivityBadge) dom.counterActivityBadge.textContent = done ? 'Completed' : 'After reading';
+      if (dom.counterActivityBtn) {
+        dom.counterActivityBtn.textContent = done ? 'Completed ✓' : 'Mark as done';
+        dom.counterActivityBtn.setAttribute('aria-pressed', String(done));
+      }
     }
   }
 }
@@ -1843,7 +1867,8 @@ async function markRead() {
   state.reads[day] = {
     planRead: true,
     extraReads: Number(data.extraReads) || 0,
-    refs: data.refs || []
+    refs: data.refs || [],
+    counterDone: Boolean(data.counterDone)
   };
   recompute();
   persist();
@@ -1857,6 +1882,28 @@ async function markRead() {
       ? `+${gained} points · ${streak} day streak`
       : `+${gained} points`
   );
+}
+
+async function toggleCounterActivity() {
+  if (!requireProfile()) return;
+  const selectedDate = dateForDay(EVENT.start, state.selectedDay);
+  const preview = earlyOpen();
+  if (!preview && selectedDate > state.today) return;
+  const data = readState(selectedDate);
+  if (!data.planRead && !preview) return;
+  const nextDone = !data.counterDone;
+  state.reads[selectedDate] = {
+    planRead: Boolean(data.planRead),
+    extraReads: Number(data.extraReads) || 0,
+    refs: data.refs || [],
+    counterDone: nextDone
+  };
+  persist();
+  if (!preview && selectedDate >= EVENT.start && selectedDate <= EVENT.end) {
+    await saveDay(selectedDate);
+  }
+  renderReading();
+  showToast(nextDone ? 'Counter activity completed!' : 'Counter activity unmarked.');
 }
 
 async function logExtra(ref) {
@@ -1873,7 +1920,8 @@ async function logExtra(ref) {
   state.reads[day] = {
     planRead: Boolean(data.planRead),
     extraReads: (Number(data.extraReads) || 0) + 1,
-    refs: [...(data.refs || []), ref].slice(0, 4)
+    refs: [...(data.refs || []), ref].slice(0, 4),
+    counterDone: Boolean(data.counterDone)
   };
   recompute();
   persist();
@@ -2360,6 +2408,7 @@ function bindEvents() {
   syncGroupFields();
 
   if (dom.markReadBtn) dom.markReadBtn.addEventListener('click', markRead);
+  if (dom.counterActivityBtn) dom.counterActivityBtn.addEventListener('click', toggleCounterActivity);
   if (dom.writeNoteBtn) dom.writeNoteBtn.addEventListener('click', () => openNote(null));
   if (dom.extraReadBtn) dom.extraReadBtn.addEventListener('click', openExtraDialog);
 

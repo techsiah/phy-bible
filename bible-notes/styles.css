@@ -1816,6 +1816,76 @@ html[data-theme="candle"] .reading {
   min-height: 1.2em;
 }
 
+/* Counter Activity (after reading) */
+.counter-activity {
+  margin-top: 16px;
+  padding: 15px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.counter-activity.is-done {
+  border-color: rgba(217, 178, 95, 0.55);
+  background: var(--gold-soft);
+}
+.counter-activity-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.counter-activity-kicker {
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold-deep, var(--gold));
+}
+.counter-activity-badge {
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+}
+.counter-activity.is-done .counter-activity-badge {
+  color: var(--gold-deep, var(--gold));
+  border-color: rgba(217, 178, 95, 0.45);
+}
+.counter-activity-title {
+  margin: 2px 0 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.counter-activity-desc {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.counter-activity-btn {
+  margin-top: 6px;
+  align-self: flex-start;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 0.82rem;
+  border-radius: 999px;
+}
+.counter-activity.is-done .counter-activity-btn {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fff;
+}
+
 /* ── Buttons ───────────────────────────────────────────────── */
 
 .btn {
