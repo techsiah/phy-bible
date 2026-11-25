@@ -592,7 +592,7 @@ html[data-theme="candle"] .cover-open-btn {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin: -16px -16px 18px;
+  margin: -16px -16px 12px;
   padding: 0 16px 14px;
   background: rgba(247, 245, 240, 0.86);
   -webkit-backdrop-filter: blur(20px) saturate(1.6);
@@ -1090,7 +1090,7 @@ html[data-theme="candle"] .icon-moon { display: none; }
 /* ── Calendar Strip Wrap ───────────────────────────────────── */
 
 .calendar-strip-wrap {
-  margin: 4px 0 22px;
+  margin: 4px 0 16px;
 }
 
 .advent-strip {
@@ -1101,7 +1101,7 @@ html[data-theme="candle"] .icon-moon { display: none; }
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  padding: 6px 2px 10px;
+  padding: 4px 4px 12px;
 }
 .advent-strip::-webkit-scrollbar {
   display: none;
@@ -1123,6 +1123,7 @@ html[data-theme="candle"] .icon-moon { display: none; }
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: var(--shadow-sm);
   position: relative;
+  overflow: hidden;
   padding: 6px 4px;
 }
 
