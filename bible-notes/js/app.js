@@ -1271,16 +1271,25 @@ function renderMyGroup() {
   }
 
   const card = el('div', 'group-card');
-  card.append(
+  const soloHead = el('div', 'group-head');
+  soloHead.append(
     el('p', 'kicker', 'Your group'),
-    el('p', 'muted', 'You are reading solo. You still appear on the individual boards.')
+    el('span', 'group-status-pill', 'Solo')
+  );
+  card.append(
+    soloHead,
+    el('p', 'group-desc', 'Read with friends in groups of up to 4. Create a group or join with an invite code.')
   );
   const create = document.createElement('button');
   create.type = 'button';
-  create.className = 'btn btn-ghost';
+  create.className = 'btn btn-ghost group-create-btn';
   create.dataset.act = 'create-group';
   create.textContent = 'Create a group';
   card.append(create);
+
+  const divider = el('div', 'group-divider');
+  divider.append(el('span', '', 'or join with a code'));
+  card.append(divider);
 
   const form = document.createElement('form');
   form.className = 'join-form';
@@ -1289,7 +1298,7 @@ function renderMyGroup() {
   input.id = 'joinCode';
   input.name = 'joinCode';
   input.maxLength = EVENT.groupCodeLength;
-  input.placeholder = 'Join code';
+  input.placeholder = 'Enter 6-letter code';
   input.autocomplete = 'off';
   input.setAttribute('aria-label', 'Group join code');
   const join = document.createElement('button');
@@ -1386,23 +1395,41 @@ function renderBoard() {
       dom.boardList.replaceChildren(el('li', 'board-empty', 'No readers yet. Be the first.'));
     } else {
       const fragment = document.createDocumentFragment();
+      const myId = state.profile ? readerKey(state.profile) : null;
       sorted.slice(0, 100).forEach((reader, index) => {
         const item = el('li', 'board-row');
-        if (reader.roll === state.profile?.roll) item.classList.add('is-me');
+        const rId = reader.id || readerKey(reader);
+        if (myId && rId === myId) item.classList.add('is-me');
+        const rank = el('span', 'board-rank', String(index + 1));
+        if (index === 0) rank.classList.add('rank-1');
+        else if (index === 1) rank.classList.add('rank-2');
+        else if (index === 2) rank.classList.add('rank-3');
+
         const value = el('span', 'board-value');
         if (state.board === 'points') {
           value.append(el('strong', '', String(Number(reader.points) || 0)), el('small', '', 'points'));
         } else {
           value.append(el('strong', '', String(Number(reader.currentStreak) || 0)), el('small', '', 'day streak'));
         }
+        const shortDept = String(reader.dept || '').replace(/^Department of\s+/i, '');
+        const yr = yearLabel(reader.year);
+        const level = [yr, reader.program].filter(Boolean).join(' ');
+        const meta = [shortDept, level].filter(Boolean).join(' · ');
+        const statText = state.board === 'points'
+          ? `${Number(reader.totalDays) || 0}d · Best ${Number(reader.longestStreak) || 0}`
+          : `Best ${Number(reader.longestStreak) || 0} · ${Number(reader.points) || 0} pts`;
+        const subText = [meta, statText].filter(Boolean).join(' · ');
+        const titleName = String(reader.name || '').trim() || `Roll ${reader.roll || ''}`.trim();
+        const titleText = reader.roll && String(reader.name || '').trim()
+          ? `${titleName} · #${reader.roll}`
+          : titleName;
+
         const main = el('span', 'board-main');
         main.append(
-          el('span', 'board-name', displayReader(reader)),
-          el('span', 'board-sub', state.board === 'points'
-            ? `${Number(reader.totalDays) || 0} days read · longest ${Number(reader.longestStreak) || 0}`
-            : `Longest ${Number(reader.longestStreak) || 0} · ${Number(reader.points) || 0} pts`)
+          el('span', 'board-name', titleText),
+          el('span', 'board-sub', subText)
         );
-        item.append(el('span', 'board-rank', String(index + 1)), main, value);
+        item.append(rank, main, value);
         fragment.append(item);
       });
       dom.boardList.replaceChildren(fragment);
@@ -1410,7 +1437,7 @@ function renderBoard() {
   }
 
   if (dom.boardFoot) {
-    dom.boardFoot.textContent = `Updated ${new Date(cache.at).toLocaleTimeString()} · Only your name, roll, gender, department, year, program, group, streak and points are public.`;
+    dom.boardFoot.textContent = `Updated ${new Date(cache.at).toLocaleTimeString()} · Phone numbers & notes stay private.`;
   }
 }
 
@@ -1472,6 +1499,11 @@ function renderAll() {
     dom.accountBtn.classList.toggle('is-signed-in', !isGuest);
     dom.accountBtn.classList.toggle('is-guest', isGuest);
     dom.accountBtn.title = isGuest ? 'Guest (Click to sign in)' : `Signed in as ${state.profile.roll}`;
+    const initialEl = $('avatarInitial');
+    if (initialEl) {
+      const display = String(state.profile?.name || state.profile?.roll || '').trim();
+      initialEl.textContent = display ? display[0].toUpperCase() : 'G';
+    }
   }
 }
 

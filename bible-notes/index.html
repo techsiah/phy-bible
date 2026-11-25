@@ -144,7 +144,7 @@
           <p class="header-greeting-sub">Advent 2026 · 25 Days of the Word</p>
         </div>
         <button class="avatar-profile-btn" id="accountBtn" type="button" aria-label="Account">
-          <img src="icon.png" alt="Jesus Youth" class="avatar-img">
+          <span class="avatar-initial" id="avatarInitial" aria-hidden="true">?</span>
         </button>
         <button id="settingsBtn" type="button" hidden></button>
         <button id="registerBtn" type="button" hidden></button>
@@ -325,7 +325,7 @@
             <button class="icon-btn small" id="refreshBoard" type="button" aria-label="Refresh leaderboard" title="Refresh">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <button class="link-btn" id="exportBoard" type="button">CSV</button>
+            <button class="board-tool-btn" id="exportBoard" type="button" title="Download CSV">CSV</button>
           </div>
         </div>
         <ol class="board-list" id="boardList"></ol>
