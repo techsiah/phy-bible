@@ -280,7 +280,7 @@
           <option value="active">Active Streaks (> 0)</option>
           <option value="broken">Inactive / Missed (0)</option>
           <option value="grouped">In a Group</option>
-          <option value="solo">Solo Readers</option>
+          <option value="solo">Companions</option>
         </select>
 
         <select id="sortParticipants" class="filter-select">
@@ -342,6 +342,7 @@
               <th>Avg Streak</th>
               <th>Avg Points</th>
               <th>Moderation</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="groupsTableBody">
@@ -487,6 +488,86 @@
           <span id="modalLastUpdated" style="font-size: 0.8rem; color: var(--ink-soft);">—</span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Edit Participant Modal ───────────────────────────────── -->
+  <div class="admin-modal-backdrop" id="editReaderModalBackdrop" hidden>
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Edit Participant</h2>
+        <button class="action-btn" id="closeEditReaderModal" type="button">✕</button>
+      </div>
+      <form id="editReaderForm" class="admin-modal-form" autocomplete="off">
+        <input type="hidden" id="editReaderId">
+        <div class="input-group">
+          <label for="editReaderName">Full Name</label>
+          <input type="text" id="editReaderName" maxlength="60" required>
+        </div>
+        <div class="recovery-form-grid" style="margin: 0;">
+          <div class="input-group">
+            <label for="editReaderRoll">Roll Number</label>
+            <input type="text" id="editReaderRoll" maxlength="24" required>
+          </div>
+          <div class="input-group">
+            <label for="editReaderGender">Gender</label>
+            <select id="editReaderGender"></select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="editReaderDept">Department</label>
+          <select id="editReaderDept" required></select>
+        </div>
+        <div class="recovery-form-grid" style="margin: 0;">
+          <div class="input-group">
+            <label for="editReaderYear">Year</label>
+            <select id="editReaderYear" required></select>
+          </div>
+          <div class="input-group">
+            <label for="editReaderProgram">Program</label>
+            <select id="editReaderProgram" required></select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="editReaderGroup">Group Code (leave blank for Companion)</label>
+          <input type="text" id="editReaderGroup" maxlength="6" placeholder="e.g. ABC123" style="text-transform: uppercase;">
+        </div>
+        <p id="editReaderError" style="color: var(--red); font-size: 0.82rem; margin: 0;" hidden></p>
+        <div class="admin-modal-actions">
+          <button type="button" class="action-btn" id="cancelEditReaderBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary small" id="saveEditReaderBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Edit Group Modal ─────────────────────────────────────── -->
+  <div class="admin-modal-backdrop" id="editGroupModalBackdrop" hidden>
+    <div class="admin-modal">
+      <div class="admin-modal-head">
+        <h2>Edit Group</h2>
+        <button class="action-btn" id="closeEditGroupModal" type="button">✕</button>
+      </div>
+      <form id="editGroupForm" class="admin-modal-form" autocomplete="off">
+        <input type="hidden" id="editGroupCodeHidden">
+        <div class="input-group">
+          <label for="editGroupCodeDisplay">Group Code</label>
+          <input type="text" id="editGroupCodeDisplay" readonly style="opacity: 0.7; font-family: var(--font-mono);">
+        </div>
+        <div class="input-group">
+          <label for="editGroupName">Group Name</label>
+          <input type="text" id="editGroupName" minlength="2" maxlength="30" required>
+        </div>
+        <div class="input-group">
+          <label>Members (First / Companion manages the group)</label>
+          <div id="editGroupMembersList" class="member-edit-list"></div>
+        </div>
+        <p id="editGroupError" style="color: var(--red); font-size: 0.82rem; margin: 0;" hidden></p>
+        <div class="admin-modal-actions">
+          <button type="button" class="action-btn" id="cancelEditGroupBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary small" id="saveEditGroupBtn">Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
 

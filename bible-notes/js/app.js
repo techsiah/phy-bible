@@ -124,8 +124,6 @@ const dom = {
   obDept: $('obDept'),
   obYear: $('obYear'),
   obProgram: $('obProgram'),
-  obGroupName: $('obGroupName'),
-  obGroupCode: $('obGroupCode'),
   obError: $('obError'),
   deptList: $('deptList'),
   bookList: $('bookList'),
@@ -147,6 +145,7 @@ const dom = {
   groupDialog: $('groupDialog'),
   groupForm: $('groupForm'),
   groupName: $('groupName'),
+  groupError: $('groupError'),
   groupCancel: $('groupCancel'),
   recoveryDialog: $('recoveryDialog'),
   recoveryTitle: $('recoveryTitle'),
@@ -258,6 +257,16 @@ function focusField(control) {
 
 async function safe(fn, fallback = null) {
   try { return await fn(); } catch (err) { console.warn(err); return fallback; }
+}
+
+/* Firestore queues writes while it cannot reach the server, so a restore on a
+   bad connection can stay pending forever. Bound it so the form can recover. */
+function withTimeout(promise, ms, message) {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timer));
 }
 
 function showToast(message, action) {
@@ -832,7 +841,7 @@ function renderCover() {
   if (dom.coverRegBtn) {
     dom.coverRegBtn.setAttribute(
       'aria-label',
-      profile ? `Signed in as ${name || profile.roll}. Tap to edit your registration.` : 'Register or join a group'
+      profile ? `Signed in as ${name || profile.roll}. Tap to continue reading.` : 'Register with Roll Number'
     );
   }
 
@@ -1263,6 +1272,7 @@ function renderMyGroup() {
 
   if (state.group) {
     const card = el('div', 'group-card');
+    const owner = isGroupOwner();
     const head = el('div', 'group-head');
     head.append(el('p', 'kicker', 'Your group'), el('h3', '', state.group.name));
     const code = el('button', 'group-code', state.group.code);
@@ -1274,12 +1284,29 @@ function renderMyGroup() {
 
     const members = Array.isArray(state.group.memberRolls) ? state.group.memberRolls : [];
     const myKey = readerKey(state.profile);
-    card.append(el('p', 'group-count', `${members.length} of ${EVENT.groupMax} members`));
+    const companionId = state.group.companionRoll || members[0];
+    card.append(el('p', 'group-count', `${members.length} of ${EVENT.groupMax} members · ${owner ? 'You are the Companion' : 'The Companion manages the group'}`));
     if (members.length) {
       const list = el('ul', 'group-members');
       members.forEach((m) => {
+        const isMe = m === myKey || m === state.profile.roll;
+        const isCompanion = m === companionId;
         const label = m.includes('|') ? m.split('|').slice(0, 2).join(' · ') : m;
-        list.append(el('li', '', (m === myKey || m === state.profile.roll) ? `${label} (you)` : label));
+        const tags = [isMe ? 'you' : '', isCompanion ? 'Companion' : ''].filter(Boolean).join(' · ');
+        const item = el('li', isMe ? 'is-me' : '');
+        item.append(el('span', 'member-name', tags ? `${label} (${tags})` : label));
+        if (owner && !isMe) {
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'member-remove';
+          remove.dataset.act = 'remove-member';
+          remove.dataset.member = m;
+          remove.setAttribute('aria-label', `Remove roll ${memberShortLabel(m)}`);
+          remove.title = `Remove roll ${memberShortLabel(m)}`;
+          remove.textContent = '×';
+          item.append(remove);
+        }
+        list.append(item);
       });
       card.append(list);
     }
@@ -1623,8 +1650,8 @@ function showOnboarding() {
 }
 
 /* Restore mode asks for the roll number and the details used at
-   registration (phone, department, year), so a returning student can pull
-   their streak and notes onto a new device. */
+   registration (phone, department, year, program), so a returning student
+   can pull their streak and notes onto a new device. */
 function setRestoreMode(on) {
   onboardingRestore = on;
   document.querySelectorAll('[data-register-only]').forEach((node) => {
@@ -1634,14 +1661,9 @@ function setRestoreMode(on) {
     const node = $(id);
     if (node) node.required = !on;
   });
-  if (on) {
-    document.querySelectorAll('[data-group-field]').forEach((node) => { node.hidden = true; });
-  } else {
-    syncGroupFields();
-  }
   if (dom.onboardDesc) {
     dom.onboardDesc.textContent = on
-      ? 'Enter your roll number, phone number, department, and year exactly as you registered.'
+      ? 'Enter your roll number, phone number, department, year, and program exactly as you registered.'
       : 'Your roll number and phone number are your entry. No email, no password.';
   }
   if (dom.onboardSubmit) dom.onboardSubmit.textContent = on ? 'Restore my entry' : 'Start reading';
@@ -1657,18 +1679,6 @@ function setRestoreMode(on) {
   if (dom.obError) dom.obError.textContent = '';
 }
 
-function groupMode() {
-  const checked = document.querySelector('input[name="groupMode"]:checked');
-  return checked ? checked.value : 'solo';
-}
-
-function syncGroupFields() {
-  const mode = groupMode();
-  document.querySelectorAll('[data-group-field]').forEach((field) => {
-    field.hidden = field.dataset.groupField !== mode;
-  });
-}
-
 async function submitOnboarding(event) {
   event.preventDefault();
   if (state.backendReady) await state.backendReady;
@@ -1681,6 +1691,7 @@ async function submitOnboarding(event) {
   const roll = String(dom.obRoll.value).trim();
   const dept = dom.obDept.value;
   const year = dom.obYear.value;
+  const program = dom.obProgram.value;
 
   if (!isValidRoll(roll)) {
     dom.obError.textContent = 'Please select a roll number.';
@@ -1702,28 +1713,41 @@ async function submitOnboarding(event) {
     focusField(dom.obYear);
     return;
   }
+  if (!program) {
+    dom.obError.textContent = 'Please select your program.';
+    focusField(dom.obProgram);
+    return;
+  }
 
   const submit = dom.onboardSubmit || dom.onboardForm.querySelector('button[type="submit"]');
   dom.obError.textContent = '';
 
   /* Returning student: roll + phone + department + year restore the same entry. */
   if (onboardingRestore) {
+    if (navigator.onLine === false) {
+      dom.obError.textContent = 'You appear to be offline. Connect to the internet and try again.';
+      return;
+    }
     setBusy(submit, true, 'Restoring…');
     try {
-      const reader = await state.backend.restoreReader(roll, phone, dept, year, program);
-      state.profile = { ...reader, roll: reader.roll || roll, phone: reader.phone || phone };
-      store.saveProfile(state.profile);
-      const restored = await hydrate({ claim: false });
-      if (!restored) throw new Error('Could not load your saved entry. Try again.');
-      await loadEarlyAccess();
+      const reader = await withTimeout((async () => {
+        const found = await state.backend.restoreReader(roll, phone, dept, year, program);
+        state.profile = { ...found, roll: found.roll || roll, phone: found.phone || phone };
+        store.saveProfile(state.profile);
+        const restored = await hydrate({ claim: false });
+        if (!restored) throw new Error('Could not load your saved entry. Try again.');
+        await loadEarlyAccess();
+        return found;
+      })(), 15000, 'Restore is taking too long. Check your internet connection and try again.');
+      if (!reader) throw new Error('Could not restore your entry. Try again.');
       closeDialog(dom.onboarding);
       enterApp();
       showToast('Welcome back. Your streak and notes are restored.');
     } catch (err) {
       if (err.code === 'PHONE_MISMATCH') {
-        dom.obError.textContent = 'Those details do not match the registration: the phone number, department, or year is different. Check them and try again.';
+        dom.obError.textContent = 'Those details do not match the registration: the phone number, department, year, or program is different. Check them and try again.';
       } else if (err.code === 'NOT_FOUND') {
-        dom.obError.textContent = 'No entry was found for that roll number. Check it, or register as a new reader.';
+        dom.obError.textContent = 'No entry was found for those details. Check the roll number, year, and program, or register as a new reader.';
       } else {
         dom.obError.textContent = err.message || 'Could not restore your entry. Check your connection and try again.';
       }
@@ -1735,8 +1759,6 @@ async function submitOnboarding(event) {
 
   const name = dom.obName.value.trim().replace(/\s+/g, ' ').slice(0, 60);
   const gender = dom.obGender.value;
-  const program = dom.obProgram.value;
-  const mode = groupMode();
 
   if (name.length < 2) {
     dom.obError.textContent = 'Please enter your full name.';
@@ -1747,35 +1769,6 @@ async function submitOnboarding(event) {
     dom.obError.textContent = 'Please select your gender.';
     focusField(dom.obGender);
     return;
-  }
-  if (!program) {
-    dom.obError.textContent = 'Please select your program.';
-    focusField(dom.obProgram);
-    return;
-  }
-
-  let groupName = '';
-  let groupCode = '';
-  if (mode === 'create') {
-    groupName = dom.obGroupName.value.trim().replace(/\s+/g, ' ').slice(0, 30);
-    if (groupName.length < 2) {
-      dom.obError.textContent = 'Give your group a name (at least 2 characters).';
-      dom.obGroupName.focus();
-      return;
-    }
-    if (!isCleanName(groupName)) {
-      dom.obError.textContent = 'Please choose a different group name.';
-      dom.obGroupName.focus();
-      return;
-    }
-  }
-  if (mode === 'join') {
-    groupCode = normalizeGroupCode(dom.obGroupCode.value);
-    if (groupCode.length !== EVENT.groupCodeLength) {
-      dom.obError.textContent = `Enter the ${EVENT.groupCodeLength}-character group code.`;
-      dom.obGroupCode.focus();
-      return;
-    }
   }
 
   setBusy(submit, true, 'Registering…');
@@ -1792,24 +1785,7 @@ async function submitOnboarding(event) {
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
-    const claimed = await state.backend.claimReader(profile);
-
-    if (mode === 'create' || mode === 'join') {
-      // Re-registering a roll can happen while its entry is still in a group.
-      // Leave that group first so a student never appears in two groups.
-      if (claimed && claimed.groupCode) {
-        await state.backend.leaveGroup(claimed.groupCode, { ...profile, groupCode: claimed.groupCode });
-      }
-    }
-
-    if (mode === 'create') {
-      const code = await generateGroupCode();
-      await state.backend.createGroup(groupName, code, profile);
-      profile.groupCode = code;
-    } else if (mode === 'join') {
-      await state.backend.joinGroup(groupCode, profile);
-      profile.groupCode = groupCode;
-    }
+    await state.backend.claimReader(profile);
 
     state.profile = profile;
     store.saveProfile(profile);
@@ -2059,85 +2035,210 @@ async function togglePin(id) {
 
 /* ── Groups ────────────────────────────────────────────────── */
 
+/* Only a registered reader may create a group, and only while reading solo.
+   Everyone who creates one can manage it from the Together section. */
+function setGroupError(message) {
+  if (dom.groupError) dom.groupError.textContent = message;
+}
+
+async function waitForBackend() {
+  if (state.backend) return true;
+  if (state.backendReady) {
+    try { await state.backendReady; } catch (err) { /* bootBackend reports it */ }
+  }
+  return Boolean(state.backend);
+}
+
+function memberShortLabel(memberId) {
+  return String(memberId || '').split('|')[0] || 'this member';
+}
+
+function isGroupOwner() {
+  if (!state.group || !state.profile) return false;
+  const members = Array.isArray(state.group.memberRolls) ? state.group.memberRolls : [];
+  const myKey = readerKey(state.profile);
+  return state.group.createdBy === state.profile.uid
+    || state.group.companionRoll === myKey
+    || (members[0] && members[0] === myKey);
+}
+
 function openGroupDialog() {
+  if (!state.profile) {
+    showToast('Register your roll number first. Groups are for registered readers.');
+    showOnboarding();
+    return;
+  }
+  if (state.group || state.profile.groupCode) {
+    showToast('You are already in a group. Manage it from the Together section.');
+    return;
+  }
   if (dom.groupForm) dom.groupForm.reset();
+  setGroupError('');
   openDialog(dom.groupDialog);
   window.setTimeout(() => dom.groupName?.focus(), 100);
 }
 
 async function submitGroup(event) {
   event.preventDefault();
-  if (!state.profile || !state.backend) return;
+  setGroupError('');
+  if (!state.profile) {
+    setGroupError('Register your roll number first. Groups are for registered readers.');
+    return;
+  }
+  if (state.group || state.profile.groupCode) {
+    setGroupError('You are already in a group. Leave it before creating another one.');
+    return;
+  }
+  if (!state.profile.program) {
+    setGroupError('Your registration is missing the program. Restore your entry first.');
+    return;
+  }
   const name = dom.groupName.value.trim().replace(/\s+/g, ' ').slice(0, 30);
   if (name.length < 2) {
-    showToast('Give your group a name (at least 2 characters).');
+    setGroupError('Give your group a name (at least 2 characters).');
     dom.groupName.focus();
     return;
   }
   if (!isCleanName(name)) {
-    showToast('Please choose a different group name.');
+    setGroupError('Please choose a different group name.');
     dom.groupName.focus();
     return;
   }
   const submit = dom.groupForm.querySelector('button[type="submit"]');
   setBusy(submit, true, 'Creating…');
   try {
-    const code = await generateGroupCode();
-    const group = await state.backend.createGroup(name, code, state.profile);
+    if (!(await waitForBackend())) {
+      throw new Error('Cannot reach the reading server. Check your connection and try again.');
+    }
+    const code = await withTimeout(
+      generateGroupCode(),
+      12000,
+      'Could not reserve a group code. Check your connection and try again.'
+    );
+    const group = await withTimeout(
+      state.backend.createGroup(name, code, state.profile),
+      20000,
+      'Creating the group is taking too long. Check your internet connection and try again.'
+    );
     state.profile.groupCode = group.code;
     store.saveProfile(state.profile);
     state.group = group;
-    await syncReader();
     closeDialog(dom.groupDialog);
     renderMyGroup();
     renderProfile();
     loadBoard(true);
     showToast(`Group created. Share code ${group.code}.`);
+    safe(() => syncReader());
   } catch (err) {
-    showToast(err.message || 'Could not create the group.');
+    setGroupError(err.message || 'Could not create the group. Check your connection and try again.');
   } finally {
     setBusy(submit, false);
   }
 }
 
 async function joinGroup(code) {
-  if (!state.profile || !state.backend) return;
+  if (!state.profile) {
+    showToast('Register your roll number first to join a group.');
+    showOnboarding();
+    return;
+  }
+  if (state.group || state.profile.groupCode) {
+    showToast('Leave your current group before joining another one.');
+    return;
+  }
   const normalized = normalizeGroupCode(code);
   if (normalized.length !== EVENT.groupCodeLength) {
     showToast(`Enter the ${EVENT.groupCodeLength}-character group code.`);
     return;
   }
   try {
-    const group = await state.backend.joinGroup(normalized, state.profile);
+    if (!(await waitForBackend())) throw new Error('Cannot reach the reading server. Check your connection.');
+    const group = await withTimeout(
+      state.backend.joinGroup(normalized, state.profile),
+      20000,
+      'Joining is taking too long. Check your internet connection and try again.'
+    );
     state.profile.groupCode = normalized;
     store.saveProfile(state.profile);
     state.group = group;
-    await syncReader();
     renderMyGroup();
     renderProfile();
     loadBoard(true);
     showToast(`Joined ${group.name}.`);
+    safe(() => syncReader());
   } catch (err) {
     showToast(err.message || 'Could not join the group.');
   }
 }
 
 async function leaveGroup() {
-  if (!state.profile || !state.profile.groupCode || !state.backend) return;
+  if (!state.profile || !state.profile.groupCode) return;
   if (!window.confirm('Leave this group? You can join another one later.')) return;
   const code = state.profile.groupCode;
   try {
-    await state.backend.leaveGroup(code, state.profile);
+    if (!(await waitForBackend())) throw new Error('Cannot reach the reading server. Check your connection.');
+    await withTimeout(
+      state.backend.leaveGroup(code, state.profile),
+      15000,
+      'Leaving is taking too long. Check your internet connection and try again.'
+    );
     state.profile.groupCode = null;
     store.saveProfile(state.profile);
     state.group = null;
-    await syncReader();
     renderMyGroup();
     renderProfile();
     loadBoard(true);
     showToast('You are reading solo again.');
+    safe(() => syncReader());
   } catch (err) {
     showToast(err.message || 'Could not leave the group.');
+  }
+}
+
+async function removeGroupMember(memberId) {
+  if (!state.group || !isGroupOwner()) return;
+  const label = memberShortLabel(memberId);
+  if (!window.confirm(`Remove roll ${label} from ${state.group.name}?`)) return;
+  try {
+    if (!(await waitForBackend())) throw new Error('Cannot reach the reading server. Check your connection.');
+    await withTimeout(
+      state.backend.removeGroupMember(state.group.code, memberId),
+      15000,
+      'Removing the member is taking too long. Check your internet connection and try again.'
+    );
+    state.group = {
+      ...state.group,
+      memberRolls: (state.group.memberRolls || []).filter((id) => id !== memberId)
+    };
+    renderMyGroup();
+    loadBoard(true);
+    showToast(`Roll ${label} was removed from the group.`);
+  } catch (err) {
+    showToast(err.message || 'Could not remove that member.');
+  }
+}
+
+async function deleteGroup() {
+  if (!state.group || !isGroupOwner()) return;
+  const name = state.group.name;
+  if (!window.confirm(`Delete ${name}? Every member will be removed and the join code will stop working.`)) return;
+  try {
+    if (!(await waitForBackend())) throw new Error('Cannot reach the reading server. Check your connection.');
+    await withTimeout(
+      state.backend.dissolveGroup(state.group.code, state.profile),
+      30000,
+      'Deleting the group is taking too long. Check your internet connection and try again.'
+    );
+    state.profile.groupCode = null;
+    store.saveProfile(state.profile);
+    state.group = null;
+    renderMyGroup();
+    renderProfile();
+    loadBoard(true);
+    showToast(`${name} was deleted.`);
+    safe(() => syncReader());
+  } catch (err) {
+    showToast(err.message || 'Could not delete the group.');
   }
 }
 
@@ -2307,8 +2408,12 @@ function bindEvents() {
   });
   if (dom.coverRegBtn) dom.coverRegBtn.addEventListener('click', (event) => {
     event.stopPropagation();
-    enterApp();
-    showOnboarding();
+    if (state.profile) {
+      openApp();
+    } else {
+      enterApp();
+      showOnboarding();
+    }
   });
   // Splash screen stays until user clicks one of the 2 action buttons
 
@@ -2402,10 +2507,6 @@ function bindEvents() {
     window.setTimeout(() => focusField(dom.obRoll), 50);
   });
   if (dom.onboardForm) dom.onboardForm.addEventListener('submit', submitOnboarding);
-  document.querySelectorAll('input[name="groupMode"]').forEach((radio) => {
-    radio.addEventListener('change', syncGroupFields);
-  });
-  syncGroupFields();
 
   if (dom.markReadBtn) dom.markReadBtn.addEventListener('click', markRead);
   if (dom.counterActivityBtn) dom.counterActivityBtn.addEventListener('click', toggleCounterActivity);

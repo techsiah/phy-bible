@@ -470,22 +470,6 @@
           </label>
         </div>
 
-        <fieldset class="group-choice" data-register-only>
-          <legend>Reading together?</legend>
-          <label class="radio"><input type="radio" name="groupMode" value="solo" checked><span>Just me</span></label>
-          <label class="radio"><input type="radio" name="groupMode" value="create"><span>Create a group</span></label>
-          <label class="radio"><input type="radio" name="groupMode" value="join"><span>Join with a code</span></label>
-        </fieldset>
-
-        <div class="field" data-group-field="create" hidden>
-          <label class="field-label" for="obGroupName">Group name</label>
-          <input type="text" id="obGroupName" maxlength="30" placeholder="e.g. The Waiting Room">
-        </div>
-        <div class="field" data-group-field="join" hidden>
-          <label class="field-label" for="obGroupCode">Group code</label>
-          <input type="text" id="obGroupCode" maxlength="6" placeholder="6 characters" autocapitalize="characters" spellcheck="false">
-        </div>
-
         <p class="form-error" id="obError" role="alert"></p>
         <button class="btn btn-primary wide" id="onboardSubmit" type="submit">Start reading</button>
         <button class="btn-quiet center" id="cancelOnboarding" type="button" style="margin-top:6px;">Browse first without registering</button>
@@ -563,6 +547,7 @@
           <span class="field-label">Group name</span>
           <input type="text" id="groupName" maxlength="30" required placeholder="e.g. The Waiting Room">
         </label>
+        <p class="form-error" id="groupError" role="alert"></p>
         <div class="form-actions">
           <button class="btn btn-ghost" id="groupCancel" type="button">Cancel</button>
           <button class="btn btn-primary" type="submit">Create group</button>

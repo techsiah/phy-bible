@@ -410,13 +410,14 @@ function createFirestoreBackend(db, uid) {
           name,
           code,
           memberRolls: [memberId],
+          companionRoll: memberId,
           createdBy: uid,
           createdAt: Date.now(),
           updatedAt: Date.now()
         });
         tx.set(readerRef(memberId), { groupCode: code, updatedAt: Date.now() }, { merge: true });
       });
-      return { name, code, memberRolls: [memberId], createdBy: uid };
+      return { name, code, memberRolls: [memberId], companionRoll: memberId, createdBy: uid };
     },
     async joinGroup(code, profile) {
       const memberId = readerKey(profile);
@@ -457,6 +458,109 @@ function createFirestoreBackend(db, uid) {
         }
         tx.set(readerRef(memberId), { groupCode: null, updatedAt: Date.now() }, { merge: true });
       });
+    },
+    /* The group owner removes one member. The removed reader's own entry is
+       left untouched (rules only let a device write its own entry), so their
+       app clears the stale code the next time it loads the group. */
+    async removeGroupMember(code, memberId) {
+      await db.runTransaction(async (tx) => {
+        const ref = groupRef(code);
+        const snap = await tx.get(ref);
+        if (!snap.exists) throw new BackendError('GROUP_NOT_FOUND', 'That group no longer exists.');
+        const current = Array.isArray(snap.data().memberRolls) ? snap.data().memberRolls : [];
+        const next = current.filter((id) => id !== memberId);
+        if (next.length === current.length) return;
+        if (!next.length) tx.delete(ref);
+        else tx.update(ref, { memberRolls: next, updatedAt: Date.now() });
+      });
+    },
+    /* The owner clears the whole group: everyone else is removed first so the
+       one-at-a-time membership rule still holds, then the owner leaves. */
+    async dissolveGroup(code, profile) {
+      const memberId = readerKey(profile);
+      const snap = await groupRef(code).get();
+      if (snap.exists) {
+        const others = (Array.isArray(snap.data().memberRolls) ? snap.data().memberRolls : [])
+          .filter((id) => id !== memberId);
+        for (const id of others) await this.removeGroupMember(code, id);
+      }
+      await this.leaveGroup(code, profile);
+    },
+    async adminUpdateReader(id, patch) {
+      const clean = {
+        roll: String(patch.roll || '').trim(),
+        name: String(patch.name || '').trim(),
+        gender: String(patch.gender || ''),
+        dept: String(patch.dept || ''),
+        year: String(patch.year || ''),
+        program: String(patch.program || ''),
+        groupCode: patch.groupCode ? String(patch.groupCode).trim().toUpperCase() : null,
+        updatedAt: Date.now()
+      };
+      await boardRef(id).set(clean, { merge: true });
+      try {
+        await readerRef(id).update(clean);
+      } catch (err) {
+        /* Reader doc may not exist or may be legacy; board is already updated. */
+      }
+    },
+    async adminDeleteReader(id, groupCode) {
+      // Delete private reader doc first so subscribeReaders fallback never backfills board
+      try {
+        await readerRef(id).delete();
+      } catch (err) {
+        if (isPermissionDenied(err)) {
+          throw new BackendError('PERMISSION_DENIED', 'Permission denied. Deploy the updated firestore.rules to Firebase.');
+        }
+      }
+      try {
+        await boardRef(id).delete();
+      } catch (err) {
+        if (isPermissionDenied(err)) {
+          throw new BackendError('PERMISSION_DENIED', 'Permission denied. Deploy the updated firestore.rules to Firebase.');
+        }
+        throw err;
+      }
+      if (groupCode) {
+        try {
+          await this.removeGroupMember(groupCode, id);
+        } catch (err) {
+          /* Group may already be deleted */
+        }
+      }
+    },
+    async adminUpdateGroup(code, patch, removedMemberIds = []) {
+      const updateData = {
+        name: String(patch.name || '').trim(),
+        updatedAt: Date.now()
+      };
+      if (Array.isArray(patch.memberRolls)) {
+        updateData.memberRolls = patch.memberRolls;
+      }
+      await groupRef(code).update(updateData);
+      for (const memberId of removedMemberIds) {
+        try {
+          await boardRef(memberId).set({ groupCode: null, updatedAt: Date.now() }, { merge: true });
+          await readerRef(memberId).update({ groupCode: null, updatedAt: Date.now() });
+        } catch (err) {
+          /* Best-effort cleanup on removed member */
+        }
+      }
+    },
+    async adminDeleteGroup(code) {
+      const snap = await groupRef(code).get();
+      const memberRolls = snap.exists && Array.isArray(snap.data().memberRolls)
+        ? snap.data().memberRolls
+        : [];
+      await groupRef(code).delete();
+      for (const memberId of memberRolls) {
+        try {
+          await boardRef(memberId).set({ groupCode: null, updatedAt: Date.now() }, { merge: true });
+          await readerRef(memberId).update({ groupCode: null, updatedAt: Date.now() });
+        } catch (err) {
+          /* Best-effort cleanup */
+        }
+      }
     },
     async signOut() {
       try { await window.firebase.auth().signOut(); } catch (err) { /* ignore */ }

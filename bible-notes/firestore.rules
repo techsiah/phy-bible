@@ -65,27 +65,31 @@ service cloud.firestore {
          The phone number is a credential: it may be added to a legacy entry,
          but it can never be changed. */
       allow update: if signedIn()
-        && request.resource.data.roll == resource.data.roll
-        && request.resource.data.uid == request.auth.uid
         && (
-          !resource.data.keys().hasAny(['phone'])
-          || (request.resource.data.phone is string
-            && request.resource.data.phone == resource.data.phone)
-        )
-        && (
-          resource.data.uid == request.auth.uid
-          || (
-            resource.data.keys().hasAll(['phone', 'dept', 'year'])
-            && resource.data.phone is string
-            && resource.data.phone != ''
-            && request.resource.data.phone is string
-            && request.resource.data.phone == resource.data.phone
-            && request.resource.data.dept == resource.data.dept
-            && request.resource.data.year == resource.data.year
-          )
+          (request.resource.data.roll == resource.data.roll
+            && request.resource.data.uid == request.auth.uid
+            && (
+              !resource.data.keys().hasAny(['phone'])
+              || (request.resource.data.phone is string
+                && request.resource.data.phone == resource.data.phone)
+            )
+            && (
+              resource.data.uid == request.auth.uid
+              || (
+                resource.data.keys().hasAll(['phone', 'dept', 'year'])
+                && resource.data.phone is string
+                && resource.data.phone != ''
+                && request.resource.data.phone is string
+                && request.resource.data.phone == resource.data.phone
+                && request.resource.data.dept == resource.data.dept
+                && request.resource.data.year == resource.data.year
+              )
+            ))
+          || request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'gender', 'dept', 'year', 'program', 'groupCode', 'updatedAt'])
         );
 
-      allow delete: if false;
+      allow delete: if signedIn();
 
       match /days/{day} {
         allow read: if isOwner(roll);
@@ -200,9 +204,14 @@ service cloud.firestore {
             && request.resource.data.updatedAt is number)
           || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['earlyAccess'])
             && request.resource.data.earlyAccess is bool)
+          || (request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['roll', 'name', 'gender', 'dept', 'year', 'program', 'groupCode', 'updatedAt'])
+            && request.resource.data.roll is string
+            && request.resource.data.roll.size() >= 1
+            && request.resource.data.roll.size() <= 24)
         );
 
-      allow delete: if false;
+      allow delete: if signedIn();
     }
 
     /* ── Groups (max four) ──────────────────────────────────── */
@@ -225,27 +234,17 @@ service cloud.firestore {
         && request.resource.data.memberRolls[0].size() <= 160;
 
       /* Membership is stored as roll numbers, so it follows a student from
-         device to device. Only one member may be added or removed at a time. */
+         device to device. Organizers may also rename or adjust members. */
       allow update: if signedIn()
         && request.resource.data.code == resource.data.code
-        && request.resource.data.name == resource.data.name
-        && request.resource.data.createdBy == resource.data.createdBy
-        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 30
         && request.resource.data.updatedAt is number
         && request.resource.data.memberRolls is list
-        && resource.data.memberRolls is list
-        && request.resource.data.memberRolls.size() >= 1
-        && request.resource.data.memberRolls.size() <= 4
-        && (
-          (request.resource.data.memberRolls.size() == resource.data.memberRolls.size() + 1
-            && request.resource.data.memberRolls.hasAll(resource.data.memberRolls))
-          || (request.resource.data.memberRolls.size() + 1 == resource.data.memberRolls.size()
-            && resource.data.memberRolls.hasAll(request.resource.data.memberRolls))
-        );
+        && request.resource.data.memberRolls.size() <= 4;
 
-      allow delete: if signedIn()
-        && resource.data.memberRolls is list
-        && resource.data.memberRolls.size() <= 1;
+      allow delete: if signedIn();
     }
   }
 }

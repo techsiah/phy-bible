@@ -411,8 +411,8 @@ function renderParticipants() {
     const deptShort = (r.dept || '—').replace(/^Department of\s+/i, '');
     const yrLabel = r.year === 'PG' ? 'PG' : (r.year ? `${r.year}Y` : '—');
     const groupBadge = r.groupCode
-      ? `<span class="group-badge" title="Group: ${r.groupCode}">${ICONS.users}${r.groupCode}</span>`
-      : `<span style="color: var(--ink-faint); font-size: 0.75rem;">Solo</span>`;
+      ? `<span class="group-badge" title="Group: ${esc(r.groupCode)}">${ICONS.users}${esc(r.groupCode)}</span>`
+      : `<span style="color: var(--ink-faint); font-size: 0.75rem;">Companion</span>`;
 
     return `
       <tr data-roll="${r.roll}">
@@ -438,7 +438,9 @@ function renderParticipants() {
         <td>
           <div class="action-btn-row">
             <button class="action-btn" data-action="view-reader" data-id="${esc(r.id || r.roll)}">Details</button>
+            <button class="action-btn" data-action="edit-reader" data-id="${esc(r.id || r.roll)}">Edit</button>
             <button class="action-btn${r.earlyAccess ? ' primary' : ''}" data-action="toggle-early" data-id="${esc(r.id || r.roll)}" aria-pressed="${r.earlyAccess ? 'true' : 'false'}" title="Open the calendar before December 1">${r.earlyAccess ? 'Early ✓' : 'Early'}</button>
+            <button class="action-btn danger" data-action="delete-reader" data-id="${esc(r.id || r.roll)}">Delete</button>
           </div>
         </td>
       </tr>
@@ -452,6 +454,14 @@ function renderParticipants() {
 
   tbody.querySelectorAll('button[data-action="toggle-early"]').forEach((btn) => {
     btn.addEventListener('click', () => toggleEarlyAccess(btn.dataset.id, btn));
+  });
+
+  tbody.querySelectorAll('button[data-action="edit-reader"]').forEach((btn) => {
+    btn.addEventListener('click', () => openEditReaderModal(btn.dataset.id));
+  });
+
+  tbody.querySelectorAll('button[data-action="delete-reader"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteReader(btn.dataset.id, btn));
   });
 }
 
@@ -546,7 +556,7 @@ function renderGroups() {
   if (!groups.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; padding: 32px; color: var(--ink-faint);">
+        <td colspan="8" style="text-align: center; padding: 32px; color: var(--ink-faint);">
           No groups have been created yet.
         </td>
       </tr>
@@ -556,10 +566,14 @@ function renderGroups() {
 
   // Calculate each group's average streak & points from members on the board
   const readerMap = new Map();
-  adminState.readers.forEach((r) => readerMap.set(r.roll, r));
+  adminState.readers.forEach((r) => {
+    if (r.id) readerMap.set(r.id, r);
+    readerMap.set(r.roll, r);
+  });
 
   tbody.innerHTML = groups.map((g) => {
     const rolls = Array.isArray(g.memberRolls) ? g.memberRolls : [];
+    const companionId = g.companionRoll || rolls[0];
     const members = rolls.map((roll) => readerMap.get(roll)).filter(Boolean);
 
     const avgStreak = members.length
@@ -576,16 +590,20 @@ function renderGroups() {
       : `<span class="group-badge" style="background: var(--pastel-peach); color: var(--pastel-peach-ink);" title="Flagged by profanity filter">${ICONS.alert}Review</span>`;
 
     const memberRollChips = rolls
-      .map((roll) => `<span style="font-family: var(--font-mono); font-size: 0.74rem; background: var(--panel-3); padding: 2px 6px; border-radius: 4px;">${roll}</span>`)
+      .map((roll) => {
+        const shortRoll = String(roll).split('|')[0];
+        const isComp = roll === companionId;
+        return `<span style="font-family: var(--font-mono); font-size: 0.74rem; background: ${isComp ? 'var(--gold-soft)' : 'var(--panel-3)'}; color: ${isComp ? 'var(--gold-deep)' : 'inherit'}; padding: 2px 6px; border-radius: 4px;" title="${isComp ? 'Companion' : 'Member'}: ${esc(roll)}">${esc(shortRoll)}${isComp ? ' ★' : ''}</span>`;
+      })
       .join(' ');
 
     return `
       <tr>
         <td>
-          <code style="font-weight: 700; color: var(--gold-deep); font-size: 0.95rem;">${g.code}</code>
+          <code style="font-weight: 700; color: var(--gold-deep); font-size: 0.95rem;">${esc(g.code)}</code>
         </td>
         <td>
-          <strong>${g.name}</strong>
+          <strong>${esc(g.name)}</strong>
         </td>
         <td>
           <span>${rolls.length} / ${EVENT.groupMax}</span>
@@ -600,9 +618,23 @@ function renderGroups() {
           <span class="points-val">${ICONS.star}${avgPoints}</span>
         </td>
         <td>${modBadge}</td>
+        <td>
+          <div class="action-btn-row">
+            <button class="action-btn" data-action="edit-group" data-code="${esc(g.code)}">Edit</button>
+            <button class="action-btn danger" data-action="delete-group" data-code="${esc(g.code)}">Delete</button>
+          </div>
+        </td>
       </tr>
     `;
   }).join('');
+
+  tbody.querySelectorAll('button[data-action="edit-group"]').forEach((btn) => {
+    btn.addEventListener('click', () => openEditGroupModal(btn.dataset.code));
+  });
+
+  tbody.querySelectorAll('button[data-action="delete-group"]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteGroup(btn.dataset.code, btn));
+  });
 }
 
 /* ── Participant Details Modal ─────────────────────────────── */
@@ -617,7 +649,7 @@ function openReaderModal(id) {
   $('modalGender').textContent = genderLabel(reader.gender) || '—';
   $('modalDept').textContent = reader.dept || '—';
   $('modalYear').textContent = reader.year ? `${reader.year} Year (${reader.program || 'UG'})` : '—';
-  $('modalGroup').textContent = reader.groupCode || 'Solo reader';
+  $('modalGroup').textContent = reader.groupCode || 'Companion';
   $('modalStreak').textContent = `${reader.currentStreak || 0} days (Record: ${reader.longestStreak || 0} days)`;
   $('modalTotalDays').textContent = `${reader.totalDays || 0} days active`;
   $('modalPoints').textContent = `${reader.points || 0} points`;
@@ -636,6 +668,238 @@ function initModals() {
       $('readerModalBackdrop').hidden = true;
     }
   });
+
+  // Edit Participant Modal
+  populateEditReaderSelects();
+  $('closeEditReaderModal')?.addEventListener('click', () => { $('editReaderModalBackdrop').hidden = true; });
+  $('cancelEditReaderBtn')?.addEventListener('click', () => { $('editReaderModalBackdrop').hidden = true; });
+  $('editReaderModalBackdrop')?.addEventListener('click', (e) => {
+    if (e.target === $('editReaderModalBackdrop')) $('editReaderModalBackdrop').hidden = true;
+  });
+  $('editReaderForm')?.addEventListener('submit', handleEditReaderSubmit);
+
+  // Edit Group Modal
+  $('closeEditGroupModal')?.addEventListener('click', () => { $('editGroupModalBackdrop').hidden = true; });
+  $('cancelEditGroupBtn')?.addEventListener('click', () => { $('editGroupModalBackdrop').hidden = true; });
+  $('editGroupModalBackdrop')?.addEventListener('click', (e) => {
+    if (e.target === $('editGroupModalBackdrop')) $('editGroupModalBackdrop').hidden = true;
+  });
+  $('editGroupForm')?.addEventListener('submit', handleEditGroupSubmit);
+}
+
+function populateEditReaderSelects() {
+  const genderSel = $('editReaderGender');
+  if (genderSel) {
+    genderSel.innerHTML = `<option value="">—</option>` +
+      GENDERS.map((g) => `<option value="${esc(g.value)}">${esc(g.label)}</option>`).join('');
+  }
+  const deptSel = $('editReaderDept');
+  if (deptSel) {
+    deptSel.innerHTML = DEPARTMENTS.map((d) => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  }
+  const yearSel = $('editReaderYear');
+  if (yearSel) {
+    yearSel.innerHTML = YEARS.map((y) => `<option value="${esc(y.value)}">${esc(y.label)}</option>`).join('');
+  }
+  const progSel = $('editReaderProgram');
+  if (progSel) {
+    progSel.innerHTML = PROGRAMS.map((p) => `<option value="${esc(p.value)}">${esc(p.label)}</option>`).join('');
+  }
+}
+
+function openEditReaderModal(id) {
+  const reader = adminState.readers.find((r) => (r.id || r.roll) === id);
+  if (!reader) return;
+
+  $('editReaderId').value = reader.id || reader.roll;
+  $('editReaderName').value = reader.name || '';
+  $('editReaderRoll').value = reader.roll || '';
+  $('editReaderGender').value = reader.gender || '';
+  $('editReaderDept').value = reader.dept || DEPARTMENTS[0];
+  $('editReaderYear').value = reader.year || '1';
+  $('editReaderProgram').value = reader.program || 'UG';
+  $('editReaderGroup').value = reader.groupCode || '';
+  $('editReaderError').hidden = true;
+  $('editReaderModalBackdrop').hidden = false;
+}
+
+async function handleEditReaderSubmit(e) {
+  e.preventDefault();
+  if (!adminState.backend) {
+    showToast('Connect to Firebase before editing participants.');
+    return;
+  }
+  const id = $('editReaderId').value;
+  const name = $('editReaderName').value.trim();
+  const roll = $('editReaderRoll').value.trim();
+  const gender = $('editReaderGender').value;
+  const dept = $('editReaderDept').value;
+  const year = $('editReaderYear').value;
+  const program = $('editReaderProgram').value;
+  const groupCode = $('editReaderGroup').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const errEl = $('editReaderError');
+
+  if (name.length < 2) {
+    errEl.textContent = 'Name must be at least 2 characters.';
+    errEl.hidden = false;
+    return;
+  }
+  if (!roll) {
+    errEl.textContent = 'Roll number is required.';
+    errEl.hidden = false;
+    return;
+  }
+  if (groupCode && groupCode.length !== EVENT.groupCodeLength) {
+    errEl.textContent = `Group code must be ${EVENT.groupCodeLength} characters or left blank.`;
+    errEl.hidden = false;
+    return;
+  }
+
+  errEl.hidden = true;
+  const btn = $('saveEditReaderBtn');
+  btn.disabled = true;
+  try {
+    const patch = { name, roll, gender, dept, year, program, groupCode: groupCode || null };
+    await adminState.backend.adminUpdateReader(id, patch);
+    const local = adminState.readers.find((r) => (r.id || r.roll) === id);
+    if (local) Object.assign(local, patch);
+    $('editReaderModalBackdrop').hidden = true;
+    renderAll();
+    showToast(`Updated participant ${name}.`);
+  } catch (err) {
+    errEl.textContent = err.message || 'Could not update participant.';
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteReader(id, btn) {
+  const reader = adminState.readers.find((r) => (r.id || r.roll) === id);
+  if (!reader) return;
+  if (!adminState.backend) {
+    showToast('Connect to Firebase before deleting participants.');
+    return;
+  }
+  const label = reader.name ? `${reader.name} (${reader.roll})` : reader.roll;
+  if (!window.confirm(`Delete participant ${label}? This removes them from the leaderboard and cannot be undone.`)) return;
+
+  btn.disabled = true;
+  try {
+    await adminState.backend.adminDeleteReader(id, reader.groupCode || null);
+    adminState.readers = adminState.readers.filter((r) => (r.id || r.roll) !== id);
+    renderAll();
+    showToast(`Deleted participant ${label}.`);
+  } catch (err) {
+    showToast(err.message || 'Could not delete participant.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+let editGroupMembers = [];
+let editGroupOriginalMembers = [];
+
+function openEditGroupModal(code) {
+  const group = adminState.groups.find((g) => g.code === code);
+  if (!group) return;
+
+  $('editGroupCodeHidden').value = group.code;
+  $('editGroupCodeDisplay').value = group.code;
+  $('editGroupName').value = group.name || '';
+  $('editGroupError').hidden = true;
+
+  editGroupOriginalMembers = Array.isArray(group.memberRolls) ? [...group.memberRolls] : [];
+  editGroupMembers = [...editGroupOriginalMembers];
+  renderEditGroupMembers(group.companionRoll || editGroupMembers[0]);
+  $('editGroupModalBackdrop').hidden = false;
+}
+
+function renderEditGroupMembers(companionId) {
+  const list = $('editGroupMembersList');
+  if (!list) return;
+  if (!editGroupMembers.length) {
+    list.innerHTML = `<span style="font-size: 0.82rem; color: var(--ink-faint);">No members remaining.</span>`;
+    return;
+  }
+  list.innerHTML = editGroupMembers.map((m) => {
+    const shortRoll = String(m).split('|')[0];
+    const isComp = m === companionId;
+    return `
+      <div class="member-edit-row">
+        <span><code>${esc(shortRoll)}</code>${isComp ? ' <strong style="color: var(--gold-deep);">(Companion)</strong>' : ''}</span>
+        <button type="button" class="action-btn danger" data-remove-member="${esc(m)}">Remove</button>
+      </div>
+    `;
+  }).join('');
+
+  list.querySelectorAll('button[data-remove-member]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.removeMember;
+      editGroupMembers = editGroupMembers.filter((m) => m !== target);
+      renderEditGroupMembers(companionId);
+    });
+  });
+}
+
+async function handleEditGroupSubmit(e) {
+  e.preventDefault();
+  if (!adminState.backend) {
+    showToast('Connect to Firebase before editing groups.');
+    return;
+  }
+  const code = $('editGroupCodeHidden').value;
+  const name = $('editGroupName').value.trim().replace(/\s+/g, ' ');
+  const errEl = $('editGroupError');
+
+  if (name.length < 2 || name.length > 30) {
+    errEl.textContent = 'Group name must be between 2 and 30 characters.';
+    errEl.hidden = false;
+    return;
+  }
+
+  errEl.hidden = true;
+  const btn = $('saveEditGroupBtn');
+  btn.disabled = true;
+  try {
+    const removed = editGroupOriginalMembers.filter((m) => !editGroupMembers.includes(m));
+    await adminState.backend.adminUpdateGroup(code, { name, memberRolls: editGroupMembers }, removed);
+    const local = adminState.groups.find((g) => g.code === code);
+    if (local) {
+      local.name = name;
+      local.memberRolls = [...editGroupMembers];
+    }
+    $('editGroupModalBackdrop').hidden = true;
+    renderAll();
+    showToast(`Updated group ${name}.`);
+  } catch (err) {
+    errEl.textContent = err.message || 'Could not update group.';
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteGroup(code, btn) {
+  const group = adminState.groups.find((g) => g.code === code);
+  if (!group) return;
+  if (!adminState.backend) {
+    showToast('Connect to Firebase before deleting groups.');
+    return;
+  }
+  if (!window.confirm(`Delete group "${group.name}" (${code})? Members will become Companions again.`)) return;
+
+  btn.disabled = true;
+  try {
+    await adminState.backend.adminDeleteGroup(code);
+    adminState.groups = adminState.groups.filter((g) => g.code !== code);
+    renderAll();
+    showToast(`Deleted group ${group.name}.`);
+  } catch (err) {
+    showToast(err.message || 'Could not delete group.');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 /* ── Export & Print ─────────────────────────────────────────── */
