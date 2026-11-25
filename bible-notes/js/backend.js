@@ -272,12 +272,43 @@ function createFirestoreBackend(db, uid) {
       await readerRef(roll).collection('notes').doc(id).delete();
     },
     async listReaders() {
-      const snap = await db.collection('board').limit(EVENT.leaderboardLimit).get();
+      // Primary source: board (public projection)
+      const boardSnap = await db.collection('board').limit(EVENT.leaderboardLimit).get();
       const out = [];
-      snap.forEach((doc) => {
+      boardSnap.forEach((doc) => {
         const data = doc.data();
         out.push({ ...data, id: doc.id, roll: data.roll || doc.id });
       });
+      // Fallback: if board is empty, read from readers and backfill board docs
+      if (!out.length) {
+        const readersSnap = await db.collection('readers').limit(EVENT.leaderboardLimit).get();
+        const writes = [];
+        readersSnap.forEach((doc) => {
+          const data = doc.data();
+          const id = doc.id;
+          const roll = data.roll || (id.includes('|') ? id.split('|')[0] : id);
+          out.push({ ...data, id, roll });
+          // Backfill board doc for this reader so future reads hit board
+          const boardData = {
+            roll,
+            name: data.name || '',
+            gender: data.gender || '',
+            dept: data.dept || '',
+            year: data.year || '',
+            program: data.program || '',
+            groupCode: data.groupCode || null,
+            currentStreak: Number(data.currentStreak) || 0,
+            longestStreak: Number(data.longestStreak) || 0,
+            totalDays: Number(data.totalDays) || 0,
+            points: Number(data.points) || 0,
+            updatedAt: Date.now()
+          };
+          writes.push(db.collection('board').doc(id).set(boardData, { merge: true }));
+        });
+        if (writes.length) {
+          await Promise.all(writes).catch((err) => console.warn('Board backfill failed', err));
+        }
+      }
       return out;
     },
     async listGroups() {

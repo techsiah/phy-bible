@@ -41,6 +41,11 @@ const adminState = {
 // DOM Helper
 const $ = (id) => document.getElementById(id);
 
+// HTML-escape for use in attribute values and text nodes
+function esc(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function genderLabel(value) {
   const found = GENDERS.find((gender) => gender.value === value);
   return found ? found.label : '';
