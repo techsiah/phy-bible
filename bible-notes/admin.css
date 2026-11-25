@@ -107,6 +107,51 @@ body.admin-body {
   border-color: var(--gold);
 }
 
+/* Live Sync Badge */
+.admin-actions .sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.admin-actions .sync-badge[data-mode="firebase"] {
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(22, 163, 74, 0.08);
+}
+
+html[data-theme="candle"] .admin-actions .sync-badge[data-mode="firebase"] {
+  color: #6ee7b7;
+  border-color: rgba(110, 231, 183, 0.35);
+  background: rgba(110, 231, 183, 0.1);
+}
+
+.admin-actions .sync-badge .live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  animation: liveBreath 2.4s ease-in-out infinite;
+}
+
+.admin-actions .sync-badge.live-pulse {
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.25);
+}
+
+@keyframes liveBreath {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
+}
+
 /* Tab Navigation */
 .admin-tabs {
   display: flex;
