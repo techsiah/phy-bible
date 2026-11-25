@@ -323,7 +323,17 @@ function createFirestoreBackend(db, uid) {
         const out = [];
         snap.forEach((doc) => {
           const data = doc.data();
-          out.push({ ...data, id: doc.id, roll: data.roll || doc.id });
+          const id = doc.id;
+          // Parse composite key "roll|dept|yearLabel program" to fill missing fields
+          const parts = id.includes('|') ? id.split('|') : [];
+          const roll = data.roll || parts[0] || id;
+          const dept = data.dept || parts[1] || '';
+          // yearLabel is like "1st Year UG" → extract year number and program
+          const yearRaw = parts[2] || '';
+          const yearMatch = yearRaw.match(/^(\d+)/);
+          const yearNum = data.year || (yearMatch ? yearMatch[1] : (yearRaw.startsWith('PG') ? 'PG' : ''));
+          const program = data.program || (yearRaw.includes(' ') ? yearRaw.split(' ').slice(-1)[0] : '');
+          out.push({ ...data, id, roll, dept: dept || data.dept || '', year: yearNum || data.year || '', program: program || data.program || '' });
         });
         return out;
       }

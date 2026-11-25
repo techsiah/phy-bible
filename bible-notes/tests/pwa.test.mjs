@@ -15,8 +15,8 @@ function pngSize(buffer) {
 test('manifest is installable and declares the right app metadata', async () => {
   const manifest = JSON.parse(await read('manifest.webmanifest'));
 
-  assert.equal(manifest.name, 'Christmas 2026 · 25 Days of the Word');
-  assert.equal(manifest.short_name, 'Christmas 2026');
+  assert.equal(manifest.name, 'Advent 26 · 25 Reflections · One Journey');
+  assert.equal(manifest.short_name, 'Advent 26');
   assert.equal(manifest.display, 'standalone');
   assert.ok(manifest.display_override.includes('standalone'));
   assert.equal(manifest.start_url, './?source=pwa');

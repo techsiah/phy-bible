@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Christmas 2026 · 25 Days of the Word",
-  "short_name": "Christmas 2026",
-  "description": "Jesus Youth · Pazhassi Raja College — Advent readings, streaks, private notes, and a shared leaderboard.",
+  "name": "Advent 26 · 25 Reflections · One Journey",
+  "short_name": "Advent 26",
+  "description": "Jesus Youth · Pazhassi Raja College — 25 days of Advent readings, streaks, private notes, and a shared leaderboard.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "./?source=pwa",

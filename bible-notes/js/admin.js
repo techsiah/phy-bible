@@ -408,23 +408,29 @@ function renderParticipants() {
     else if (index === 1) rankBadge = `<span class="rank-pill silver" title="2nd Place">2</span>`;
     else if (index === 2) rankBadge = `<span class="rank-pill bronze" title="3rd Place">3</span>`;
 
-    const deptShort = (r.dept || '—').replace(/^Department of\s+/i, '');
-    const yrLabel = r.year === 'PG' ? 'PG' : (r.year ? `${r.year}Y` : '—');
+    // Fallback: parse roll, dept, year from composite doc ID ("roll|dept|yearLabel program")
+    const idParts = (r.id || '').includes('|') ? r.id.split('|') : [];
+    const displayRoll = r.roll || idParts[0] || r.id || '—';
+    const displayDept = r.dept || idParts[1] || '—';
+    const displayName = r.name || displayRoll;
+    const deptShort = displayDept.replace(/^Department of\s+/i, '');
+    const yrRaw = r.year || (idParts[2] ? idParts[2].match(/^(\d+)/)?.[1] || (idParts[2].startsWith('PG') ? 'PG' : '') : '');
+    const yrLabel = yrRaw === 'PG' ? 'PG' : (yrRaw ? `${yrRaw}Y` : '—');
     const groupBadge = r.groupCode
       ? `<span class="group-badge" title="Group: ${esc(r.groupCode)}">${ICONS.users}${esc(r.groupCode)}</span>`
       : `<span style="color: var(--ink-faint); font-size: 0.75rem;">Companion</span>`;
 
     return `
-      <tr data-roll="${r.roll}">
+      <tr data-roll="${displayRoll}">
         <td>${rankBadge}</td>
         <td class="roll-cell">
-          <strong>${r.name || r.roll || '—'}</strong>
-          <span style="font-size: 0.74rem; color: var(--ink-faint);">${r.roll || '—'} · ${r.program || 'UG'}</span>
+          <strong>${esc(displayName)}</strong>
+          <span style="font-size: 0.74rem; color: var(--ink-faint);">${esc(displayRoll)} · ${esc(r.program || 'UG')}</span>
           ${r.earlyAccess ? '<span class="early-pill" title="Early access to the calendar">Early</span>' : ''}
         </td>
         <td>
-          <div style="font-weight: 500;">${deptShort}</div>
-          <div style="font-size: 0.74rem; color: var(--ink-faint);">${yrLabel}</div>
+          <div style="font-weight: 500;">${esc(deptShort)}</div>
+          <div style="font-size: 0.74rem; color: var(--ink-faint);">${esc(yrLabel)}</div>
         </td>
         <td>
           <span class="streak-val">${ICONS.flame}${r.currentStreak || 0}</span>

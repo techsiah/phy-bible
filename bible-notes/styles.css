@@ -347,21 +347,25 @@ html[data-theme="candle"] .cover-tag {
 }
 
 .cover-hero-title {
-  margin: 8px 0 0;
-  font-family: var(--font-serif);
-  font-size: clamp(2.1rem, 8vw, 2.65rem);
-  font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.02em;
+  margin: 6px 0 0;
+  font-family: 'Palatino Linotype', 'Palatino', 'Book Antiqua', Georgia, var(--font-serif), serif;
+  font-size: clamp(2.6rem, 10.5vw, 3.4rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.0;
+  letter-spacing: -0.025em;
   color: var(--ink);
 }
 
 .cover-hero-sub {
-  margin: 6px 0 0;
-  font-family: var(--font-serif);
-  font-size: 1.04rem;
-  font-style: italic;
+  margin: 8px 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--ink-soft);
+  font-style: normal;
 }
 
 .cover-hero-meta {
