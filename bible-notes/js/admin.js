@@ -35,7 +35,10 @@ const adminState = {
     sort: 'points_desc'
   },
   selectedReader: null,
-  selectedGroup: null
+  selectedGroup: null,
+  // Real-time listener cleanup functions
+  _unsubReaders: null,
+  _unsubGroups: null
 };
 
 // DOM Helper
@@ -86,6 +89,7 @@ function handleLogin(e) {
 }
 
 function handleLogout() {
+  stopRealtimeSync();
   sessionStorage.removeItem(AUTH_KEY);
   checkAuth();
 }
@@ -127,7 +131,7 @@ async function bootPortal() {
     }
     adminState.warning = null;
     updateModeBadge();
-    await refreshData();
+    startRealtimeSync();
   } catch (err) {
     console.error('Portal boot failed:', err);
     adminState.warning = err.message || 'Failed to load portal data. Check connection.';
@@ -138,13 +142,52 @@ async function bootPortal() {
   }
 }
 
+function startRealtimeSync() {
+  if (!adminState.backend) return;
+
+  // Tear down any existing subscriptions first
+  stopRealtimeSync();
+
+  let firstReaders = true;
+  let firstGroups = true;
+
+  adminState._unsubReaders = adminState.backend.subscribeReaders((readers) => {
+    adminState.readers = Array.isArray(readers) ? readers : [];
+    renderAll();
+    if (!firstReaders) flashLiveBadge();
+    firstReaders = false;
+  });
+
+  adminState._unsubGroups = adminState.backend.subscribeGroups((groups) => {
+    adminState.groups = Array.isArray(groups) ? groups : [];
+    renderAll();
+    if (!firstGroups) flashLiveBadge();
+    firstGroups = false;
+  });
+}
+
+function stopRealtimeSync() {
+  if (adminState._unsubReaders) { adminState._unsubReaders(); adminState._unsubReaders = null; }
+  if (adminState._unsubGroups) { adminState._unsubGroups(); adminState._unsubGroups = null; }
+}
+
+/** Briefly pulse the live badge to signal a real-time update arrived. */
+function flashLiveBadge() {
+  const badge = $('syncBadge');
+  if (!badge) return;
+  badge.classList.add('live-pulse');
+  setTimeout(() => badge.classList.remove('live-pulse'), 1200);
+}
+
 function updateModeBadge() {
   const badge = $('syncBadge');
   if (!badge) return;
   const connected = Boolean(adminState.backend);
-  badge.textContent = connected ? 'Firebase Connected' : 'Not Connected';
+  badge.innerHTML = connected
+    ? '<span class="live-dot"></span>Live'
+    : 'Not Connected';
   badge.dataset.mode = connected ? 'firebase' : 'offline';
-  badge.title = connected ? 'Live Firestore data' : (adminState.warning || 'Could not connect to Firebase');
+  badge.title = connected ? 'Real-time Firestore — updates automatically' : (adminState.warning || 'Could not connect to Firebase');
 
   const note = $('connectNote');
   if (note) {
@@ -153,22 +196,10 @@ function updateModeBadge() {
   }
 }
 
+/** Manual refresh: re-render from current state (subscriptions keep it live). */
 async function refreshData() {
-  if (!adminState.backend) return;
-  try {
-    const [readers, groups] = await Promise.all([
-      adminState.backend.listReaders(),
-      adminState.backend.listGroups()
-    ]);
-
-    adminState.readers = Array.isArray(readers) ? readers : [];
-    adminState.groups = Array.isArray(groups) ? groups : [];
-
-    renderAll();
-  } catch (err) {
-    console.error('Refresh error:', err);
-    showToast('Could not fetch updated data.');
-  }
+  renderAll();
+  flashLiveBadge();
 }
 
 function renderAll() {

@@ -311,6 +311,85 @@ function createFirestoreBackend(db, uid) {
       }
       return out;
     },
+    /**
+     * Real-time subscription to the board collection.
+     * cb(readers) is called immediately and on every change.
+     * Returns an unsubscribe function.
+     */
+    subscribeReaders(cb) {
+      let boardEmpty = false;
+      // Helper: convert a snapshot to our reader array shape
+      function snapToReaders(snap) {
+        const out = [];
+        snap.forEach((doc) => {
+          const data = doc.data();
+          out.push({ ...data, id: doc.id, roll: data.roll || doc.id });
+        });
+        return out;
+      }
+      // Try board first. If it turns out to be empty on the first snapshot,
+      // fall back to a live listener on `readers` and backfill board in the bg.
+      let unsubReaders = null;
+      const unsubBoard = db.collection('board')
+        .limit(EVENT.leaderboardLimit)
+        .onSnapshot((snap) => {
+          const readers = snapToReaders(snap);
+          if (readers.length) {
+            boardEmpty = false;
+            // Kill any readers fallback listener that may be running
+            if (unsubReaders) { unsubReaders(); unsubReaders = null; }
+            cb(readers);
+          } else if (!boardEmpty) {
+            boardEmpty = true;
+            // Board is empty — start a parallel listener on `readers`
+            if (!unsubReaders) {
+              unsubReaders = db.collection('readers')
+                .limit(EVENT.leaderboardLimit)
+                .onSnapshot((rsnap) => {
+                  const rreaders = snapToReaders(rsnap);
+                  cb(rreaders);
+                  // Backfill board docs so future loads use board
+                  const writes = [];
+                  rsnap.forEach((doc) => {
+                    const data = doc.data();
+                    const id = doc.id;
+                    const roll = data.roll || (id.includes('|') ? id.split('|')[0] : id);
+                    const boardData = {
+                      roll, name: data.name || '', gender: data.gender || '',
+                      dept: data.dept || '', year: data.year || '',
+                      program: data.program || '', groupCode: data.groupCode || null,
+                      currentStreak: Number(data.currentStreak) || 0,
+                      longestStreak: Number(data.longestStreak) || 0,
+                      totalDays: Number(data.totalDays) || 0,
+                      points: Number(data.points) || 0,
+                      updatedAt: Date.now()
+                    };
+                    writes.push(db.collection('board').doc(id).set(boardData, { merge: true }));
+                  });
+                  Promise.all(writes).catch((err) => console.warn('Board backfill failed', err));
+                }, (err) => console.warn('readers subscription error', err));
+            }
+          }
+        }, (err) => console.warn('board subscription error', err));
+
+      // Return a single cleanup function
+      return () => {
+        unsubBoard();
+        if (unsubReaders) unsubReaders();
+      };
+    },
+    /**
+     * Real-time subscription to the groups collection.
+     * cb(groups) is called immediately and on every change.
+     * Returns an unsubscribe function.
+     */
+    subscribeGroups(cb) {
+      return db.collection('groups').limit(500).onSnapshot((snap) => {
+        const out = [];
+        snap.forEach((doc) => out.push({ ...doc.data(), code: doc.id }));
+        cb(out);
+      }, (err) => console.warn('groups subscription error', err));
+    },
     async listGroups() {
       const snap = await db.collection('groups').limit(500).get();
       const out = [];
