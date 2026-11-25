@@ -49,7 +49,6 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.roll is string
-        && request.resource.data.roll == roll
         && request.resource.data.roll.size() >= 1
         && request.resource.data.roll.size() <= 24
         && request.resource.data.phone is string
@@ -66,7 +65,7 @@ service cloud.firestore {
          The phone number is a credential: it may be added to a legacy entry,
          but it can never be changed. */
       allow update: if signedIn()
-        && request.resource.data.roll == roll
+        && request.resource.data.roll == resource.data.roll
         && request.resource.data.uid == request.auth.uid
         && (
           !resource.data.keys().hasAny(['phone'])
@@ -129,7 +128,9 @@ service cloud.firestore {
 
       allow create: if signedIn()
         && isOwner(roll)
-        && request.resource.data.roll == roll
+        && request.resource.data.roll is string
+        && request.resource.data.roll.size() >= 1
+        && request.resource.data.roll.size() <= 24
         && (!request.resource.data.keys().hasAny(['name'])
           || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
         && (!request.resource.data.keys().hasAny(['gender'])
@@ -166,7 +167,9 @@ service cloud.firestore {
       allow update: if signedIn()
         && (
           (isOwner(roll)
-            && request.resource.data.roll == roll
+            && request.resource.data.roll is string
+            && request.resource.data.roll.size() >= 1
+            && request.resource.data.roll.size() <= 24
             && (!request.resource.data.keys().hasAny(['name'])
               || (request.resource.data.name is string && request.resource.data.name.size() <= 60))
             && (!request.resource.data.keys().hasAny(['gender'])
@@ -219,7 +222,7 @@ service cloud.firestore {
         && request.resource.data.memberRolls.size() == 1
         && request.resource.data.memberRolls[0] is string
         && request.resource.data.memberRolls[0].size() >= 1
-        && request.resource.data.memberRolls[0].size() <= 24;
+        && request.resource.data.memberRolls[0].size() <= 160;
 
       /* Membership is stored as roll numbers, so it follows a student from
          device to device. Only one member may be added or removed at a time. */

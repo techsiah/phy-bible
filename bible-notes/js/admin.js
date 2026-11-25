@@ -401,8 +401,8 @@ function renderParticipants() {
         <td>${groupBadge}</td>
         <td>
           <div class="action-btn-row">
-            <button class="action-btn" data-action="view-reader" data-roll="${r.roll}">Details</button>
-            <button class="action-btn${r.earlyAccess ? ' primary' : ''}" data-action="toggle-early" data-roll="${r.roll}" aria-pressed="${r.earlyAccess ? 'true' : 'false'}" title="Open the calendar before December 1">${r.earlyAccess ? 'Early ✓' : 'Early'}</button>
+            <button class="action-btn" data-action="view-reader" data-id="${esc(r.id || r.roll)}">Details</button>
+            <button class="action-btn${r.earlyAccess ? ' primary' : ''}" data-action="toggle-early" data-id="${esc(r.id || r.roll)}" aria-pressed="${r.earlyAccess ? 'true' : 'false'}" title="Open the calendar before December 1">${r.earlyAccess ? 'Early ✓' : 'Early'}</button>
           </div>
         </td>
       </tr>
@@ -411,16 +411,16 @@ function renderParticipants() {
 
   // Attach button listeners
   tbody.querySelectorAll('button[data-action="view-reader"]').forEach((btn) => {
-    btn.addEventListener('click', () => openReaderModal(btn.dataset.roll));
+    btn.addEventListener('click', () => openReaderModal(btn.dataset.id));
   });
 
   tbody.querySelectorAll('button[data-action="toggle-early"]').forEach((btn) => {
-    btn.addEventListener('click', () => toggleEarlyAccess(btn.dataset.roll, btn));
+    btn.addEventListener('click', () => toggleEarlyAccess(btn.dataset.id, btn));
   });
 }
 
-async function toggleEarlyAccess(roll, btn) {
-  const reader = adminState.readers.find((r) => r.roll === roll);
+async function toggleEarlyAccess(id, btn) {
+  const reader = adminState.readers.find((r) => (r.id || r.roll) === id);
   if (!reader) return;
   if (!adminState.backend) {
     showToast('Connect to Firebase before changing early access.');
@@ -429,10 +429,10 @@ async function toggleEarlyAccess(roll, btn) {
   const next = !reader.earlyAccess;
   btn.disabled = true;
   try {
-    await adminState.backend.setEarlyAccess(roll, next);
+    await adminState.backend.setEarlyAccess(id, next);
     reader.earlyAccess = next;
     renderParticipants();
-    showToast(next ? `Early access enabled for ${roll}.` : `Early access removed for ${roll}.`);
+    showToast(next ? `Early access enabled for ${reader.roll || id}.` : `Early access removed for ${reader.roll || id}.`);
   } catch (err) {
     showToast(err.message || 'Could not update early access.');
   } finally {
@@ -571,8 +571,8 @@ function renderGroups() {
 
 /* ── Participant Details Modal ─────────────────────────────── */
 
-function openReaderModal(roll) {
-  const reader = adminState.readers.find((r) => r.roll === roll);
+function openReaderModal(id) {
+  const reader = adminState.readers.find((r) => (r.id || r.roll) === id);
   if (!reader) return;
 
   adminState.selectedReader = reader;

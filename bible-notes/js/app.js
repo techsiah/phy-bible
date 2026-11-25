@@ -1,6 +1,6 @@
 /* Christmas 2026 — Jesus Youth · Pazhassi Raja College
    Local-first reading, streaks, notes, groups, and a shared leaderboard. */
-import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, isCleanName } from './config.js';
+import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, isCleanName, yearLabel, readerKey } from './config.js';
 import { PLAN, DAILY_VERSES, EDITION } from './plan.js';
 import {
   BOOKS, chaptersFor, formatBookName, parseReference, assembleReference, formatReference,
@@ -110,6 +110,7 @@ const dom = {
   onboardForm: $('onboardForm'),
   onboardDesc: $('onboardDesc'),
   onboardSubmit: $('onboardSubmit'),
+  obTabRegister: $('obTabRegister'),
   obRestoreToggle: $('obRestoreToggle'),
   obName: $('obName'),
   obPhone: $('obPhone'),
@@ -203,12 +204,6 @@ function clear(node) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
-}
-
-function yearLabel(year) {
-  if (year === 'PG') return 'PG';
-  const suffix = year === '1' ? 'st' : year === '2' ? 'nd' : year === '3' ? 'rd' : 'th';
-  return `${year}${suffix} Year`;
 }
 
 function normalizePhone(value) {
@@ -477,7 +472,7 @@ async function loadEarlyAccess() {
     return;
   }
   try {
-    const board = await state.backend.getBoard(state.profile.roll);
+    const board = await state.backend.getBoard(readerKey(state.profile));
     state.earlyAccess = Boolean(board && board.earlyAccess);
   } catch (err) {
     state.earlyAccess = false;
@@ -559,16 +554,16 @@ async function hydrate(options = {}) {
     }
   }
 
-  const roll = state.profile.roll;
+  const key = readerKey(state.profile);
   const localNotes = state.notes;
   let reader;
   let remoteDays;
   let remoteNotes;
   try {
     [reader, remoteDays, remoteNotes] = await Promise.all([
-      state.backend.getReader(roll),
-      state.backend.getDays(roll),
-      state.backend.getNotes(roll)
+      state.backend.getReader(key),
+      state.backend.getDays(key),
+      state.backend.getNotes(key)
     ]);
   } catch (err) {
     // Never replace a synced entry with an empty local copy just because a
@@ -642,7 +637,7 @@ function persist() {
 async function pushDay(day) {
   if (!state.backend || !state.profile) return;
   const data = state.reads[day] || { planRead: false, extraReads: 0, refs: [] };
-  await state.backend.saveDay(state.profile.roll, day, {
+  await state.backend.saveDay(readerKey(state.profile), day, {
     ...data,
     day,
     points: dayPoints(data, EVENT.points),
@@ -654,14 +649,14 @@ async function pushDay(day) {
    document (Firestore counts each write against the free daily quota). */
 async function pushChanged(changedDays, localNotes, remoteNotes) {
   if (!state.backend || !state.profile) return;
-  const roll = state.profile.roll;
+  const key = readerKey(state.profile);
   try {
     for (const day of changedDays) await pushDay(day);
     const remoteById = new Map((remoteNotes || []).map((note) => [note.id, note]));
     for (const note of state.notes) {
       const remote = remoteById.get(note.id);
       if (!remote || (Number(note.updatedAt) || 0) > (Number(remote.updatedAt) || 0)) {
-        await state.backend.saveNote(roll, note);
+        await state.backend.saveNote(key, note);
       }
     }
     await syncReader();
@@ -672,9 +667,10 @@ async function pushChanged(changedDays, localNotes, remoteNotes) {
 
 async function pushLocal() {
   if (!state.backend || !state.profile) return;
+  const key = readerKey(state.profile);
   try {
     for (const day of Object.keys(state.reads)) await pushDay(day);
-    for (const note of state.notes) await state.backend.saveNote(state.profile.roll, note);
+    for (const note of state.notes) await state.backend.saveNote(key, note);
     await syncReader();
   } catch (err) {
     console.warn('Sync deferred', err);
@@ -701,7 +697,7 @@ async function syncReader() {
     milestones: state.stats.milestones.map((m) => m.days)
   };
   try {
-    await state.backend.updateReader(state.profile.roll, patch);
+    await state.backend.updateReader(readerKey(state.profile), patch);
   } catch (err) {
     console.warn('Reader sync deferred', err);
   }
@@ -811,16 +807,22 @@ function renderCover() {
   const profile = state.profile;
   const name = String(profile?.name || '').trim();
   if (dom.coverAvatar) {
-    dom.coverAvatar.textContent = profile ? (name.charAt(0).toUpperCase() || profile.roll) : '+';
+    if (profile) {
+      dom.coverAvatar.textContent = name.charAt(0).toUpperCase() || profile.roll;
+      dom.coverAvatar.classList.add('is-signed-in');
+    } else {
+      dom.coverAvatar.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+      dom.coverAvatar.classList.remove('is-signed-in');
+    }
   }
   if (dom.coverIdentityName) {
-    dom.coverIdentityName.textContent = profile ? (name || `Roll ${profile.roll}`) : 'Register / Join';
+    dom.coverIdentityName.textContent = profile ? (name || `Roll ${profile.roll}`) : 'Register with Roll Number';
   }
   if (dom.coverIdentitySub) {
     const year = profile?.year ? yearLabel(profile.year) : '';
     dom.coverIdentitySub.textContent = profile
       ? [`Roll ${profile.roll}`, year].filter(Boolean).join(' · ')
-      : 'Create your reading pass in 20 seconds';
+      : 'Save streaks & join your college group';
   }
   if (dom.coverRegBtn) {
     dom.coverRegBtn.setAttribute(
@@ -1247,10 +1249,14 @@ function renderMyGroup() {
     card.append(head);
 
     const members = Array.isArray(state.group.memberRolls) ? state.group.memberRolls : [];
+    const myKey = readerKey(state.profile);
     card.append(el('p', 'group-count', `${members.length} of ${EVENT.groupMax} members`));
     if (members.length) {
       const list = el('ul', 'group-members');
-      members.forEach((roll) => list.append(el('li', '', roll === state.profile.roll ? `${roll} (you)` : roll)));
+      members.forEach((m) => {
+        const label = m.includes('|') ? m.split('|').slice(0, 2).join(' · ') : m;
+        list.append(el('li', '', (m === myKey || m === state.profile.roll) ? `${label} (you)` : label));
+      });
       card.append(list);
     }
 
@@ -1312,7 +1318,12 @@ function renderBoard() {
   const groups = Array.isArray(cache.groups) ? cache.groups : [];
 
   if (state.board === 'groups') {
-    const byRoll = new Map(readers.map((reader) => [reader.roll, reader]));
+    const byRoll = new Map();
+    readers.forEach((reader) => {
+      if (reader.id) byRoll.set(reader.id, reader);
+      byRoll.set(readerKey(reader), reader);
+      if (!byRoll.has(reader.roll)) byRoll.set(reader.roll, reader);
+    });
     const rows = groups.map((group) => {
       const memberRolls = Array.isArray(group.memberRolls) ? group.memberRolls : [];
       const members = memberRolls.map((roll) => byRoll.get(roll)).filter(Boolean);
@@ -1579,10 +1590,13 @@ function setRestoreMode(on) {
   }
   if (dom.onboardSubmit) dom.onboardSubmit.textContent = on ? 'Restore my entry' : 'Start reading';
   if (dom.onboardForm) dom.onboardForm.classList.toggle('is-restore', on);
+  if (dom.obTabRegister) {
+    dom.obTabRegister.classList.toggle('is-active', !on);
+    dom.obTabRegister.setAttribute('aria-selected', String(!on));
+  }
   if (dom.obRestoreToggle) {
-    dom.obRestoreToggle.textContent = on
-      ? 'New here? Register instead'
-      : 'Already registered? Restore my entry';
+    dom.obRestoreToggle.classList.toggle('is-active', on);
+    dom.obRestoreToggle.setAttribute('aria-selected', String(on));
   }
   if (dom.obError) dom.obError.textContent = '';
 }
@@ -1640,7 +1654,7 @@ async function submitOnboarding(event) {
   if (onboardingRestore) {
     setBusy(submit, true, 'Restoring…');
     try {
-      const reader = await state.backend.restoreReader(roll, phone, dept, year);
+      const reader = await state.backend.restoreReader(roll, phone, dept, year, program);
       state.profile = { ...reader, roll: reader.roll || roll, phone: reader.phone || phone };
       store.saveProfile(state.profile);
       const restored = await hydrate({ claim: false });
@@ -1924,7 +1938,7 @@ async function submitNote(event) {
   closeDialog(dom.noteDialog);
   state.editingNoteId = null;
   try {
-    if (state.backend && state.profile) await state.backend.saveNote(state.profile.roll, note);
+    if (state.backend && state.profile) await state.backend.saveNote(readerKey(state.profile), note);
     showToast('Note saved.');
   } catch (err) {
     showToast('Saved on this device. It will sync when you reconnect.');
@@ -1938,7 +1952,7 @@ async function deleteNote(id) {
   persist();
   renderNotes();
   if (state.backend && state.profile) {
-    await safe(() => state.backend.deleteNote(state.profile.roll, id));
+    await safe(() => state.backend.deleteNote(readerKey(state.profile), id));
   }
   showToast('Note deleted.', {
     label: 'Undo',
@@ -1946,7 +1960,7 @@ async function deleteNote(id) {
       state.notes.push(removed);
       persist();
       renderNotes();
-      if (state.backend && state.profile) await safe(() => state.backend.saveNote(state.profile.roll, removed));
+      if (state.backend && state.profile) await safe(() => state.backend.saveNote(readerKey(state.profile), removed));
       showToast('Note restored.');
     }
   });
@@ -1959,7 +1973,7 @@ async function togglePin(id) {
   note.updatedAt = Date.now();
   persist();
   renderNotes();
-  if (state.backend && state.profile) await safe(() => state.backend.saveNote(state.profile.roll, note));
+  if (state.backend && state.profile) await safe(() => state.backend.saveNote(readerKey(state.profile), note));
   showToast(note.pinned ? 'Pinned to the top.' : 'Unpinned.');
 }
 
@@ -2297,11 +2311,15 @@ function bindEvents() {
   if (dom.printBtn) dom.printBtn.addEventListener('click', () => window.print());
   if (dom.leaveDevice) dom.leaveDevice.addEventListener('click', leaveDevice);
 
+  if (dom.obTabRegister) dom.obTabRegister.addEventListener('click', () => {
+    if (!onboardingRestore) return;
+    setRestoreMode(false);
+    window.setTimeout(() => focusField(dom.obName), 50);
+  });
   if (dom.obRestoreToggle) dom.obRestoreToggle.addEventListener('click', () => {
-    setRestoreMode(!onboardingRestore);
-    window.setTimeout(() => {
-      focusField(onboardingRestore ? dom.obRoll : dom.obName);
-    }, 50);
+    if (onboardingRestore) return;
+    setRestoreMode(true);
+    window.setTimeout(() => focusField(dom.obRoll), 50);
   });
   if (dom.onboardForm) dom.onboardForm.addEventListener('submit', submitOnboarding);
   document.querySelectorAll('input[name="groupMode"]').forEach((radio) => {

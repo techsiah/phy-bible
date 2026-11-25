@@ -18,7 +18,6 @@
   <link rel="icon" type="image/png" sizes="1024x1024" href="icon-1024.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="preload" as="image" href="assets/cover-campus.jpg">
   <link rel="stylesheet" href="styles.css">
   <script>
     try {
@@ -31,7 +30,14 @@
 </head>
 <body>
 
-  <!-- ── Splash Screen (Cover) ──────────────────────────────────── -->
+  <!-- ── Splash (simple & clean) ──────────────────────────────── -->
+  <div class="splash" id="splash" aria-hidden="true">
+    <img class="splash-logo" src="icon-512.png" alt="" width="76" height="76" decoding="async">
+    <p class="splash-title">Christmas 2026</p>
+    <p class="splash-org">Jesus Youth · Pazhassi Raja College</p>
+  </div>
+
+  <!-- ── Landing ───────────────────────────────────────────────── -->
   <div class="cover" id="cover">
     <div class="cover-panel">
       <header class="cover-topbar">
@@ -50,30 +56,31 @@
         </button>
       </header>
 
-      <!-- Hero Splash Card (Mombo-style warm illustration & title) -->
-      <section class="cover-hero-card">
-        <div class="cover-hero-head">
-          <span class="cover-tag">Advent 2026</span>
-          <h1 class="cover-hero-title" id="coverTitle">Christmas 2026</h1>
-          <p class="cover-hero-sub" id="coverSub">25 Days of the Word</p>
-        </div>
-
-        <div class="cover-hero-art">
-          <img src="assets/cover-campus.jpg" alt="Snowy Pazhassi Raja College campus lit up for Christmas" width="1500" height="788" decoding="async">
-        </div>
-
-        <div class="cover-hero-meta">
-          <span class="cover-chip" id="coverCountdown">Opens in 7 days</span>
-          <span class="cover-chip is-quiet">25 doors</span>
-        </div>
+      <section class="cover-hero">
+        <img src="icon-192.png" alt="Jesus Youth" class="cover-emblem" width="56" height="56">
+        <span class="cover-tag">Advent 2026</span>
+        <h1 class="cover-hero-title" id="coverTitle">Christmas 2026</h1>
+        <p class="cover-hero-sub" id="coverSub">25 Days of the Word</p>
+        <p class="cover-hero-meta">
+          <span id="coverCountdown">Opens in 7 days</span>
+          <span aria-hidden="true">·</span>
+          <span>25 daily readings</span>
+        </p>
       </section>
 
       <div class="cover-body">
+        <p class="cover-desc">One chapter each day from December 1 to 25. Read, reflect, and keep your Advent notes in one quiet place.</p>
+
         <button class="cover-identity" id="coverRegBtn" type="button">
-          <span class="cover-avatar" id="coverAvatar" aria-hidden="true">+</span>
+          <span class="cover-avatar" id="coverAvatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </span>
           <span class="cover-identity-text">
-            <span class="cover-identity-name" id="coverIdentityName">Register / Join</span>
-            <span class="cover-identity-sub" id="coverIdentitySub">Create your reading pass in 20 seconds</span>
+            <span class="cover-identity-name" id="coverIdentityName">Register with Roll Number</span>
+            <span class="cover-identity-sub" id="coverIdentitySub">Save streaks &amp; join your college group</span>
           </span>
           <svg class="cover-identity-go" viewBox="0 0 24 24" aria-hidden="true">
             <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -85,14 +92,12 @@
           <div class="cover-stat"><strong id="coverPoints">0</strong><span>points</span></div>
           <div class="cover-stat"><strong id="coverDays">0</strong><span>days read</span></div>
         </div>
-
-        <p class="cover-desc">One door each day. Take a quiet breath and let the Word light your path to Christmas.</p>
       </div>
 
       <div class="cover-dock">
         <button class="cover-open-btn" id="openBtn" type="button">
           <span>Explore the readings</span>
-          <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="17" height="17" aria-hidden="true">
             <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
           </svg>
         </button>
@@ -179,154 +184,12 @@
           <button type="button" class="section-link-btn" data-view="journey">See all</button>
         </div>
 
-        <!-- Hero Check-in Card (Warm yellow/amber with cute sun illustration) -->
+        <!-- Hero Check-in Card (Clean editorial Scripture card) -->
         <div class="hero-checkin-card" id="heroCheckinCard">
           <div class="hero-card-header">
             <span class="hero-tag-badge" id="dailyLabel">Today's Word</span>
             <h3 class="hero-title" id="heroCheckinPrompt">How is God speaking to you today?</h3>
             <p class="hero-subtitle">Take a quiet breath and let the Word light your path.</p>
-          </div>
-
-          <!-- Festive Christmas Sun, Star of Bethlehem & snowy hills illustration -->
-          <div class="hero-card-art" aria-hidden="true">
-            <svg viewBox="0 0 320 130" fill="none" preserveAspectRatio="xMidYMid meet">
-              <defs>
-                <linearGradient id="artSky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#FFF9ED"/>
-                  <stop offset="60%" stop-color="#FFEBB8"/>
-                  <stop offset="100%" stop-color="#FED996"/>
-                </linearGradient>
-                <linearGradient id="artSun" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#FFA826"/>
-                  <stop offset="100%" stop-color="#FF7A00"/>
-                </linearGradient>
-                <linearGradient id="artSantaHat" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#E84435"/>
-                  <stop offset="100%" stop-color="#C2281E"/>
-                </linearGradient>
-                <linearGradient id="artHillA" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#438D60"/>
-                  <stop offset="100%" stop-color="#26643F"/>
-                </linearGradient>
-                <linearGradient id="artHillB" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#5CA879"/>
-                  <stop offset="100%" stop-color="#357D50"/>
-                </linearGradient>
-                <radialGradient id="artStarAura" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#FFF3C4" stop-opacity="0.85"/>
-                  <stop offset="50%" stop-color="#FFE48A" stop-opacity="0.35"/>
-                  <stop offset="100%" stop-color="#FFE48A" stop-opacity="0"/>
-                </radialGradient>
-              </defs>
-              <rect width="320" height="130" fill="url(#artSky)" rx="18"/>
-
-              <!-- Radiant Star of Bethlehem -->
-              <circle cx="102" cy="32" r="24" fill="url(#artStarAura)"/>
-              <path d="M102 10 L105 28 L123 32 L105 36 L102 54 L99 36 L81 32 L99 28 Z" fill="#FFFBE6"/>
-              <path d="M93 23 L102 30 L111 23 L104 32 L111 41 L102 34 L93 41 L100 32 Z" fill="#FFDF73" opacity="0.8"/>
-              <circle cx="102" cy="32" r="2.8" fill="#FFFFFF"/>
-
-              <!-- Gentle Falling Snowflakes & Star Twinkles -->
-              <g fill="#FFFFFF" opacity="0.85">
-                <circle cx="34" cy="24" r="1.4"/>
-                <circle cx="65" cy="18" r="1.2"/>
-                <circle cx="150" cy="20" r="1.5"/>
-                <circle cx="176" cy="34" r="1.2"/>
-                <circle cx="194" cy="22" r="1.4"/>
-                <circle cx="288" cy="20" r="1.3"/>
-                <circle cx="304" cy="40" r="1.1"/>
-                <circle cx="138" cy="48" r="1.2"/>
-                <circle cx="24" cy="50" r="1.2"/>
-              </g>
-              <path d="M150 16 v7 M146.5 19.5 h7" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" opacity="0.75"/>
-              <path d="M34 20 v7 M30.5 23.5 h7" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
-
-              <!-- Gentle Morning Doves -->
-              <path d="M136 34 Q140 30 144 34 Q148 30 152 34" stroke="#8C662E" stroke-width="1.3" stroke-linecap="round" fill="none" opacity="0.65"/>
-              <path d="M162 44 Q165 40 168 44 Q171 40 174 44" stroke="#8C662E" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.5"/>
-
-              <!-- Cute Smiling Sun wearing cozy Santa Hat -->
-              <g class="art-festive-sun">
-                <circle cx="244" cy="54" r="22" fill="url(#artSun)"/>
-                <circle cx="237" cy="53" r="2.2" fill="#3D2005"/>
-                <circle cx="251" cy="53" r="2.2" fill="#3D2005"/>
-                <path d="M239 60 Q244 65 249 60" stroke="#3D2005" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-                <ellipse cx="233" cy="57" rx="2.8" ry="1.5" fill="#FF6B4A" opacity="0.45"/>
-                <ellipse cx="255" cy="57" rx="2.8" ry="1.5" fill="#FF6B4A" opacity="0.45"/>
-
-                <!-- Santa Hat -->
-                <path d="M227 41 C228 24 244 13 259 14 C270 15 281 24 279 36 C280 44 273 49 272 52 Z" fill="url(#artSantaHat)"/>
-                <rect x="224" y="37" width="44" height="9" rx="4.5" fill="#FFFFFF"/>
-                <circle cx="275" cy="53" r="5" fill="#FFFFFF"/>
-              </g>
-
-              <!-- Rolling Green Hills with Snow -->
-              <path d="M0 130 L0 102 Q65 76 145 98 Q225 114 320 76 L320 130 Z" fill="url(#artHillA)"/>
-              <!-- Snow cap on background hill -->
-              <path d="M0 102 Q40 86 85 84 Q125 82 150 99 Q190 107 225 114 Q275 94 320 76 L320 83 Q275 100 225 119 Q190 112 150 104 Q125 89 85 90 Q40 93 0 108 Z" fill="#E8F4EC" opacity="0.8"/>
-
-              <!-- Foreground hill -->
-              <path d="M25 130 Q145 74 240 96 Q285 104 320 98 L320 130 Z" fill="url(#artHillB)"/>
-              <!-- Snow cap on foreground hill -->
-              <path d="M50 110 Q145 74 240 96 Q285 104 320 98 L320 104 Q285 109 240 102 Q145 81 60 115 Z" fill="#FFFFFF" opacity="0.88"/>
-
-              <!-- Right-side snowy pines -->
-              <polygon points="280,82 272,104 288,104" fill="#1C5234"/>
-              <path d="M280 82 L275 89 Q280 91 285 89 Z" fill="#FFFFFF"/>
-              <polygon points="294,78 286,100 302,100" fill="#154229"/>
-              <path d="M294 78 L290 85 Q294 87 298 85 Z" fill="#FFFFFF"/>
-              <circle cx="294" cy="76" r="1.4" fill="#FFC72C"/>
-
-              <!-- Main Decorated Christmas Tree -->
-              <g class="art-xmas-tree">
-                <rect x="45" y="114" width="6" height="8" rx="1.5" fill="#4A2E16"/>
-                <!-- Tier 3 -->
-                <polygon points="48,88 25,115 71,115" fill="#1B4D31"/>
-                <path d="M25 115 Q36 111 48 111 Q60 111 71 115 Q62 110 48 109 Q34 110 25 115 Z" fill="#FFFFFF"/>
-                <!-- Tier 2 -->
-                <polygon points="48,74 30,97 66,97" fill="#245F3D"/>
-                <path d="M30 97 Q38 93 48 93 Q58 93 66 97 Q58 93 48 91 Q38 93 30 97 Z" fill="#FFFFFF"/>
-                <!-- Tier 1 -->
-                <polygon points="48,61 36,82 60,82" fill="#2E754C"/>
-                <path d="M48 61 L42 71 Q48 73 54 71 Z" fill="#FFFFFF"/>
-
-                <!-- Star topper -->
-                <polygon points="48,54 49.8,58.6 54.8,58.6 50.8,61.5 52.3,66.2 48,63.4 43.7,66.2 45.2,61.5 41.2,58.6 46.2,58.6" fill="#FFC72C"/>
-
-                <!-- Ornaments -->
-                <circle cx="39" cy="105" r="2.4" fill="#E63946"/>
-                <circle cx="57" cy="107" r="2.4" fill="#FFB703"/>
-                <circle cx="48" cy="100" r="2.1" fill="#48CAE4"/>
-                <circle cx="41" cy="89" r="2.2" fill="#FFB703"/>
-                <circle cx="55" cy="90" r="2.2" fill="#E63946"/>
-                <circle cx="48" cy="77" r="2" fill="#FFFFFF"/>
-              </g>
-
-              <!-- Secondary snowy tree -->
-              <polygon points="78,84 68,110 88,110" fill="#1C5234"/>
-              <polygon points="78,74 71,94 85,94" fill="#286944"/>
-              <path d="M78 74 L74 81 Q78 83 82 81 Z" fill="#FFFFFF"/>
-              <path d="M68 110 Q77 107 88 110 Q82 107 78 106 Q74 107 68 110 Z" fill="#FFFFFF" opacity="0.9"/>
-              <circle cx="76" cy="100" r="1.7" fill="#FFD166"/>
-              <circle cx="81" cy="105" r="1.7" fill="#E63946"/>
-
-              <!-- Festive Gift Boxes -->
-              <!-- Red Present -->
-              <rect x="58" y="113" width="10" height="10" rx="1.5" fill="#D93829"/>
-              <rect x="62" y="113" width="1.8" height="10" fill="#FFD166"/>
-              <rect x="58" y="117" width="10" height="1.8" fill="#FFD166"/>
-              <ellipse cx="61.2" cy="112" rx="2" ry="1.2" fill="#FFE27A"/>
-              <ellipse cx="64.8" cy="112" rx="2" ry="1.2" fill="#FFE27A"/>
-
-              <!-- Gold Present -->
-              <rect x="70" y="115" width="8" height="8" rx="1.2" fill="#FFB703"/>
-              <rect x="73.2" y="115" width="1.6" height="8" fill="#D93829"/>
-              <rect x="70" y="118.2" width="8" height="1.6" fill="#D93829"/>
-              <circle cx="74" cy="114" r="1.3" fill="#D93829"/>
-
-              <!-- Snow on ground base -->
-              <path d="M10 130 Q48 120 90 123 Q120 125 145 130 Z" fill="#FFFFFF" opacity="0.6"/>
-            </svg>
           </div>
 
           <!-- Daily scripture verse box -->
@@ -338,7 +201,7 @@
           <!-- Hero Action Button -->
           <button class="hero-primary-btn" id="openReadingBtn" type="button">
             <span>Read Today's Scripture</span>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
         </div>
 
@@ -546,7 +409,10 @@
         </button>
       </div>
       <p class="sheet-desc muted" id="onboardDesc">Your roll number and phone number are your entry. No email, no password.</p>
-      <button class="link-btn restore-toggle" id="obRestoreToggle" type="button">Already registered? Restore my entry</button>
+      <div class="onboard-tabs" role="tablist" aria-label="Registration mode">
+        <button class="onboard-tab is-active" id="obTabRegister" type="button" role="tab" aria-selected="true">New registration</button>
+        <button class="onboard-tab" id="obRestoreToggle" type="button" role="tab" aria-selected="false">Restore entry</button>
+      </div>
       <form id="onboardForm" class="form" autocomplete="off">
         <label class="field" for="obName" data-register-only>
           <span class="field-label">Full name</span>
@@ -785,6 +651,35 @@
   <datalist id="chapterList"></datalist>
 
   <script src="firebase-config.js"></script>
+  <script>
+    /* Splash: simple, clean intro before revealing the landing page. */
+    (function () {
+      var splash = document.getElementById('splash');
+      var cover = document.getElementById('cover');
+      if (!splash) { if (cover) cover.classList.add('is-revealed'); return; }
+
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) {
+        if (cover) cover.classList.add('is-revealed');
+        splash.remove();
+        return;
+      }
+
+      var finished = false;
+      function dismiss() {
+        if (finished) return;
+        finished = true;
+        document.body.classList.remove('splash-open');
+        if (cover) cover.classList.add('is-revealed');
+        splash.classList.add('is-done');
+        window.setTimeout(function () { splash.remove(); }, 400);
+      }
+
+      document.body.classList.add('splash-open');
+      splash.addEventListener('click', dismiss);
+      window.setTimeout(dismiss, 1150);
+    })();
+  </script>
   <script type="module" src="js/pwa.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>

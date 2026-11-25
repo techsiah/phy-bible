@@ -71,3 +71,22 @@ export function isCleanName(name) {
   const lower = String(name || '').toLowerCase();
   return !PROFANITY.some((word) => lower.includes(word));
 }
+
+export function yearLabel(year) {
+  if (year === 'PG') return 'PG';
+  const suffix = year === '1' ? 'st' : year === '2' ? 'nd' : year === '3' ? 'rd' : 'th';
+  return `${year}${suffix} Year`;
+}
+
+/* Composite Firestore document ID so students with the same roll number
+   in different departments/years never collide:
+   e.g. "21|Department of Microbiology|2nd Year PG" */
+export function readerKey(profile) {
+  if (typeof profile === 'string') return profile;
+  const roll = String(profile?.roll || '').trim();
+  const dept = String(profile?.dept || '').trim().replace(/\//g, '-');
+  const yr = yearLabel(String(profile?.year || '').trim());
+  const prog = String(profile?.program || '').trim();
+  const level = yr && prog && yr !== prog ? `${yr} ${prog}` : (yr || prog);
+  return [roll, dept, level].filter(Boolean).join('|');
+}
