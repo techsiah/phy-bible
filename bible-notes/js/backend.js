@@ -144,13 +144,12 @@ function createFirestoreBackend(db, uid) {
     };
   }
 
-  async function writeBoard(roll, data) {
+  async function writeBoard(idOrProfile, data) {
     try {
+      const id = readerKey(idOrProfile);
+      const roll = data.roll || (id.includes('|') ? id.split('|')[0] : id);
       const doc = boardDoc({ ...data, roll });
-      // The phone number is part of the sign-in pair, so it is never
-      // projected. The delete also clears it from older board documents.
-      doc.phone = window.firebase.firestore.FieldValue.delete();
-      await boardRef(roll).set(doc, { merge: true });
+      await boardRef(id).set(doc, { merge: true });
     } catch (err) {
       console.warn('Board sync deferred', err);
     }
