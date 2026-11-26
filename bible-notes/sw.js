@@ -3,12 +3,15 @@
 
    App files use network-first so a deploy is picked up on the next load. Vendor
    SDK files are versioned and immutable, so they stay cache-first. */
-const CACHE = 'xmas2026-shell-v44';
+const CACHE = 'xmas2026-shell-v46';
 
 const ASSETS = [
   './',
   'index.html',
   'styles.css',
+  'header-nativity.jpg',
+  'Assets/Snowy%20Campus%20Christmas%20Lights.png',
+  'Assets/Snowy%20Mountain%20Campus%20in%20Winter.png',
   'manifest.webmanifest',
   'icon.png',
   'icon-1024.png',

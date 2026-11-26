@@ -88,7 +88,9 @@ const dom = {
   syncNote: $('syncNote'),
   syncNote2: $('syncNote2'),
   dailyLabel: $('dailyLabel'),
+  headerGreetingBar: $('headerGreetingBar'),
   headerUserName: $('headerUserName'),
+  headerGreetingSub: $('headerGreetingSub'),
   openReadingBtn: $('openReadingBtn'),
   quickReflectBtn: $('quickReflectBtn'),
   quickStreakBtn: $('quickStreakBtn'),
@@ -397,8 +399,22 @@ function updateHeaderElevation() {
   else if (scrolled && y < 12) dom.appHeader.dataset.scrolled = 'false';
 }
 
+function initHeaderSlideshow() {
+  if (!dom.appHeader) return;
+  const slides = Array.from(dom.appHeader.querySelectorAll('.header-nativity-img'));
+  if (slides.length < 2) return;
+  let index = Math.max(0, slides.findIndex((img) => img.classList.contains('is-active')));
+  setInterval(() => {
+    if (document.hidden) return;
+    slides[index].classList.remove('is-active');
+    index = (index + 1) % slides.length;
+    slides[index].classList.add('is-active');
+  }, 6000);
+}
+
 function bindAppShell() {
   ensureViewHistory();
+  initHeaderSlideshow();
   requestAnimationFrame(positionNavIndicator);
   requestAnimationFrame(updateHeaderElevation);
 
@@ -1824,6 +1840,17 @@ function renderAll() {
     const firstName = String(state.profile?.name || '').trim().split(/\s+/)[0];
     dom.headerUserName.textContent = firstName || (state.profile ? state.profile.roll : 'Friend');
   }
+  if (dom.headerGreetingSub) {
+    if (isGuest) {
+      dom.headerGreetingSub.textContent = 'Advent 26 · Tap to sign in & track points';
+    } else {
+      const streak = Number(state.stats?.currentStreak) || 0;
+      const pts = Number(state.stats?.points) || 0;
+      dom.headerGreetingSub.textContent = streak > 0
+        ? `${streak}-day streak · ${pts} pts · Dec 1 – 25`
+        : `${pts} pts · Advent 26 · Dec 1 – 25`;
+    }
+  }
   if (dom.registerBtn) dom.registerBtn.hidden = true; // always hidden – avatar btn + guest banner handle registration
   if (dom.guestBanner) dom.guestBanner.hidden = !isGuest;
   if (dom.guestReadingHint) dom.guestReadingHint.hidden = !isGuest;
@@ -2824,6 +2851,20 @@ function bindEvents() {
         showOnboarding();
       } else {
         openSettings();
+      }
+    });
+  }
+  if (dom.headerGreetingBar) {
+    dom.headerGreetingBar.addEventListener('click', (event) => {
+      if (event.target.closest('#accountBtn')) return;
+      if (!state.profile) showOnboarding();
+      else openSettings();
+    });
+    dom.headerGreetingBar.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (!state.profile) showOnboarding();
+        else openSettings();
       }
     });
   }
