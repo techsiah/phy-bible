@@ -880,9 +880,7 @@ function updateSyncNotes() {
 /* ── Static content ────────────────────────────────────────── */
 
 function populateStatic() {
-  if (dom.coverOrg) dom.coverOrg.textContent = EVENT.org;
-  const coverCollege = $('coverCollege');
-  if (coverCollege) coverCollege.textContent = EVENT.college;
+  if (dom.coverOrg) dom.coverOrg.textContent = `${EVENT.org} · ${EVENT.college}`;
   if (dom.coverTitle) dom.coverTitle.textContent = EVENT.title;
   if (dom.coverSub) dom.coverSub.textContent = EVENT.tagline;
   if (dom.coverEdition) dom.coverEdition.textContent = `${EDITION.name} · ${EDITION.license}`;
@@ -951,9 +949,7 @@ function populateStatic() {
 /* ── Rendering ─────────────────────────────────────────────── */
 
 function renderCover() {
-  if (dom.coverOrg) dom.coverOrg.textContent = EVENT.org;
-  const coverCollege = $('coverCollege');
-  if (coverCollege) coverCollege.textContent = EVENT.college;
+  if (dom.coverOrg) dom.coverOrg.textContent = `${EVENT.org} · ${EVENT.college}`;
   if (dom.coverTitle) dom.coverTitle.textContent = EVENT.title;
   if (dom.coverSub) dom.coverSub.textContent = EVENT.tagline;
   if (dom.coverEdition) dom.coverEdition.textContent = `${EDITION.name} · ${EDITION.license}`;
