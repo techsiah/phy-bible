@@ -6,9 +6,10 @@
 import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, isCleanName } from './config.js';
 import { initBackend } from './backend.js';
 
-// Firebase Email/Password auth is used here — no passcodes in source code.
-// Add organizer emails in Firebase Console → Authentication → Users
-// and create admins/{uid} docs in Firestore Console (empty docs are fine).
+// Firebase Google Auth is used here — no passcodes in source code.
+// Primary organizer UID is allowed directly; additional organizers can be
+// added via admins/{uid} docs in Firestore Console.
+const PRIMARY_ADMIN_UID = '8BxvFDLch0PAmHMdH0FpIO1zKU83';
 let _firebaseAdminAuth = null; // set in initAdminFirebase()
 
 // Professional SVG Icon Library
@@ -56,11 +57,9 @@ function genderLabel(value) {
 }
 
 /* ── Authentication ─────────────────────────────────────────
-   Uses Firebase Email/Password sign-in.
-   Steps to provision a new organizer:
-     1. Firebase Console → Authentication → Users → Add user
-     2. Firebase Console → Firestore → admins → create a document
-        whose ID is the new user's UID (content can be empty: {}).
+   Uses Firebase Google Sign-In.
+   Primary organizer UID is allowed directly; additional organizers can
+   be added by creating admins/{uid} docs in Firestore Console.
    ──────────────────────────────────────────────────────────── */
 
 async function initAdminFirebase() {
@@ -74,12 +73,21 @@ async function initAdminFirebase() {
       window.firebase.auth.Auth.Persistence.LOCAL
     );
   } catch (err) { /* ignore */ }
+  // Complete any pending redirect sign-in
+  try {
+    await _firebaseAdminAuth.getRedirectResult();
+  } catch (err) {
+    const errorEl = $('passcodeError');
+    if (errorEl && err.code) {
+      errorEl.textContent = err.message || 'Google sign-in failed.';
+      errorEl.hidden = false;
+    }
+  }
   return _firebaseAdminAuth;
 }
 
 function checkAuth() {
   if (!_firebaseAdminAuth) {
-    // Firebase not ready yet — wait for onAuthStateChanged
     return;
   }
   _firebaseAdminAuth.onAuthStateChanged(async (user) => {
@@ -87,18 +95,19 @@ function checkAuth() {
       _showLockScreen();
       return;
     }
-    // Verify UID is in admins collection
-    const db = window.firebase.firestore();
-    try {
-      const snap = await db.collection('admins').doc(user.uid).get();
-      if (!snap.exists) {
-        await _firebaseAdminAuth.signOut();
-        _showLockScreen('Your account is not registered as an organizer.');
+    if (user.uid !== PRIMARY_ADMIN_UID) {
+      const db = window.firebase.firestore();
+      try {
+        const snap = await db.collection('admins').doc(user.uid).get();
+        if (!snap.exists) {
+          await _firebaseAdminAuth.signOut();
+          _showLockScreen(`Account (${user.email || user.uid}) is not authorized as an organizer.`);
+          return;
+        }
+      } catch (err) {
+        _showLockScreen('Could not verify organizer status. Check your connection.');
         return;
       }
-    } catch (err) {
-      _showLockScreen('Could not verify organizer status. Check your connection.');
-      return;
     }
     adminState.authenticated = true;
     $('lockScreen').hidden = true;
@@ -120,17 +129,9 @@ function _showLockScreen(errorMsg) {
 
 async function handleLogin(e) {
   if (e) e.preventDefault();
-  const emailInput = $('adminEmailInput');
-  const passInput = $('passcodeInput');
   const errorEl = $('passcodeError');
   const submitBtn = $('loginSubmitBtn');
-  const email = (emailInput?.value || '').trim();
-  const pass = passInput?.value || '';
 
-  if (!email || !pass) {
-    if (errorEl) { errorEl.textContent = 'Enter your email and password.'; errorEl.hidden = false; }
-    return;
-  }
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Signing in…'; }
   if (errorEl) errorEl.hidden = true;
 
@@ -139,21 +140,32 @@ async function handleLogin(e) {
       _firebaseAdminAuth = await initAdminFirebase();
     }
     if (!_firebaseAdminAuth) throw new Error('Firebase not configured.');
-    await _firebaseAdminAuth.signInWithEmailAndPassword(email, pass);
-    // onAuthStateChanged will handle the rest
+    const provider = new window.firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    try {
+      await _firebaseAdminAuth.signInWithPopup(provider);
+    } catch (popupErr) {
+      if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/operation-not-supported-in-this-environment') {
+        await _firebaseAdminAuth.signInWithRedirect(provider);
+        return;
+      }
+      throw popupErr;
+    }
   } catch (err) {
-    const msgs = {
-      'auth/user-not-found': 'No organizer account found for that email.',
-      'auth/wrong-password': 'Incorrect password. Please try again.',
-      'auth/invalid-email': 'Please enter a valid email address.',
-      'auth/too-many-requests': 'Too many attempts. Please wait a few minutes.',
-      'auth/network-request-failed': 'Network error. Check your connection.'
-    };
-    const msg = msgs[err.code] || err.message || 'Sign-in failed. Please try again.';
-    if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
-    if (passInput) { passInput.value = ''; passInput.focus(); }
+    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      const msgs = {
+        'auth/operation-not-allowed': 'Google Sign-In is not enabled in Firebase Console → Authentication → Sign-in method.',
+        'auth/unauthorized-domain': 'This domain is not authorized for Google Sign-In in Firebase Console.',
+        'auth/network-request-failed': 'Network error. Check your connection.'
+      };
+      const msg = msgs[err.code] || err.message || 'Google sign-in failed. Please try again.';
+      if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+    }
   } finally {
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign In'; }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81Z"/></svg><span>Sign in with Google</span>`;
+    }
   }
 }
 
