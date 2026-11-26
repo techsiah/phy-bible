@@ -148,3 +148,152 @@ if ('serviceWorker' in navigator && !isFile) {
     });
   });
 }
+
+/* ── Pull-to-refresh (essential in installed standalone PWAs) ── */
+function initPullToRefresh() {
+  if (!('ontouchstart' in window) && !(navigator.maxTouchPoints > 0)) return;
+
+  const THRESHOLD = 72;
+  const MAX_PULL = 116;
+
+  const pill = document.createElement('div');
+  pill.className = 'ptr-pill';
+  pill.setAttribute('role', 'status');
+  pill.setAttribute('aria-live', 'polite');
+  pill.innerHTML = `
+    <span class="ptr-spinner" aria-hidden="true">
+      <svg class="ptr-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14"/>
+        <path d="m19 12-7 7-7-7"/>
+      </svg>
+      <svg class="ptr-ring" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+      </svg>
+    </span>
+    <span class="ptr-label">Pull to refresh</span>
+  `;
+  document.body.append(pill);
+
+  const labelEl = pill.querySelector('.ptr-label');
+  const arrowEl = pill.querySelector('.ptr-arrow');
+
+  let startX = 0;
+  let startY = 0;
+  let pulling = false;
+  let refreshing = false;
+  let currentPull = 0;
+
+  function canPullFrom(target) {
+    if (refreshing) return false;
+    if (document.querySelector('dialog[open]')) return false;
+    if ((window.scrollY || document.documentElement.scrollTop || 0) > 2) return false;
+    if (target && target.closest && target.closest('input, textarea, select, [contenteditable="true"], .advent-strip')) {
+      return false;
+    }
+    return true;
+  }
+
+  function applyPull(dist) {
+    currentPull = dist;
+    const progress = Math.min(1, dist / THRESHOLD);
+    const ready = dist >= THRESHOLD;
+    const translateY = Math.min(MAX_PULL, dist) * 0.72;
+
+    pill.classList.add('is-visible');
+    pill.classList.toggle('is-ready', ready);
+    pill.style.transform = `translate3d(-50%, ${translateY}px, 0) scale(${0.86 + 0.14 * progress})`;
+    pill.style.opacity = String(Math.min(1, progress * 1.3));
+    if (arrowEl) {
+      arrowEl.style.transform = `rotate(${ready ? 180 : Math.round(progress * 140)}deg)`;
+    }
+    if (labelEl) {
+      labelEl.textContent = ready ? 'Release to refresh' : 'Pull to refresh';
+    }
+  }
+
+  function resetPull() {
+    pulling = false;
+    currentPull = 0;
+    pill.classList.remove('is-visible', 'is-ready');
+    pill.style.transform = '';
+    pill.style.opacity = '';
+    if (arrowEl) arrowEl.style.transform = '';
+  }
+
+  async function triggerRefresh() {
+    refreshing = true;
+    pulling = false;
+    pill.classList.add('is-visible', 'is-refreshing');
+    pill.classList.remove('is-ready');
+    pill.style.transform = 'translate3d(-50%, 56px, 0) scale(1)';
+    pill.style.opacity = '1';
+    if (labelEl) labelEl.textContent = 'Refreshing…';
+
+    try {
+      if ('serviceWorker' in navigator && !isFile) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) await Promise.race([reg.update(), new Promise((r) => setTimeout(r, 800))]);
+      }
+    } catch (err) { /* ignore update check failures */ }
+
+    window.setTimeout(() => {
+      window.location.reload();
+    }, 420);
+  }
+
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || !canPullFrom(e.target)) {
+      pulling = false;
+      return;
+    }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    pulling = true;
+    currentPull = 0;
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!pulling || refreshing || e.touches.length !== 1) return;
+    if ((window.scrollY || document.documentElement.scrollTop || 0) > 2) {
+      resetPull();
+      return;
+    }
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+
+    if (currentPull === 0) {
+      if (dy < 10) return;
+      if (Math.abs(dx) > Math.abs(dy) * 0.8) {
+        pulling = false;
+        return;
+      }
+    }
+
+    if (dy > 0) {
+      // Elastic resistance as the user pulls further down
+      const damped = Math.min(MAX_PULL, dy * 0.52);
+      applyPull(damped);
+    } else if (currentPull > 0) {
+      resetPull();
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchend', () => {
+    if (!pulling || refreshing) return;
+    if (currentPull >= THRESHOLD) {
+      triggerRefresh();
+    } else {
+      resetPull();
+    }
+  }, { passive: true });
+
+  window.addEventListener('touchcancel', () => {
+    if (pulling && !refreshing) resetPull();
+  }, { passive: true });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initPullToRefresh, { once: true });
+} else {
+  initPullToRefresh();
+}
