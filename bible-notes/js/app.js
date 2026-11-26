@@ -467,7 +467,7 @@ function applyTheme(theme) {
     btn.setAttribute('aria-pressed', String(btn.dataset.themeChoice === next));
   });
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', next === 'day' ? '#F7F5F0' : '#0F1A15');
+  if (meta) meta.setAttribute('content', next === 'day' ? '#F7F5F0' : '#000000');
 }
 
 function applyFont(size) {
