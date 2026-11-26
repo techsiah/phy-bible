@@ -532,6 +532,129 @@ function init() {
   }
 }
 
+let unsubSelf = null;
+let unsubBoardReaders = null;
+let unsubBoardGroups = null;
+
+function stopSelfRealtime() {
+  if (unsubSelf) {
+    unsubSelf();
+    unsubSelf = null;
+  }
+}
+
+function stopBoardRealtime() {
+  if (unsubBoardReaders) {
+    unsubBoardReaders();
+    unsubBoardReaders = null;
+  }
+  if (unsubBoardGroups) {
+    unsubBoardGroups();
+    unsubBoardGroups = null;
+  }
+}
+
+async function revokeDeletedAccount() {
+  stopSelfRealtime();
+  state.profile = null;
+  state.reader = null;
+  state.group = null;
+  state.earlyAccess = false;
+  state.reads = {};
+  state.notes = [];
+  state.milestones = [];
+  store.clearData();
+  await safe(() => state.backend && state.backend.signOut());
+  recompute();
+  [dom.settingsDialog, dom.groupDialog, dom.noteDialog, dom.recoveryDialog, dom.onboarding].forEach((dlg) => {
+    if (dlg && dlg.open) closeDialog(dlg);
+  });
+  renderCover();
+  renderAll();
+  showToast('Your account was removed by an organizer.');
+}
+
+function startSelfRealtime() {
+  stopSelfRealtime();
+  if (!state.profile || !state.backend || typeof state.backend.subscribeSelf !== 'function') return;
+  const key = readerKey(state.profile);
+  unsubSelf = state.backend.subscribeSelf(key, {
+    onBoard(board) {
+      if (!state.profile) return;
+      const nextEarly = Boolean(board.earlyAccess);
+      const nextGroupCode = board.groupCode || null;
+      const prevGroupCode = state.profile.groupCode || null;
+      let changed = nextEarly !== state.earlyAccess;
+      state.earlyAccess = nextEarly;
+
+      ['name', 'gender', 'dept', 'year', 'program'].forEach((field) => {
+        if (board[field] && board[field] !== state.profile[field]) {
+          state.profile[field] = board[field];
+          changed = true;
+        }
+      });
+      if (nextGroupCode !== prevGroupCode) {
+        state.profile.groupCode = nextGroupCode;
+        if (!nextGroupCode) {
+          state.group = null;
+        } else if (state.cache?.groups) {
+          state.group = state.cache.groups.find((g) => g.code === nextGroupCode) || null;
+        }
+        changed = true;
+      }
+      if (changed) {
+        persist();
+        renderAll();
+        renderCover();
+      }
+    },
+    onReader(reader) {
+      if (!state.profile) return;
+      state.reader = reader;
+      let changed = false;
+      ['name', 'gender', 'dept', 'year', 'program', 'groupCode'].forEach((field) => {
+        if (reader[field] !== undefined && reader[field] !== state.profile[field]) {
+          state.profile[field] = reader[field];
+          changed = true;
+        }
+      });
+      if (changed) {
+        persist();
+        renderAll();
+        renderCover();
+      }
+    },
+    onDeleted() {
+      revokeDeletedAccount();
+    }
+  });
+}
+
+function startBoardRealtime() {
+  stopBoardRealtime();
+  if (!state.backend || typeof state.backend.subscribeReaders !== 'function') return;
+  let liveReaders = state.cache?.readers || [];
+  let liveGroups = state.cache?.groups || [];
+  const commit = () => {
+    state.cache = { at: Date.now(), readers: liveReaders, groups: liveGroups };
+    store.saveCache(state.cache);
+    if (state.profile?.groupCode) {
+      state.group = liveGroups.find((g) => g.code === state.profile.groupCode) || null;
+    }
+    renderMyGroup();
+    renderProfile();
+    renderBoard();
+  };
+  unsubBoardReaders = state.backend.subscribeReaders((readers) => {
+    liveReaders = readers;
+    commit();
+  });
+  unsubBoardGroups = state.backend.subscribeGroups((groups) => {
+    liveGroups = groups;
+    commit();
+  });
+}
+
 async function bootBackend() {
   try {
     state.backend = await initBackend();
@@ -545,10 +668,14 @@ async function bootBackend() {
   }
   state.warning = null;
   updateSyncNotes();
+  startBoardRealtime();
   if (state.profile) {
-    const ok = await hydrate();
-    if (!ok && state.backend?.mode === 'firebase') showRecovery();
-    await loadEarlyAccess();
+    const ok = await hydrate({ claim: false });
+    if (!ok && state.backend?.mode === 'firebase' && state.profile) showRecovery();
+    if (state.profile) {
+      await loadEarlyAccess();
+      startSelfRealtime();
+    }
     renderAll();
   }
   // Splash screen stays until user clicks 'Explore the readings' or 'Register / Join'
@@ -573,11 +700,13 @@ async function hydrate(options = {}) {
   const key = readerKey(state.profile);
   const localNotes = state.notes;
   let reader;
+  let board;
   let remoteDays;
   let remoteNotes;
   try {
-    [reader, remoteDays, remoteNotes] = await Promise.all([
+    [reader, board, remoteDays, remoteNotes] = await Promise.all([
       state.backend.getReader(key),
+      state.backend.getBoard(key),
       state.backend.getDays(key),
       state.backend.getNotes(key)
     ]);
@@ -589,6 +718,11 @@ async function hydrate(options = {}) {
     recompute();
     persist();
     return true;
+  }
+
+  if (!claim && !reader && !board) {
+    await revokeDeletedAccount();
+    return false;
   }
 
   const merged = mergeReads(state.reads, remoteDays || {});
@@ -1600,31 +1734,33 @@ function renderProfile() {
 
   const card = el('div', 'profile-card');
 
+  // Hero row: avatar + name/dept + roll pill
   const hero = el('div', 'profile-hero');
   const avatar = el('span', 'profile-avatar', initial);
   avatar.setAttribute('aria-hidden', 'true');
   const info = el('div', 'profile-hero-info');
   info.append(
     el('strong', 'profile-name', displayName),
-    el('span', 'profile-sub', [deptShort, yearProgram].filter(Boolean).join(' · ') || '—')
+    el('span', 'profile-sub', deptShort || '—')
   );
   const rollBadge = el('span', 'profile-roll-pill', `Roll ${state.profile.roll}`);
   hero.append(avatar, info, rollBadge);
 
-  const meta = el('div', 'profile-meta-grid');
-  const items = [
+  // Detail rows: label on left, value on right
+  const rows = [
     ['Phone', state.profile.phone || '—'],
-    ['Group', state.group ? `${state.group.name} (${state.group.code})` : 'Solo'],
+    ['Year', yearProgram || '—'],
     ['Gender', genderLabel(state.profile.gender) || '—'],
-    ['Year & Program', yearProgram || '—']
+    ['Group', state.group ? `${state.group.name} (${state.group.code})` : 'Solo']
   ];
-  items.forEach(([label, value]) => {
-    const cell = el('div', 'profile-meta-cell');
-    cell.append(el('span', '', label), el('strong', '', value));
-    meta.append(cell);
+  const details = el('div', 'profile-details');
+  rows.forEach(([label, value]) => {
+    const row = el('div', 'profile-detail-row');
+    row.append(el('span', 'profile-detail-label', label), el('span', 'profile-detail-value', value));
+    details.append(row);
   });
 
-  card.append(hero, meta);
+  card.append(hero, details);
   dom.profileSummary.append(card);
 }
 
@@ -1839,6 +1975,7 @@ async function submitOnboarding(event) {
         const restored = await hydrate({ claim: false });
         if (!restored) throw new Error('Could not load your saved entry. Try again.');
         await loadEarlyAccess();
+        startSelfRealtime();
         return found;
       })(), 15000, 'Restore is taking too long. Check your internet connection and try again.');
       if (!reader) throw new Error('Could not restore your entry. Try again.');
@@ -1897,13 +2034,14 @@ async function submitOnboarding(event) {
     const restored = await hydrate({ claim: false });
     if (!restored) throw new Error('Could not load your saved entry. Try again.');
     await loadEarlyAccess();
+    startSelfRealtime();
 
     closeDialog(dom.onboarding);
     enterApp();
     showToast('Welcome to the 25-day journey.');
   } catch (err) {
     if (err.code === 'PHONE_MISMATCH') {
-      dom.obError.textContent = 'That roll number is already registered with different details. Use the same phone number, department, and year as the first time, or use “Restore my entry”.';
+      dom.obError.textContent = `Roll ${dom.obRoll?.value || ''} in that department and year is already registered with a different phone number. Use the original phone number or “Restore my entry”.`;
     } else if (err.code === 'GROUP_FULL') {
       dom.obError.textContent = 'That group already has four members.';
     } else if (err.code === 'GROUP_NOT_FOUND') {

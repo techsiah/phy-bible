@@ -122,7 +122,23 @@ function isAlreadyExists(err) {
   return /already-exists|alreadyexists/i.test(errorCode(err));
 }
 
-function createFirestoreBackend(db, uid) {
+function createFirestoreBackend(db, initialUid) {
+  let uid = initialUid;
+  async function ensureUid() {
+    const auth = window.firebase && window.firebase.auth ? window.firebase.auth() : null;
+    if (auth) {
+      if (auth.currentUser && auth.currentUser.uid) {
+        uid = auth.currentUser.uid;
+        return uid;
+      }
+      const cred = await auth.signInAnonymously();
+      if (cred && cred.user && cred.user.uid) {
+        uid = cred.user.uid;
+        return uid;
+      }
+    }
+    return uid;
+  }
   const readerRef = (idOrProfile) => db.collection('readers').doc(readerKey(idOrProfile));
   const boardRef = (idOrProfile) => db.collection('board').doc(readerKey(idOrProfile));
   const groupRef = (code) => db.collection('groups').doc(code);
@@ -167,8 +183,9 @@ function createFirestoreBackend(db, uid) {
      if the submitted phone, department, and year equal the stored ones, so the
      check happens on the server and a wrong entry cannot be taken over. */
   async function transferReader(roll, phone, dept, year) {
+    const activeUid = await ensureUid();
     const now = Date.now();
-    const patch = { uid, phone: String(phone || ''), updatedAt: now };
+    const patch = { uid: activeUid, phone: String(phone || ''), updatedAt: now };
     if (dept) patch.dept = String(dept);
     if (year) patch.year = String(year);
     try {
@@ -191,15 +208,24 @@ function createFirestoreBackend(db, uid) {
     mode: 'firebase',
     warning: null,
     async claimReader(profile) {
+      const activeUid = await ensureUid();
       const now = Date.now();
       const phone = String(profile.phone || '');
       const id = readerKey(profile);
       const ref = readerRef(id);
       let reader = null;
+      let existedOrDeniedRead = false;
       try {
         await db.runTransaction(async (tx) => {
-          const existing = await tx.get(ref);
+          let existing;
+          try {
+            existing = await tx.get(ref);
+          } catch (readErr) {
+            if (isPermissionDenied(readErr)) existedOrDeniedRead = true;
+            throw readErr;
+          }
           if (existing.exists) {
+            existedOrDeniedRead = true;
             const err = new Error('Already exists');
             err.code = 'already-exists';
             throw err;
@@ -207,15 +233,15 @@ function createFirestoreBackend(db, uid) {
           tx.set(ref, {
             ...profile,
             phone,
-            uid,
+            uid: activeUid,
             createdAt: now,
             updatedAt: now
           });
         });
       } catch (err) {
-        if (isAlreadyExists(err) || isPermissionDenied(err)) {
-          // The entry is already registered. The phone, department, and year
-          // decide whether this is the same student.
+        if (existedOrDeniedRead && (isAlreadyExists(err) || isPermissionDenied(err))) {
+          // The entry is already registered for this roll + dept + year.
+          // The phone number decides whether this is the same student.
           reader = await transferReader(id, phone, profile.dept, profile.year);
         } else {
           throw err;
@@ -249,6 +275,44 @@ function createFirestoreBackend(db, uid) {
     },
     async setEarlyAccess(roll, enabled) {
       await boardRef(roll).set({ earlyAccess: Boolean(enabled) }, { merge: true });
+    },
+    subscribeSelf(key, { onBoard, onReader, onDeleted } = {}) {
+      let deleted = false;
+      const notifyDeleted = () => {
+        if (deleted) return;
+        deleted = true;
+        if (onDeleted) onDeleted();
+      };
+      const unsubBoard = boardRef(key).onSnapshot(
+        (snap) => {
+          if (!snap.exists) {
+            if (!snap.metadata.fromCache) notifyDeleted();
+            return;
+          }
+          if (onBoard) onBoard(snap.data());
+        },
+        (err) => console.warn('self board subscription error', err)
+      );
+      const unsubReader = readerRef(key).onSnapshot(
+        (snap) => {
+          if (!snap.exists) {
+            if (!snap.metadata.fromCache) notifyDeleted();
+            return;
+          }
+          if (onReader) onReader(snap.data());
+        },
+        (err) => {
+          if (isPermissionDenied(err)) {
+            notifyDeleted();
+            return;
+          }
+          console.warn('self reader subscription error', err);
+        }
+      );
+      return () => {
+        unsubBoard();
+        unsubReader();
+      };
     },
     async getDays(roll) {
       const snap = await readerRef(roll).collection('days').get();
