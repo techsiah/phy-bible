@@ -341,8 +341,8 @@ body.splash-open { overflow: hidden; }
 }
 
 .cover-emblem {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
@@ -364,24 +364,24 @@ html[data-theme="candle"] .cover-tag {
 }
 
 .cover-hero-title {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   font-family: var(--font-serif);
-  font-size: clamp(2.65rem, 10.5vw, 3.4rem);
-  font-weight: 700;
+  font-size: clamp(2.6rem, 10vw, 3.35rem);
+  font-weight: 600;
   font-style: normal;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
   color: var(--ink);
 }
 
 .cover-hero-sub {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   font-family: var(--font-sans);
   font-size: 0.72rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--ink-faint);
 }
 
 .cover-hero-meta {
@@ -418,7 +418,11 @@ html[data-theme="candle"] .cover-hero-meta #coverCountdown {
 .cover-pillars {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 }
 
 .cover-pillar {
@@ -426,11 +430,13 @@ html[data-theme="candle"] .cover-hero-meta #coverCountdown {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 4px;
-  padding: 12px 8px;
-  border-radius: 14px;
-  background: var(--panel);
-  border: 1px solid var(--line-soft);
+  gap: 3px;
+  padding: 13px 8px;
+  border-right: 1px solid var(--line-soft);
+}
+
+.cover-pillar:last-child {
+  border-right: none;
 }
 
 .cover-pillar svg {
@@ -570,8 +576,9 @@ html[data-theme="candle"] .cover-avatar.is-signed-in {
 }
 
 .cover-desc {
-  margin: 0 6px;
-  font-size: 0.86rem;
+  margin: 0 auto;
+  max-width: 34ch;
+  font-size: 0.85rem;
   line-height: 1.55;
   color: var(--ink-soft);
   text-align: center;
@@ -582,8 +589,8 @@ html[data-theme="candle"] .cover-avatar.is-signed-in {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 12px;
+  gap: 10px;
+  padding-top: 10px;
 }
 
 .cover-open-btn {
@@ -594,13 +601,14 @@ html[data-theme="candle"] .cover-avatar.is-signed-in {
   background: var(--ink);
   color: var(--panel);
   font-family: var(--font-sans);
-  font-size: 0.94rem;
+  font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 10px 24px -8px rgba(28, 28, 30, 0.35);
   transition: transform 0.18s ease, opacity 0.18s ease;
   cursor: pointer;
 }
