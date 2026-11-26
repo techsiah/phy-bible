@@ -45,7 +45,6 @@
     <div class="cover-panel">
       <header class="cover-topbar">
         <div class="cover-brand-row">
-          <img src="icon.png" alt="Jesus Youth" class="cover-brand-logo">
           <span class="cover-brand-text" id="coverOrg">Jesus Youth · Pazhassi Raja College</span>
         </div>
         <button class="cover-icon-btn" id="coverThemeBtn" type="button" aria-label="Switch to candlelight">
@@ -59,21 +58,56 @@
         </button>
       </header>
 
-      <section class="cover-hero">
-        <img src="icon-192.png" alt="Jesus Youth" class="cover-emblem" width="56" height="56">
-        <span class="cover-tag">December 1–25</span>
-        <h1 class="cover-hero-title" id="coverTitle">Advent 26</h1>
-        <p class="cover-hero-sub" id="coverSub">25 Days · 25 Reflections · One Journey</p>
-        <p class="cover-hero-meta">
-          <span id="coverCountdown">Opens in 7 days</span>
-          <span aria-hidden="true">·</span>
-          <span>25 daily readings</span>
-        </p>
-      </section>
+      <div class="cover-center">
+        <section class="cover-hero">
+          <div class="cover-emblem-wrap">
+            <img src="icon-192.png" alt="Jesus Youth" class="cover-emblem" width="64" height="64">
+          </div>
+          <span class="cover-tag">December 1–25</span>
+          <h1 class="cover-hero-title" id="coverTitle">Advent 26</h1>
+          <p class="cover-hero-sub" id="coverSub">25 Days · 25 Reflections · One Journey</p>
+          <p class="cover-hero-meta">
+            <span id="coverCountdown">Opens in 7 days</span>
+            <span aria-hidden="true">·</span>
+            <span>25 daily readings</span>
+          </p>
+        </section>
 
-      <div class="cover-body">
-        <p class="cover-desc">One chapter each day from December 1 to 25. Read, reflect, and keep your Advent notes in one quiet place.</p>
+        <div class="cover-body">
+          <p class="cover-desc">One chapter each day from December 1 to 25. Read, reflect, and keep your Advent notes in one quiet place.</p>
 
+          <div class="cover-pillars" aria-label="Highlights">
+            <div class="cover-pillar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              <strong>Daily Word</strong>
+              <span>EN &amp; Malayalam</span>
+            </div>
+            <div class="cover-pillar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20h9"/>
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+              </svg>
+              <strong>Quiet Notes</strong>
+              <span>Private journal</span>
+            </div>
+            <div class="cover-pillar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <strong>Together</strong>
+              <span>College groups</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cover-dock">
         <button class="cover-identity" id="coverRegBtn" type="button">
           <span class="cover-avatar" id="coverAvatar" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -95,9 +129,7 @@
           <div class="cover-stat"><strong id="coverPoints">0</strong><span>points</span></div>
           <div class="cover-stat"><strong id="coverDays">0</strong><span>days read</span></div>
         </div>
-      </div>
 
-      <div class="cover-dock">
         <button class="cover-open-btn" id="openBtn" type="button">
           <span>Explore the readings</span>
           <svg viewBox="0 0 20 20" fill="currentColor" width="17" height="17" aria-hidden="true">

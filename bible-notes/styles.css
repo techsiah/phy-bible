@@ -316,29 +316,49 @@ body.splash-open { overflow: hidden; }
 }
 
 /* Hero — grounded, editorial & trustworthy */
+.cover-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  padding: 8px 0;
+}
+
 .cover-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 28px 8px 8px;
+  padding: 8px 8px 0;
+}
+
+.cover-emblem-wrap {
+  padding: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 160, 23, 0.16) 0%, rgba(212, 160, 23, 0.04) 68%, transparent 100%);
+  margin-bottom: 14px;
 }
 
 .cover-emblem {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 16px;
+  display: block;
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
 }
 
 .cover-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--gold-soft);
   font-family: var(--font-sans);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--gold-deep);
 }
@@ -348,9 +368,9 @@ html[data-theme="candle"] .cover-tag {
 }
 
 .cover-hero-title {
-  margin: 6px 0 0;
+  margin: 10px 0 0;
   font-family: 'Palatino Linotype', 'Palatino', 'Book Antiqua', Georgia, var(--font-serif), serif;
-  font-size: clamp(2.6rem, 10.5vw, 3.4rem);
+  font-size: clamp(2.75rem, 11vw, 3.6rem);
   font-weight: 400;
   font-style: italic;
   line-height: 1.0;
@@ -375,8 +395,12 @@ html[data-theme="candle"] .cover-tag {
   justify-content: center;
   gap: 8px;
   margin: 14px 0 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
   font-family: var(--font-sans);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -393,7 +417,47 @@ html[data-theme="candle"] .cover-hero-meta #coverCountdown {
 .cover-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+}
+
+.cover-pillars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.cover-pillar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+}
+
+.cover-pillar svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold-deep);
+  margin-bottom: 2px;
+}
+
+html[data-theme="candle"] .cover-pillar svg {
+  color: var(--gold-bright);
+}
+
+.cover-pillar strong {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.cover-pillar span {
+  font-size: 0.68rem;
+  color: var(--ink-faint);
 }
 
 .cover-identity {
