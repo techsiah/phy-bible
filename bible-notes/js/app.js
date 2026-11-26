@@ -926,8 +926,13 @@ function renderAdvent() {
 
     const weekday = el('span', 'door-weekday', weekdayStr);
     const number = el('span', 'door-num', String(entry.day));
-    const mark = el('span', 'door-mark', entry.read ? '✓' : entry.state === 'today' ? '•' : '');
-    button.append(weekday, number, mark);
+    if (entry.read) {
+      const check = el('span', 'door-check');
+      check.setAttribute('aria-hidden', 'true');
+      check.innerHTML = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.3 5 8.8 9.5 3.6"/></svg>';
+      number.append(check);
+    }
+    button.append(weekday, number);
     fragment.append(button);
   });
   dom.adventStrip.replaceChildren(fragment);

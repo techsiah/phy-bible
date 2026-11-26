@@ -1136,6 +1136,7 @@ html[data-theme="candle"] .icon-moon { display: none; }
 }
 
 .door .door-num {
+  position: relative;
   font-family: var(--font-sans);
   font-size: 0.95rem;
   font-weight: 700;
@@ -1150,12 +1151,26 @@ html[data-theme="candle"] .icon-moon { display: none; }
   transition: background 0.18s ease, color 0.18s ease;
 }
 
-.door .door-mark {
+.door .door-check {
   position: absolute;
-  top: 4px;
-  right: 6px;
-  font-size: 0.62rem;
-  color: var(--gold-bright);
+  bottom: -2px;
+  right: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #FFFFFF;
+  border: 1.5px solid var(--door-bg, var(--panel));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+}
+
+.door .door-check svg {
+  width: 9px;
+  height: 9px;
+  display: block;
 }
 
 .door:not(:disabled):hover {
@@ -1184,10 +1199,16 @@ html[data-theme="candle"] .icon-moon { display: none; }
 }
 
 .door-done {
+  --door-bg: var(--panel-2);
   background: var(--panel-2);
+  border-color: rgba(46, 125, 82, 0.22);
+}
+.door-done.is-selected,
+.door-done.door-today {
+  --door-bg: var(--panel);
 }
 .door-done .door-num {
-  background: rgba(46, 125, 82, 0.12);
+  background: rgba(46, 125, 82, 0.14);
   color: var(--green);
 }
 
