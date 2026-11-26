@@ -811,7 +811,7 @@ html[data-theme="candle"] .cover-open-btn {
   margin: -16px -16px 14px;
   padding: 0 16px 12px;
   background: var(--bg-app);
-  overflow: hidden;
+  overflow: visible; /* never clip children — badge shadows must show */
   transition: padding-bottom 0.26s ease,
     box-shadow 0.22s ease,
     border-color 0.22s ease;
@@ -819,54 +819,42 @@ html[data-theme="candle"] .cover-open-btn {
   user-select: none;
 }
 
-.header-hero-stage {
-  position: relative;
-  margin: 0 -16px;
-  padding: 0 16px;
-  min-height: 170px;
-  overflow: hidden;
-  transition: min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.app-header[data-scrolled="true"] .header-hero-stage {
-  min-height: 0;
-}
-
+/* Background images: covers the full header area absolutely */
 .header-nativity-bg {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 190px; /* controls how tall the visible hero area is */
   pointer-events: none;
   z-index: 0;
-  overflow: hidden;
-  transition: opacity 0.26s ease;
+  overflow: hidden; /* clips images internally only */
+  transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.26s ease;
+}
+
+.app-header[data-scrolled="true"] .header-nativity-bg {
+  height: 0;
+  opacity: 0;
 }
 
 .header-nativity-bg::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 46%;
+  height: 50%;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(250, 247, 240, 0.86) 0%, rgba(250, 247, 240, 0.36) 55%, rgba(250, 247, 240, 0) 100%);
+  background: linear-gradient(180deg, rgba(250, 247, 240, 0.72) 0%, rgba(250, 247, 240, 0.28) 55%, rgba(250, 247, 240, 0) 100%);
 }
 
 .header-nativity-bg::after {
   content: "";
   position: absolute;
   inset: auto 0 0 0;
-  height: 20%;
+  height: 22%;
   z-index: 1;
   pointer-events: none;
   background: linear-gradient(0deg, var(--bg-app) 0%, rgba(250, 247, 240, 0) 100%);
-}
-
-.header-nativity-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  object-position: center;
 }
 
 .header-nativity-img {
@@ -898,19 +886,26 @@ html[data-theme="candle"] .header-nativity-bg::after {
   background: linear-gradient(0deg, var(--bg-app) 0%, rgba(7, 19, 14, 0.88) 46%, rgba(7, 19, 14, 0) 100%);
 }
 
-.app-header[data-scrolled="true"] .header-nativity-bg {
-  opacity: 0;
-}
-
+/* Top bar sits above the image in normal flex flow */
 .header-top-bar,
 .header-greeting-bar {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+}
+
+/* Spacer between brand bar and greeting card: creates the visible hero window */
+.header-hero-spacer {
+  height: 100px;
+  flex: none;
+  transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-header[data-scrolled="true"] .header-hero-spacer {
+  height: 0;
 }
 
 /* Raised edge once content scrolls beneath the bar */
 .app-header[data-scrolled="true"] {
-  min-height: 0;
   padding-bottom: 10px;
   border-bottom-color: transparent;
   box-shadow: 0 1px 0 rgba(28, 20, 8, 0.06), 0 10px 24px -20px rgba(28, 20, 8, 0.5);
@@ -985,16 +980,6 @@ html[data-theme="candle"] .app-header[data-scrolled="true"] {
   box-shadow: 0 3px 10px rgba(18, 30, 22, 0.08);
 }
 
-.brand-santa-hat {
-  position: absolute;
-  top: -14px;
-  right: -8px;
-  width: 32px;
-  height: 28px;
-  transform: rotate(12deg);
-  pointer-events: none;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.18));
-}
 
 .header-brand-icon {
   width: 26px;

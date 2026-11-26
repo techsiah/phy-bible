@@ -147,61 +147,50 @@
   <div class="app" id="app" hidden>
     <!-- Modern Header -->
     <header class="app-header" id="appHeader">
-      <div class="header-hero-stage">
-        <!-- Atmospheric Snowy Nativity Header Illustration -->
-        <div class="header-nativity-bg" aria-hidden="true">
-          <img src="header-nativity.jpg" alt="" class="header-nativity-img is-active" decoding="async">
-          <img src="Assets/Snowy%20Campus%20Christmas%20Lights.png" alt="" class="header-nativity-img" decoding="async">
-          <img src="Assets/Snowy%20Mountain%20Campus%20in%20Winter.png" alt="" class="header-nativity-img"
-            decoding="async">
-        </div>
+      <!-- Background hero images, absolutely positioned behind all content -->
+      <div class="header-nativity-bg" aria-hidden="true">
+        <img src="header-nativity.jpg" alt="" class="header-nativity-img is-active" decoding="async">
+        <img src="Assets/Snowy%20Campus%20Christmas%20Lights.png" alt="" class="header-nativity-img" decoding="async">
+        <img src="Assets/Snowy%20Mountain%20Campus%20in%20Winter.png" alt="" class="header-nativity-img" decoding="async">
+      </div>
 
-        <div class="header-top-bar">
-          <div class="header-brand-row">
-            <span class="header-brand-badge">
-              <img src="icon.png" alt="" class="header-brand-icon" aria-hidden="true">
-              <svg class="brand-santa-hat" viewBox="0 0 36 32" aria-hidden="true">
-                <!-- Hat body: tall pointed cone tilted right -->
-                <path d="M8 26 C9 14, 18 4, 29 7 C27 13, 25 19, 26 26 Z" fill="#D32F2F"/>
-                <!-- White brim band -->
-                <rect x="6" y="23" width="22" height="5" rx="2.5" fill="#FFFFFF"/>
-                <!-- Pompom at tip -->
-                <circle cx="29.5" cy="7.5" r="3.8" fill="#FFFFFF"/>
-                <!-- Slight shadow on hat body -->
-                <path d="M20 8 C22 11, 24 16, 25 23" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </span>
-            <span class="header-brand-text">
-              <span class="header-brand-name">Jesus Youth</span>
-              <span class="header-brand-college">Pazhassi Raja College</span>
-            </span>
-          </div>
-          <div class="header-top-actions">
-            <button class="icon-btn" id="installBtn" type="button" aria-label="Install app" title="Install app" hidden>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3.5v11m0 0 4-4m-4 4-4-4M5 17.5v1.2A1.8 1.8 0 0 0 6.8 20.5h10.4a1.8 1.8 0 0 0 1.8-1.8v-1.2"
-                  fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </button>
-            <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme"
-              title="Daylight / Candlelight">
-              <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor"
-                  stroke-width="1.5" stroke-linejoin="round" />
-              </svg>
-              <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.5" />
-                <path
-                  d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5"
-                  fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-              </svg>
-            </button>
-          </div>
+      <!-- Brand bar: in normal flow, sits above the image -->
+      <div class="header-top-bar">
+        <div class="header-brand-row">
+          <span class="header-brand-badge">
+            <img src="icon.png" alt="" class="header-brand-icon" aria-hidden="true">
+          </span>
+          <span class="header-brand-text">
+            <span class="header-brand-name">Jesus Youth</span>
+            <span class="header-brand-college">Pazhassi Raja College</span>
+          </span>
+        </div>
+        <div class="header-top-actions">
+          <button class="icon-btn" id="installBtn" type="button" aria-label="Install app" title="Install app" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3.5v11m0 0 4-4m-4 4-4-4M5 17.5v1.2A1.8 1.8 0 0 0 6.8 20.5h10.4a1.8 1.8 0 0 0 1.8-1.8v-1.2"
+                fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <button class="icon-btn" id="themeBtn" type="button" aria-label="Toggle theme" title="Daylight / Candlelight">
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor"
+                stroke-width="1.5" stroke-linejoin="round" />
+            </svg>
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.5" />
+              <path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5"
+                fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      <div class="header-greeting-bar" id="headerGreetingBar" role="button" tabindex="0"
-        aria-label="Profile and progress">
+      <!-- Spacer: pushes greeting card down so the image shows clearly -->
+      <div class="header-hero-spacer" aria-hidden="true"></div>
+
+      <!-- Greeting card -->
+      <div class="header-greeting-bar" id="headerGreetingBar" role="button" tabindex="0" aria-label="Profile and progress">
         <div class="header-user-block">
           <h1 class="header-greeting-title">Hi, <span id="headerUserName">Friend</span></h1>
           <p class="header-greeting-sub" id="headerGreetingSub">Advent 26 · December 1 – 25</p>
