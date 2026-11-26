@@ -680,7 +680,8 @@
       if (!splash) { if (cover) cover.classList.add('is-revealed'); return; }
 
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduce) {
+      var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+      if (reduce || standalone) {
         if (cover) cover.classList.add('is-revealed');
         splash.remove();
         return;
