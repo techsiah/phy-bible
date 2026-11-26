@@ -1085,8 +1085,14 @@ function renderReading() {
 
   if (dom.readingDay) dom.readingDay.textContent = `Day ${state.selectedDay}`;
   if (dom.readingTheme) dom.readingTheme.textContent = plan.theme;
-  if (dom.readingRef) dom.readingRef.textContent = mlPlan ? mlPlan.ref : plan.ref;
-  if (dom.readingTitle) dom.readingTitle.textContent = mlPlan ? mlPlan.title : plan.title;
+  if (dom.readingRef) {
+    dom.readingRef.classList.toggle('is-ml', Boolean(mlPlan));
+    dom.readingRef.textContent = mlPlan ? mlPlan.ref : plan.ref;
+  }
+  if (dom.readingTitle) {
+    dom.readingTitle.classList.toggle('is-ml', Boolean(mlPlan));
+    dom.readingTitle.textContent = mlPlan ? mlPlan.title : plan.title;
+  }
   if (dom.passageText) {
     dom.passageText.classList.toggle('is-ml', Boolean(mlPlan));
     const verses = mlPlan ? mlPlan.verses : plan.verses;

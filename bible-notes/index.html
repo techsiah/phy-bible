@@ -18,6 +18,9 @@
   <link rel="icon" type="image/png" sizes="1024x1024" href="icon-1024.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
   <script>
     try {
@@ -215,7 +218,13 @@
           <!-- Card 1: Pause & reflect (Pastel Peach) -->
           <div class="quick-card card-peach" id="quickReflectBtn" role="button" tabindex="0">
             <div class="quick-card-top">
-              <h4 class="quick-card-title">Pause & reflect 🌿</h4>
+              <div class="quick-card-head">
+                <span class="quick-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </span>
+                <svg class="quick-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+              </div>
+              <h4 class="quick-card-title">Pause &amp; reflect</h4>
               <p class="quick-card-desc">What are you grateful for today?</p>
             </div>
             <div class="quick-card-tags">
@@ -227,8 +236,14 @@
           <!-- Card 2: Daily Streak (Pastel Lavender) -->
           <div class="quick-card card-lavender" id="quickStreakBtn" role="button" tabindex="0">
             <div class="quick-card-top">
-              <h4 class="quick-card-title">Streak Fire 🔥</h4>
-              <p class="quick-card-desc"><span id="streakNumber">0</span> days streak alive.</p>
+              <div class="quick-card-head">
+                <span class="quick-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.6 3.2-1.8 5.2-1.8 8a3.8 3.8 0 0 0 7.6 0c0-2.1-1-3.8-2.3-5.2.3 1.4-.5 2.4-1.3 2.7C14.1 6.3 13.3 4.3 12 3Z"/><path d="M6.2 13.5A5.8 5.8 0 0 0 12 21a5.8 5.8 0 0 0 5.8-7.5"/></svg>
+                </span>
+                <svg class="quick-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+              </div>
+              <h4 class="quick-card-title">Daily Streak</h4>
+              <p class="quick-card-desc"><span id="streakNumber">0</span> days streak active.</p>
             </div>
             <div class="quick-card-tags">
               <span class="q-tag" id="streakLabel">day streak</span>
@@ -239,8 +254,14 @@
           <!-- Card 3: College Fellowship (Pastel Mint) -->
           <div class="quick-card card-mint" id="quickTogetherBtn" role="button" tabindex="0">
             <div class="quick-card-top">
-              <h4 class="quick-card-title">Together 🤝</h4>
-              <p class="quick-card-desc">College leaderboards & groups.</p>
+              <div class="quick-card-head">
+                <span class="quick-card-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </span>
+                <svg class="quick-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+              </div>
+              <h4 class="quick-card-title">Together</h4>
+              <p class="quick-card-desc">College leaderboards &amp; groups.</p>
             </div>
             <div class="quick-card-tags">
               <span class="q-tag">Pazhassi</span>

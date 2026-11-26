@@ -6,6 +6,7 @@
 :root {
   --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-ml: "Noto Sans Malayalam", "Malayalam Sangam MN", "Nirmala UI", sans-serif;
   --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
 
   --reading-size: 18px;
@@ -1428,11 +1429,46 @@ html[data-theme="candle"] .hero-primary-btn {
   box-shadow: var(--shadow-card);
 }
 
+.quick-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.quick-card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+html[data-theme="candle"] .quick-card-icon {
+  background: rgba(255, 255, 255, 0.08);
+}
+.quick-card-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.quick-card-arrow {
+  width: 14px;
+  height: 14px;
+  opacity: 0.45;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.quick-card:hover .quick-card-arrow {
+  opacity: 0.85;
+  transform: translate(2px, -2px);
+}
+
 .quick-card-title {
-  margin: 0 0 6px;
-  font-size: 0.98rem;
+  margin: 0 0 5px;
+  font-size: 0.96rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .quick-card-desc {
@@ -1812,9 +1848,28 @@ html[data-theme="candle"] .reading {
   background: var(--gold);
   color: #FFFFFF;
 }
+.passage.is-ml {
+  font-family: var(--font-ml);
+  font-size: calc(var(--reading-size) * 1.02);
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+  word-spacing: 0.04em;
+}
 .passage.is-ml p {
-  line-height: 1.85;
-  font-size: 0.98rem;
+  margin: 0 0 0.95em;
+}
+.passage.is-ml sup {
+  margin-right: 6px;
+  font-size: 0.65em;
+}
+.reading-ref.is-ml {
+  font-family: var(--font-ml);
+  font-size: 0.94rem;
+}
+.reading-title.is-ml {
+  font-family: var(--font-ml);
+  font-size: clamp(1.38rem, 3.2vw, 1.85rem);
+  line-height: 1.38;
 }
 .reading-day {
   font-family: var(--font-sans);
