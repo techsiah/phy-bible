@@ -1593,21 +1593,39 @@ function renderProfile() {
     dom.profileSummary.append(p, btn);
     return;
   }
-  const rows = [
-    ['Name', state.profile.name || '—'],
+  const displayName = state.profile.name || state.profile.roll || 'Reader';
+  const initial = String(displayName).trim()[0]?.toUpperCase() || '?';
+  const deptShort = String(state.profile.dept || '').replace(/^Department of\s+/i, '');
+  const yearProgram = [yearLabel(state.profile.year), state.profile.program].filter(Boolean).join(' · ');
+
+  const card = el('div', 'profile-card');
+
+  const hero = el('div', 'profile-hero');
+  const avatar = el('span', 'profile-avatar', initial);
+  avatar.setAttribute('aria-hidden', 'true');
+  const info = el('div', 'profile-hero-info');
+  info.append(
+    el('strong', 'profile-name', displayName),
+    el('span', 'profile-sub', [deptShort, yearProgram].filter(Boolean).join(' · ') || '—')
+  );
+  const rollBadge = el('span', 'profile-roll-pill', `Roll ${state.profile.roll}`);
+  hero.append(avatar, info, rollBadge);
+
+  const meta = el('div', 'profile-meta-grid');
+  const items = [
     ['Phone', state.profile.phone || '—'],
-    ['Roll number', state.profile.roll],
+    ['Group', state.group ? `${state.group.name} (${state.group.code})` : 'Solo'],
     ['Gender', genderLabel(state.profile.gender) || '—'],
-    ['Department', state.profile.dept],
-    ['Year', yearLabel(state.profile.year)],
-    ['Program', state.profile.program],
-    ['Group', state.group ? `${state.group.name} (${state.group.code})` : 'Solo']
+    ['Year & Program', yearProgram || '—']
   ];
-  rows.forEach(([label, value]) => {
-    const row = el('div', 'profile-row');
-    row.append(el('span', '', label), el('strong', '', value));
-    dom.profileSummary.append(row);
+  items.forEach(([label, value]) => {
+    const cell = el('div', 'profile-meta-cell');
+    cell.append(el('span', '', label), el('strong', '', value));
+    meta.append(cell);
   });
+
+  card.append(hero, meta);
+  dom.profileSummary.append(card);
 }
 
 function renderAll() {
