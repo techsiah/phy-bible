@@ -20,32 +20,58 @@
       align-items: center;
       justify-content: center;
       min-height: 100dvh;
-      padding: 2rem 1.5rem;
+      padding: 2rem 1.25rem;
       text-align: center;
-      gap: 1rem;
     }
-    .notfound-wrap img { width: 72px; height: 72px; opacity: .9; }
-    .notfound-wrap h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
-    .notfound-wrap p  { font-size: 0.95rem; opacity: .65; margin: 0; max-width: 28ch; }
-    .notfound-wrap a  {
-      display: inline-block;
-      margin-top: .5rem;
-      padding: .6em 1.4em;
-      background: var(--pine, #165B33);
+    .notfound-card {
+      width: min(380px, 100%);
+      background: var(--panel, #FFFFFF);
+      border: 1px solid rgba(22, 42, 30, 0.07);
+      border-radius: 24px;
+      padding: 32px 24px 28px;
+      box-shadow: 0 14px 34px -14px rgba(18, 30, 22, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .notfound-card img { width: 64px; height: 64px; border-radius: 50%; }
+    .notfound-kicker {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--xmas-red, #B91C1C);
+      margin: 4px 0 0;
+    }
+    .notfound-card h1 { font-size: 1.3rem; font-weight: 700; margin: 0; }
+    .notfound-card p  { font-size: 0.92rem; color: var(--ink-soft, #4D5A52); margin: 0; max-width: 28ch; }
+    .notfound-card a  {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-top: 10px;
+      padding: 13px 20px;
+      background: #183D25;
       color: #fff;
       border-radius: 999px;
       font-weight: 600;
       font-size: 0.95rem;
       text-decoration: none;
+      box-shadow: 0 10px 22px -8px rgba(24, 61, 37, 0.42);
     }
   </style>
 </head>
 <body>
   <div class="notfound-wrap">
-    <img src="icon-512.png" alt="">
-    <h1>Page not found</h1>
-    <p>That door doesn't exist. Head back to the Advent calendar.</p>
-    <a href="/">Open Advent 26</a>
+    <div class="notfound-card">
+      <img src="icon-512.png" alt="Advent 26">
+      <span class="notfound-kicker">Advent 26</span>
+      <h1>Page not found</h1>
+      <p>That door doesn't exist. Head back to the Advent calendar.</p>
+      <a href="/">Open Advent 26 →</a>
+    </div>
   </div>
 </body>
 </html>
