@@ -467,7 +467,7 @@ function applyTheme(theme) {
     btn.setAttribute('aria-pressed', String(btn.dataset.themeChoice === next));
   });
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', next === 'day' ? '#F7F5F0' : '#000000');
+  if (meta) meta.setAttribute('content', next === 'day' ? '#FAF7F2' : '#07130E');
 }
 
 function applyFont(size) {
@@ -1021,19 +1021,48 @@ function renderCover() {
 }
 
 function renderDaily() {
-  const index = state.phase === 'before'
-    ? 1
-    : clamp(currentTodayIndex() || 1, 1, PLAN.length);
-  const verse = DAILY_VERSES[(index - 1) % DAILY_VERSES.length];
-  if (dom.dailyLabel) {
-    dom.dailyLabel.textContent = state.phase === 'before'
-      ? 'A word for the season'
-      : state.phase === 'after'
-        ? 'The Word at Christmas'
-        : 'Today’s word';
+  const preview = earlyOpen();
+  if (state.phase === 'before' && !preview) {
+    const verse = DAILY_VERSES[0];
+    if (dom.dailyLabel) dom.dailyLabel.textContent = 'A word for the season';
+    if (dom.dailyText) {
+      dom.dailyText.classList.remove('is-verses', 'is-ml');
+      dom.dailyText.textContent = `“${verse.text}”`;
+    }
+    if (dom.dailyRef) {
+      dom.dailyRef.classList.remove('is-ml');
+      dom.dailyRef.textContent = `— ${verse.ref}`;
+    }
+    return;
   }
-  if (dom.dailyText) dom.dailyText.textContent = `“${verse.text}”`;
-  if (dom.dailyRef) dom.dailyRef.textContent = `— ${verse.ref}`;
+
+  const plan = currentPlan();
+  const bibleLang = getBibleLang();
+  const mlPlan = bibleLang === 'ml' ? PLAN_ML.find((entry) => entry.day === plan.day) : null;
+  const activePlan = mlPlan || plan;
+
+  if (dom.dailyLabel) {
+    dom.dailyLabel.textContent = `Day ${plan.day} · ${plan.theme}`;
+  }
+
+  if (dom.dailyText) {
+    dom.dailyText.classList.add('is-verses');
+    dom.dailyText.classList.toggle('is-ml', Boolean(mlPlan));
+    const fragment = document.createDocumentFragment();
+    activePlan.verses.forEach((verse) => {
+      const span = document.createElement('span');
+      span.className = 'daily-verse-line';
+      const sup = el('sup', '', String(verse.v));
+      span.append(sup, document.createTextNode(` ${verse.t}`));
+      fragment.append(span);
+    });
+    dom.dailyText.replaceChildren(fragment);
+  }
+
+  if (dom.dailyRef) {
+    dom.dailyRef.classList.toggle('is-ml', Boolean(mlPlan));
+    dom.dailyRef.textContent = `— ${activePlan.ref} · ${activePlan.title}`;
+  }
 }
 
 function renderToday() {
@@ -2713,6 +2742,7 @@ function setBibleLang(lang) {
   } catch (err) {
     /* ignore */
   }
+  renderDaily();
   renderReading();
 }
 

@@ -10,8 +10,8 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
-  "background_color": "#F7F5F0",
-  "theme_color": "#F7F5F0",
+  "background_color": "#FAF7F2",
+  "theme_color": "#FAF7F2",
   "categories": ["education", "lifestyle"],
   "prefer_related_applications": false,
   "icons": [
