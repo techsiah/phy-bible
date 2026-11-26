@@ -825,7 +825,7 @@ html[data-theme="candle"] .cover-open-btn {
   top: 0;
   left: 0;
   right: 0;
-  height: 190px; /* controls how tall the visible hero area is */
+  height: 222px; /* controls how tall the visible hero area is */
   pointer-events: none;
   z-index: 0;
   overflow: hidden; /* clips images internally only */
@@ -895,7 +895,7 @@ html[data-theme="candle"] .header-nativity-bg::after {
 
 /* Spacer between brand bar and greeting card: creates the visible hero window */
 .header-hero-spacer {
-  height: 100px;
+  height: 132px;
   flex: none;
   transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
