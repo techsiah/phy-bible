@@ -265,31 +265,37 @@ body.splash-open { overflow: hidden; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .cover-brand-row {
   display: flex;
-  align-items: center;
-  gap: 9px;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
 }
 
-.cover-brand-logo {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid var(--line);
+.cover-brand-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
 }
 
-.cover-brand-text {
+html[data-theme="candle"] .cover-brand-eyebrow {
+  color: var(--gold-bright);
+}
+
+.cover-brand-college {
   font-family: var(--font-sans);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
   line-height: 1.25;
-  color: var(--ink-soft);
+  color: var(--ink);
 }
 
 .cover-icon-btn {
