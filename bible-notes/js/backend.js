@@ -76,16 +76,21 @@ export async function initBackend() {
     try {
       await auth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL);
     } catch (err) { /* ignore */ }
-    // Anonymous auth is only the gate that lets a signed-in browser reach
-    // Firestore. It is never shown to students and is not their identity.
-    const credential = await auth.signInAnonymously();
+    // If the browser already has a signed-in user (e.g. an admin who signed in
+    // with Email/Password), keep that session. Only fall back to anonymous auth
+    // when there is no existing user — this is the student-app path.
+    let user = auth.currentUser;
+    if (!user) {
+      const credential = await auth.signInAnonymously();
+      user = credential.user;
+    }
     const db = window.firebase.firestore();
     try {
       await db.enablePersistence({ synchronizeTabs: true });
     } catch (err) {
       // Multi-tab or a browser without IndexedDB; Firestore still works.
     }
-    return createFirestoreBackend(db, credential.user.uid);
+    return createFirestoreBackend(db, user.uid);
   } catch (err) {
     console.error('Firebase could not start.', err);
     const code = err && err.code;
@@ -131,6 +136,8 @@ function createFirestoreBackend(db, initialUid) {
         uid = auth.currentUser.uid;
         return uid;
       }
+      // Only fall back to anonymous if no user is signed in at all.
+      // Never downgrade an Email/Password (admin) session.
       const cred = await auth.signInAnonymously();
       if (cred && cred.user && cred.user.uid) {
         uid = cred.user.uid;
