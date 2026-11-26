@@ -157,6 +157,15 @@ const dom = {
   recoveryRetry: $('recoveryRetry'),
   recoveryReset: $('recoveryReset'),
   recoveryClose: $('recoveryClose'),
+  dayCompleteDialog: $('dayCompleteDialog'),
+  dayCompleteKicker: $('dayCompleteKicker'),
+  dayCompleteTitle: $('dayCompleteTitle'),
+  dayCompleteText: $('dayCompleteText'),
+  dayCompleteStreak: $('dayCompleteStreak'),
+  dayCompletePoints: $('dayCompletePoints'),
+  dayCompleteDays: $('dayCompleteDays'),
+  dayCompleteNoteBtn: $('dayCompleteNoteBtn'),
+  dayCompleteClose: $('dayCompleteClose'),
   toast: $('toast'),
   toastText: $('toastText'),
   toastAction: $('toastAction')
@@ -566,7 +575,7 @@ async function revokeDeletedAccount() {
   store.clearData();
   await safe(() => state.backend && state.backend.signOut());
   recompute();
-  [dom.settingsDialog, dom.groupDialog, dom.noteDialog, dom.recoveryDialog, dom.onboarding].forEach((dlg) => {
+  [dom.settingsDialog, dom.groupDialog, dom.noteDialog, dom.recoveryDialog, dom.dayCompleteDialog, dom.onboarding].forEach((dlg) => {
     if (dlg && dlg.open) closeDialog(dlg);
   });
   renderCover();
@@ -1074,7 +1083,15 @@ function renderAdvent() {
   const selectedBtn = dom.adventStrip.querySelector('.door.is-selected');
   if (selectedBtn) {
     window.setTimeout(() => {
-      selectedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      const strip = dom.adventStrip;
+      if (!strip) return;
+      const stripRect = strip.getBoundingClientRect();
+      const btnRect = selectedBtn.getBoundingClientRect();
+      const targetLeft = strip.scrollLeft + (btnRect.left - stripRect.left) - (stripRect.width - btnRect.width) / 2;
+      strip.scrollTo({
+        left: Math.max(0, targetLeft),
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth'
+      });
     }, 60);
   }
 
@@ -2069,6 +2086,29 @@ async function generateGroupCode() {
 
 /* ── Reading actions ───────────────────────────────────────── */
 
+function openDayCompleteDialog(dayIndex) {
+  if (!dom.dayCompleteDialog) return;
+  const entry = currentEntry(dayIndex) || PLAN[dayIndex - 1];
+  const isFinal = dayIndex === 25;
+  if (dom.dayCompleteKicker) {
+    dom.dayCompleteKicker.textContent = `Day ${dayIndex} Complete`;
+  }
+  if (dom.dayCompleteTitle) {
+    dom.dayCompleteTitle.textContent = isFinal
+      ? 'You completed all 25 days!'
+      : `You completed Day ${dayIndex}!`;
+  }
+  if (dom.dayCompleteText) {
+    dom.dayCompleteText.textContent = entry && entry.ref
+      ? `${entry.ref} and today’s counter activity are both finished.`
+      : 'Today’s Bible reading and counter activity are both finished.';
+  }
+  if (dom.dayCompleteStreak) dom.dayCompleteStreak.textContent = String(state.stats.currentStreak);
+  if (dom.dayCompletePoints) dom.dayCompletePoints.textContent = String(state.stats.points);
+  if (dom.dayCompleteDays) dom.dayCompleteDays.textContent = String(state.stats.totalDays);
+  openDialog(dom.dayCompleteDialog);
+}
+
 async function markRead() {
   if (!requireProfile()) return;
   const preview = earlyOpen();
@@ -2112,6 +2152,9 @@ async function markRead() {
   } else {
     showToast('Reading marked as completed!');
   }
+  if (state.reads[day].planRead && state.reads[day].counterDone) {
+    openDayCompleteDialog(state.selectedDay);
+  }
 }
 
 async function toggleCounterActivity() {
@@ -2133,7 +2176,11 @@ async function toggleCounterActivity() {
     await saveDay(selectedDate);
   }
   renderReading();
-  showToast(nextDone ? 'Counter activity completed!' : 'Counter activity unmarked.');
+  if (nextDone && Boolean(data.planRead)) {
+    openDayCompleteDialog(state.selectedDay);
+  } else {
+    showToast(nextDone ? 'Counter activity completed!' : 'Counter activity unmarked.');
+  }
 }
 
 async function logExtra(ref) {
@@ -2882,6 +2929,14 @@ function bindEvents() {
   if (dom.recoveryRetry) dom.recoveryRetry.addEventListener('click', retryRecovery);
   if (dom.recoveryReset) dom.recoveryReset.addEventListener('click', resetThisDevice);
   if (dom.recoveryClose) dom.recoveryClose.addEventListener('click', () => closeDialog(dom.recoveryDialog));
+  if (dom.dayCompleteClose) dom.dayCompleteClose.addEventListener('click', () => closeDialog(dom.dayCompleteDialog));
+  if (dom.dayCompleteNoteBtn) {
+    dom.dayCompleteNoteBtn.addEventListener('click', () => {
+      closeDialog(dom.dayCompleteDialog);
+      const entry = currentEntry(state.selectedDay) || PLAN[state.selectedDay - 1];
+      openNote(null, entry && entry.ref ? entry.ref : '');
+    });
+  }
 
   window.addEventListener('online', updateSyncNotes);
   window.addEventListener('offline', updateSyncNotes);

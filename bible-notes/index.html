@@ -715,6 +715,29 @@
     </div>
   </dialog>
 
+  <!-- ── Day Completed Popup ──────────────────────────────────── -->
+  <dialog class="sheet day-complete-sheet" id="dayCompleteDialog" aria-labelledby="dayCompleteTitle">
+    <div class="sheet-inner day-complete-inner">
+      <div class="day-complete-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <p class="kicker day-complete-kicker" id="dayCompleteKicker">Day 1 Complete</p>
+      <h2 class="day-complete-title" id="dayCompleteTitle">You have completed the day!</h2>
+      <p class="muted day-complete-text" id="dayCompleteText">Today's Bible reading and counter activity are both finished.</p>
+      <div class="day-complete-stats">
+        <div class="day-complete-stat"><strong id="dayCompleteStreak">0</strong><span>Streak</span></div>
+        <div class="day-complete-stat"><strong id="dayCompletePoints">0</strong><span>Points</span></div>
+        <div class="day-complete-stat"><strong id="dayCompleteDays">0</strong><span>Days done</span></div>
+      </div>
+      <div class="form-actions day-complete-actions">
+        <button class="btn btn-ghost" id="dayCompleteNoteBtn" type="button">Write a note</button>
+        <button class="btn btn-primary" id="dayCompleteClose" type="button">Continue</button>
+      </div>
+    </div>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite" hidden>
     <span id="toastText"></span>
     <button id="toastAction" type="button" hidden></button>

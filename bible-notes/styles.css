@@ -3680,3 +3680,88 @@ html[data-theme="candle"] .toast button {
   .note { break-inside: avoid; border-color: #ccc; background: #fff; }
   .note-text, .note-ref { color: #111; }
 }
+
+/* ── Day Completed Popup ──────────────────────────────────── */
+
+.day-complete-sheet {
+  max-width: 400px;
+}
+
+.day-complete-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 22px 24px;
+  gap: 8px;
+}
+
+.day-complete-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--gold, #F9A61A) 16%, transparent);
+  color: var(--gold, #F9A61A);
+  border: 1.5px solid color-mix(in srgb, var(--gold, #F9A61A) 45%, transparent);
+  margin-bottom: 6px;
+}
+
+.day-complete-kicker {
+  margin: 0;
+  color: var(--gold, #F9A61A);
+  letter-spacing: 0.12em;
+}
+
+.day-complete-title {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.day-complete-text {
+  margin: 2px 0 8px;
+  font-size: 0.9rem;
+  max-width: 30ch;
+}
+
+.day-complete-stats {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px 10px;
+  margin: 4px 0 12px;
+  border-radius: 14px;
+  background: var(--bg-soft, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+}
+
+.day-complete-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.day-complete-stat strong {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.day-complete-stat span {
+  font-size: 0.72rem;
+  opacity: 0.65;
+}
+
+.day-complete-actions {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+}
+
+.day-complete-actions .btn {
+  flex: 1;
+}
