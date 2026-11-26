@@ -35,8 +35,11 @@
 
   <!-- ── Splash (simple & clean) ──────────────────────────────── -->
   <div class="splash" id="splash" aria-hidden="true">
-    <img class="splash-logo" src="icon-512.png" alt="" width="76" height="76" decoding="async">
-    <p class="splash-title">Advent 26</p>
+    <div class="splash-center">
+      <img class="splash-logo" src="icon-512.png" alt="" width="72" height="72" decoding="async">
+      <p class="splash-title">Advent 26</p>
+      <p class="splash-sub">December 1–25</p>
+    </div>
     <p class="splash-org">Jesus Youth · Pazhassi Raja College</p>
   </div>
 
@@ -59,41 +62,61 @@
         </button>
       </header>
 
-      <section class="cover-hero">
-        <img src="icon-192.png" alt="Jesus Youth" class="cover-emblem" width="56" height="56">
-        <span class="cover-tag">December 1–25</span>
-        <h1 class="cover-hero-title" id="coverTitle">Advent 26</h1>
-        <p class="cover-hero-sub" id="coverSub">25 Days · 25 Reflections · One Journey</p>
-        <p class="cover-hero-meta">
-          <span id="coverCountdown">Opens in 7 days</span>
-          <span aria-hidden="true">·</span>
-          <span>25 daily readings</span>
-        </p>
-      </section>
+      <div class="cover-main">
+        <section class="cover-hero">
+          <span class="cover-tag">December 1–25</span>
+          <h1 class="cover-hero-title" id="coverTitle">Advent 26</h1>
+          <p class="cover-hero-sub" id="coverSub">25 days · 25 reflections · One journey</p>
+          <p class="cover-hero-meta">
+            <span class="cover-status-dot" aria-hidden="true"></span>
+            <span id="coverCountdown">Opens in 7 days</span>
+            <span aria-hidden="true">·</span>
+            <span>25 daily readings</span>
+          </p>
+        </section>
 
-      <div class="cover-body">
-        <p class="cover-desc">One chapter each day from December 1 to 25. Read, reflect, and keep your Advent notes in one quiet place.</p>
+        <div class="cover-body">
+          <div class="cover-preview" aria-label="Day 1 reading preview">
+            <div class="cover-preview-head">
+              <span class="cover-preview-day">Day 1 · Hope</span>
+              <span class="cover-preview-ref">Isaiah 2:1–5</span>
+            </div>
+            <blockquote class="cover-preview-quote">
+              “O house of Jacob, let us approach and walk in the light of the Lord.”
+            </blockquote>
+            <div class="cover-preview-foot">
+              <div class="cover-advent-ticks" aria-hidden="true">
+                <span class="is-first"></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <span class="cover-preview-caption">One chapter a day · Dec 1–25</span>
+            </div>
+          </div>
 
-        <button class="cover-identity" id="coverRegBtn" type="button">
-          <span class="cover-avatar" id="coverAvatar" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
+          <button class="cover-identity" id="coverRegBtn" type="button">
+            <span class="cover-avatar" id="coverAvatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span class="cover-identity-text">
+              <span class="cover-identity-name" id="coverIdentityName">Register with Roll Number</span>
+              <span class="cover-identity-sub" id="coverIdentitySub">Save streaks &amp; join your college group</span>
+            </span>
+            <svg class="cover-identity-go" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </span>
-          <span class="cover-identity-text">
-            <span class="cover-identity-name" id="coverIdentityName">Register with Roll Number</span>
-            <span class="cover-identity-sub" id="coverIdentitySub">Save streaks &amp; join your college group</span>
-          </span>
-          <svg class="cover-identity-go" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+          </button>
 
-        <div class="cover-stat-row" id="coverStats" hidden>
-          <div class="cover-stat"><strong id="coverStreak">0</strong><span>streak</span></div>
-          <div class="cover-stat"><strong id="coverPoints">0</strong><span>points</span></div>
-          <div class="cover-stat"><strong id="coverDays">0</strong><span>days read</span></div>
+          <div class="cover-stat-row" id="coverStats" hidden>
+            <div class="cover-stat"><strong id="coverStreak">0</strong><span>Streak</span></div>
+            <div class="cover-stat"><strong id="coverPoints">0</strong><span>Points</span></div>
+            <div class="cover-stat"><strong id="coverDays">0</strong><span>Days read</span></div>
+          </div>
         </div>
       </div>
 
