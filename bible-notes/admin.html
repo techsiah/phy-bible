@@ -150,6 +150,15 @@
         </svg>
         <span>Event Rules</span>
       </button>
+      <button class="admin-tab" data-tab="firebase" data-pane="pane-firebase" type="button">
+        <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+        </svg>
+        <span>Firebase Usage</span>
+      </button>
     </nav>
 
     <!-- ── Pane 1: Overview & Analytics ───────────────────────── -->
@@ -532,6 +541,93 @@
             <span style="color: var(--ink-faint); display: block;">Group Size Limit</span>
             <strong id="cfgGroupMax">—</strong>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Pane 7: Firebase Usage & Quota ───────────────────────── -->
+    <section class="tab-pane" id="pane-firebase" hidden>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span class="stat-label">Firestore Status</span>
+          </div>
+          <div class="stat-value" id="fbStatus" style="font-size: 1.45rem;">—</div>
+          <div class="stat-sub" id="fbProjectSub">Project: —</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span class="stat-label">Total Documents</span>
+          </div>
+          <div class="stat-value" id="fbTotalDocs">0</div>
+          <div class="stat-sub" id="fbDocsSub">Across active collections</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span class="stat-label">Est. Storage Used</span>
+          </div>
+          <div class="stat-value" id="fbStorageUsed">0 KB</div>
+          <div class="stat-sub">Spark free tier: 1 GiB limit</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-head">
+            <span class="stat-label">Est. Daily Reads</span>
+          </div>
+          <div class="stat-value" id="fbEstReads">0</div>
+          <div class="stat-sub" id="fbReadsSub">Spark free tier: 50,000 / day</div>
+        </div>
+      </div>
+
+      <div class="admin-grid-2" style="margin-bottom: 24px;">
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <h2 class="admin-card-title">Spark Free Tier Quota Estimate</h2>
+            <a id="fbConsoleLink" class="action-btn" href="https://console.firebase.google.com/" target="_blank"
+              rel="noopener noreferrer">
+              <span>Firebase Console ↗</span>
+            </a>
+          </div>
+          <div id="fbQuotaBars" class="fb-quota-list">
+            <!-- Dynamically populated -->
+          </div>
+          <p class="fb-note">
+            Estimates are calculated from live collection counts and typical daily student activity. Open the Firebase
+            Console for official Google Cloud billing &amp; minute-by-minute telemetry.
+          </p>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-head">
+            <h2 class="admin-card-title">Project &amp; Sync Configuration</h2>
+          </div>
+          <div class="fb-meta-list" id="fbProjectMeta">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-head">
+          <h2 class="admin-card-title">Firestore Collection Breakdown</h2>
+        </div>
+        <div class="table-wrap" style="border: none; box-shadow: none;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Collection Path</th>
+                <th>Purpose</th>
+                <th>Documents</th>
+                <th>Est. Size</th>
+                <th>Access Rule</th>
+              </tr>
+            </thead>
+            <tbody id="fbCollectionsBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
         </div>
       </div>
     </section>

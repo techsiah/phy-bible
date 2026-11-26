@@ -207,6 +207,7 @@ function renderAll() {
   renderParticipants();
   renderGroups();
   renderConfigInfo();
+  renderFirebaseUsage();
 }
 
 /* ── Tab Switching ─────────────────────────────────────────── */
@@ -1016,6 +1017,133 @@ function renderConfigInfo() {
   $('cfgDates').textContent = `${EVENT.start} to ${EVENT.end} (${EVENT.timezone})`;
   $('cfgPointsRules').textContent = `Plan: +${EVENT.points.plan} pts, Extras: +${EVENT.points.extra} pts (max ${EVENT.points.maxExtras}/day), Daily Cap: ${EVENT.points.dailyCap} pts`;
   $('cfgGroupMax').textContent = `Max ${EVENT.groupMax} members per group`;
+}
+
+/* ── Firebase Usage & Quota ─────────────────────────────────── */
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function renderFirebaseUsage() {
+  const statusEl = $('fbStatus');
+  if (!statusEl) return;
+
+  const cfg = (typeof window !== 'undefined' && window.FIREBASE_CONFIG) || {};
+  const projectId = cfg.projectId || 'Not configured';
+  const connected = Boolean(adminState.backend);
+
+  statusEl.textContent = connected ? 'Connected' : 'Offline';
+  statusEl.style.color = connected ? 'var(--green)' : 'var(--red)';
+  if ($('fbProjectSub')) $('fbProjectSub').textContent = `Project: ${projectId}`;
+
+  const readers = adminState.readers || [];
+  const groups = adminState.groups || [];
+  const readerCount = readers.length;
+  const groupCount = groups.length;
+  const dayDocCount = readers.reduce((sum, r) => sum + (Number(r.totalDays) || 0), 0);
+  const configCount = 1; // config/earlyAccess
+  const totalDocs = readerCount * 2 + dayDocCount + groupCount + configCount;
+
+  // Conservative average Firestore document sizes (including field names & metadata overhead)
+  const boardBytes = readerCount * 420;
+  const readerBytes = readerCount * 520;
+  const dayBytes = dayDocCount * 220;
+  const groupBytes = groupCount * 320;
+  const configBytes = configCount * 140;
+  const totalBytes = boardBytes + readerBytes + dayBytes + groupBytes + configBytes;
+
+  // Conservative daily read/write estimates:
+  // Each active reader opens app ~2x/day (hydrating self + board + group) + live listener updates
+  const activeCount = Math.max(readerCount, 1);
+  const estReadsPerDay = readerCount === 0
+    ? 0
+    : activeCount * (readerCount + groupCount + 6);
+  const estWritesPerDay = readerCount === 0
+    ? 0
+    : activeCount * 3; // daily day doc + reader + board sync
+
+  if ($('fbTotalDocs')) $('fbTotalDocs').textContent = totalDocs.toLocaleString();
+  if ($('fbDocsSub')) {
+    $('fbDocsSub').textContent = `${readerCount} profiles · ${groupCount} groups · ${dayDocCount} check-ins`;
+  }
+  if ($('fbStorageUsed')) $('fbStorageUsed').textContent = formatBytes(totalBytes);
+  if ($('fbEstReads')) $('fbEstReads').textContent = estReadsPerDay.toLocaleString();
+  if ($('fbReadsSub')) {
+    const pct = ((estReadsPerDay / 50000) * 100).toFixed(1);
+    $('fbReadsSub').textContent = `${pct}% of 50,000 / day Spark limit`;
+  }
+
+  const consoleLink = $('fbConsoleLink');
+  if (consoleLink && cfg.projectId) {
+    consoleLink.href = `https://console.firebase.google.com/project/${encodeURIComponent(cfg.projectId)}/firestore/usage`;
+  }
+
+  const quotaEl = $('fbQuotaBars');
+  if (quotaEl) {
+    const quotas = [
+      { label: 'Est. Daily Reads', used: estReadsPerDay, limit: 50000, unit: 'reads' },
+      { label: 'Est. Daily Writes', used: estWritesPerDay, limit: 20000, unit: 'writes' },
+      { label: 'Stored Firestore Data', used: totalBytes, limit: 1024 * 1024 * 1024, format: formatBytes, limitLabel: '1 GiB' }
+    ];
+    quotaEl.innerHTML = quotas.map((q) => {
+      const pct = Math.min(100, (q.used / q.limit) * 100);
+      const cls = pct >= 85 ? 'is-danger' : pct >= 60 ? 'is-warn' : '';
+      const usedText = q.format ? q.format(q.used) : q.used.toLocaleString();
+      const limitText = q.limitLabel || `${q.limit.toLocaleString()} ${q.unit}`;
+      return `
+        <div class="fb-quota-item">
+          <div class="fb-quota-head">
+            <strong>${esc(q.label)}</strong>
+            <span>${esc(usedText)} / ${esc(limitText)} (${pct.toFixed(1)}%)</span>
+          </div>
+          <div class="fb-quota-track">
+            <div class="fb-quota-fill ${cls}" style="width: ${Math.max(pct, q.used > 0 ? 1.5 : 0)}%;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  const metaEl = $('fbProjectMeta');
+  if (metaEl) {
+    const rows = [
+      ['Project ID', cfg.projectId || '—', true],
+      ['Auth Domain', cfg.authDomain || '—', true],
+      ['Auth Mode', 'Anonymous Auth + Admin PIN', false],
+      ['Sync Engine', 'Firestore Real-time (onSnapshot)', false],
+      ['Spark Plan Limits', '50k reads · 20k writes · 1 GiB/day', false]
+    ];
+    metaEl.innerHTML = rows.map(([k, v, isCode]) => `
+      <div class="fb-meta-row">
+        <span>${esc(k)}</span>
+        ${isCode ? `<code>${esc(v)}</code>` : `<strong>${esc(v)}</strong>`}
+      </div>
+    `).join('');
+  }
+
+  const tbody = $('fbCollectionsBody');
+  if (tbody) {
+    const collections = [
+      { path: 'board/{key}', purpose: 'Public leaderboard projections', docs: readerCount, bytes: boardBytes, rule: 'Signed-in read · Owner write' },
+      { path: 'readers/{key}', purpose: 'Private student profiles & phones', docs: readerCount, bytes: readerBytes, rule: 'Owner-only read/write' },
+      { path: 'readers/{key}/days/{day}', purpose: 'Daily reading & points check-ins', docs: dayDocCount, bytes: dayBytes, rule: 'Owner-only read/write' },
+      { path: 'groups/{code}', purpose: 'Reading teams (max 4 members)', docs: groupCount, bytes: groupBytes, rule: 'Signed-in read/write' },
+      { path: 'config/earlyAccess', purpose: 'Global early access toggle', docs: configCount, bytes: configBytes, rule: 'Public read' }
+    ];
+    tbody.innerHTML = collections.map((c) => `
+      <tr>
+        <td><code>${esc(c.path)}</code></td>
+        <td>${esc(c.purpose)}</td>
+        <td><strong>${c.docs.toLocaleString()}</strong></td>
+        <td>${esc(formatBytes(c.bytes))}</td>
+        <td style="color: var(--ink-soft); font-size: 0.8rem;">${esc(c.rule)}</td>
+      </tr>
+    `).join('');
+  }
 }
 
 /* ── UI Feedback Helpers ───────────────────────────────────── */
