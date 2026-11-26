@@ -5,6 +5,8 @@ rules_version = '2';
 
    Model
    -----
+   admins/{uid}              one doc per organizer (create in Firebase Console).
+                             Its mere existence grants admin privileges.
    readers/{roll}            owner-only. A student signs in with their roll
                              number plus the phone, department, and year used
                              at registration; a full match transfers the entry
@@ -16,6 +18,10 @@ rules_version = '2';
 
    The public board deliberately has no phone number, UID, notes, or reading
    history, so the sign-in pair and private entries stay private.
+
+   Admin writes (earlyAccess toggles, member edits, deletions) come from
+   organizer browsers signed in with Firebase Email/Password auth whose UID
+   appears in admins/{uid}. Anonymous browsers cannot do any of those.
 */
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -32,19 +38,34 @@ service cloud.firestore {
       return signedIn() && get(readerDoc(roll)).data.uid == request.auth.uid;
     }
 
+    // True when the requesting browser is a registered organizer.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
     function validDay(day) {
       return day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
         && day >= '2026-12-01'
         && day <= '2026-12-25';
     }
 
+    /* ── Organizer registry ──────────────────────────────────── */
+
+    match /admins/{uid} {
+      // An organizer can confirm their own status; nobody else reads or writes.
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;  // created only via Firebase Console / Admin SDK
+    }
+
     /* ── Private reader entry ───────────────────────────────── */
 
     match /readers/{roll} {
       // A missing document is readable so a first claim can test the roll.
-      // An existing entry is readable only by its owner.
+      // An existing entry is readable only by its owner or an admin.
       allow read: if !exists(readerDoc(roll))
-        || (signedIn() && resource.data.uid == request.auth.uid);
+        || (signedIn() && resource.data.uid == request.auth.uid)
+        || isAdmin();
 
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
@@ -60,12 +81,12 @@ service cloud.firestore {
       /* Two ways to write:
          1. The browser already owns the entry.
          2. The browser submitted the same roll number, phone number,
-            department, and year as the stored entry. That is the sign-in on
-            a new device: the write transfers ownership (uid) to this browser.
-         The phone number is a credential: it may be added to a legacy entry,
-         but it can never be changed. */
+            department, and year as the stored entry — device transfer.
+         3. An organizer admin may patch any profile field.
+         The phone number is a credential: students can never change it. */
       allow update: if signedIn()
         && (
+          // Student owns entry and is updating it
           (request.resource.data.roll == resource.data.roll
             && request.resource.data.uid == request.auth.uid
             && (
@@ -85,14 +106,19 @@ service cloud.firestore {
                 && request.resource.data.year == resource.data.year
               )
             ))
-          || request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['name', 'gender', 'dept', 'year', 'program', 'groupCode', 'updatedAt'])
+          // Student patches only safe profile fields (name/gender/dept/year/groupCode)
+          || (resource.data.uid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['name', 'gender', 'dept', 'year', 'program', 'groupCode', 'updatedAt']))
+          // Organizer admin can patch anything
+          || isAdmin()
         );
 
-      allow delete: if signedIn();
+      // Only the owner or an admin may delete an entry.
+      allow delete: if isOwner(roll) || isAdmin();
 
       match /days/{day} {
-        allow read: if isOwner(roll);
+        allow read: if isOwner(roll) || isAdmin();
         allow create, update: if isOwner(roll)
           && validDay(day)
           && request.resource.data.day == day
@@ -110,7 +136,7 @@ service cloud.firestore {
       }
 
       match /notes/{noteId} {
-        allow read: if isOwner(roll);
+        allow read: if isOwner(roll) || isAdmin();
         allow create, update: if isOwner(roll)
           && request.resource.data.id == noteId
           && request.resource.data.text is string
@@ -121,7 +147,7 @@ service cloud.firestore {
           && request.resource.data.updatedAt is number
           && request.resource.data.tags is list
           && request.resource.data.tags.size() <= 8;
-        allow delete: if isOwner(roll);
+        allow delete: if isOwner(roll) || isAdmin();
       }
     }
 
@@ -164,12 +190,11 @@ service cloud.firestore {
         && request.resource.data.points <= 810
         && request.resource.data.updatedAt is number;
 
-      /* The organizer portal toggles early access on a student's projection.
-         Board docs hold no private data, and the flag only opens the
-         pre-event preview, so a field-only update is allowed for any
-         signed-in device (anonymous auth cannot identify the organizer). */
+      /* Owner may update their own projection.
+         Admins may toggle earlyAccess or patch profile fields. */
       allow update: if signedIn()
         && (
+          // Full owner update (streak/points sync)
           (isOwner(roll)
             && request.resource.data.roll is string
             && request.resource.data.roll.size() >= 1
@@ -202,16 +227,24 @@ service cloud.firestore {
             && request.resource.data.points >= 0
             && request.resource.data.points <= 810
             && request.resource.data.updatedAt is number)
-          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['earlyAccess'])
-            && request.resource.data.earlyAccess is bool)
-          || (request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['roll', 'name', 'gender', 'dept', 'year', 'program', 'groupCode', 'updatedAt'])
+          // Owner patches safe profile fields
+          || (isOwner(roll)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['roll', 'name', 'gender', 'dept', 'year', 'program', 'groupCode', 'updatedAt'])
             && request.resource.data.roll is string
             && request.resource.data.roll.size() >= 1
             && request.resource.data.roll.size() <= 24)
+          // Admin toggles earlyAccess flag
+          || (isAdmin()
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['earlyAccess'])
+            && request.resource.data.earlyAccess is bool)
+          // Admin patches any profile fields (correcting dept/name etc.)
+          || isAdmin()
         );
 
-      allow delete: if signedIn();
+      // Only the owner or an admin may delete a board entry.
+      allow delete: if isOwner(roll) || isAdmin();
     }
 
     /* ── Groups (max four) ──────────────────────────────────── */
@@ -233,8 +266,9 @@ service cloud.firestore {
         && request.resource.data.memberRolls[0].size() >= 1
         && request.resource.data.memberRolls[0].size() <= 160;
 
-      /* Membership is stored as roll numbers, so it follows a student from
-         device to device. Organizers may also rename or adjust members. */
+      /* Any signed-in device may join or leave (membership update).
+         Only the creator or an admin may rename or remove other members.
+         Membership is always capped at 4. */
       allow update: if signedIn()
         && request.resource.data.code == resource.data.code
         && request.resource.data.name is string
@@ -244,7 +278,9 @@ service cloud.firestore {
         && request.resource.data.memberRolls is list
         && request.resource.data.memberRolls.size() <= 4;
 
-      allow delete: if signedIn();
+      // Only the group creator or an admin may dissolve a group.
+      allow delete: if signedIn()
+        && (resource.data.createdBy == request.auth.uid || isAdmin());
     }
   }
 }

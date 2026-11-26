@@ -43,7 +43,7 @@ function refresh() {
 
   if (standalone) {
     setControls({ header: false, settings: false });
-    setNote('Installed. Open Christmas 2026 from your home screen or app list.');
+    setNote('Installed. Open Advent 26 from your home screen or app list.');
     return;
   }
 

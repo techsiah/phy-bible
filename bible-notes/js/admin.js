@@ -6,9 +6,10 @@
 import { EVENT, DEPARTMENTS, YEARS, PROGRAMS, GENDERS, isCleanName } from './config.js';
 import { initBackend } from './backend.js';
 
-// Default organizer passcode
-const PASSCODE = 'JYPRC2026';
-const AUTH_KEY = 'xmas2026.admin.auth.v1';
+// Firebase Email/Password auth is used here — no passcodes in source code.
+// Add organizer emails in Firebase Console → Authentication → Users
+// and create admins/{uid} docs in Firestore Console (empty docs are fine).
+let _firebaseAdminAuth = null; // set in initAdminFirebase()
 
 // Professional SVG Icon Library
 const ICONS = {
@@ -54,44 +55,114 @@ function genderLabel(value) {
   return found ? found.label : '';
 }
 
-/* ── Authentication ────────────────────────────────────────── */
+/* ── Authentication ─────────────────────────────────────────
+   Uses Firebase Email/Password sign-in.
+   Steps to provision a new organizer:
+     1. Firebase Console → Authentication → Users → Add user
+     2. Firebase Console → Firestore → admins → create a document
+        whose ID is the new user's UID (content can be empty: {}).
+   ──────────────────────────────────────────────────────────── */
+
+async function initAdminFirebase() {
+  const cfg = window.FIREBASE_CONFIG;
+  if (!cfg || !cfg.apiKey || String(cfg.apiKey).includes('YOUR_')) return null;
+  if (!window.firebase) return null;
+  if (!window.firebase.apps.length) window.firebase.initializeApp(cfg);
+  _firebaseAdminAuth = window.firebase.auth();
+  try {
+    await _firebaseAdminAuth.setPersistence(
+      window.firebase.auth.Auth.Persistence.LOCAL
+    );
+  } catch (err) { /* ignore */ }
+  return _firebaseAdminAuth;
+}
 
 function checkAuth() {
-  const isAuth = sessionStorage.getItem(AUTH_KEY) === '1';
-  if (isAuth) {
+  if (!_firebaseAdminAuth) {
+    // Firebase not ready yet — wait for onAuthStateChanged
+    return;
+  }
+  _firebaseAdminAuth.onAuthStateChanged(async (user) => {
+    if (!user || user.isAnonymous) {
+      _showLockScreen();
+      return;
+    }
+    // Verify UID is in admins collection
+    const db = window.firebase.firestore();
+    try {
+      const snap = await db.collection('admins').doc(user.uid).get();
+      if (!snap.exists) {
+        await _firebaseAdminAuth.signOut();
+        _showLockScreen('Your account is not registered as an organizer.');
+        return;
+      }
+    } catch (err) {
+      _showLockScreen('Could not verify organizer status. Check your connection.');
+      return;
+    }
     adminState.authenticated = true;
     $('lockScreen').hidden = true;
     $('adminShell').hidden = false;
+    $('lockUserEmail').textContent = user.email || '';
     bootPortal();
-  } else {
-    adminState.authenticated = false;
-    $('lockScreen').hidden = false;
-    $('adminShell').hidden = true;
+  });
+}
+
+function _showLockScreen(errorMsg) {
+  adminState.authenticated = false;
+  $('lockScreen').hidden = false;
+  $('adminShell').hidden = true;
+  if (errorMsg) {
+    const el = $('passcodeError');
+    if (el) { el.textContent = errorMsg; el.hidden = false; }
   }
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
   if (e) e.preventDefault();
-  const input = $('passcodeInput');
-  const error = $('passcodeError');
-  const code = (input.value || '').trim();
+  const emailInput = $('adminEmailInput');
+  const passInput = $('passcodeInput');
+  const errorEl = $('passcodeError');
+  const submitBtn = $('loginSubmitBtn');
+  const email = (emailInput?.value || '').trim();
+  const pass = passInput?.value || '';
 
-  if (code === PASSCODE) {
-    sessionStorage.setItem(AUTH_KEY, '1');
-    input.value = '';
-    error.hidden = true;
-    checkAuth();
-  } else {
-    error.textContent = 'Incorrect passcode. Please try again.';
-    error.hidden = false;
-    input.focus();
+  if (!email || !pass) {
+    if (errorEl) { errorEl.textContent = 'Enter your email and password.'; errorEl.hidden = false; }
+    return;
+  }
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Signing in…'; }
+  if (errorEl) errorEl.hidden = true;
+
+  try {
+    if (!_firebaseAdminAuth) {
+      _firebaseAdminAuth = await initAdminFirebase();
+    }
+    if (!_firebaseAdminAuth) throw new Error('Firebase not configured.');
+    await _firebaseAdminAuth.signInWithEmailAndPassword(email, pass);
+    // onAuthStateChanged will handle the rest
+  } catch (err) {
+    const msgs = {
+      'auth/user-not-found': 'No organizer account found for that email.',
+      'auth/wrong-password': 'Incorrect password. Please try again.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/too-many-requests': 'Too many attempts. Please wait a few minutes.',
+      'auth/network-request-failed': 'Network error. Check your connection.'
+    };
+    const msg = msgs[err.code] || err.message || 'Sign-in failed. Please try again.';
+    if (errorEl) { errorEl.textContent = msg; errorEl.hidden = false; }
+    if (passInput) { passInput.value = ''; passInput.focus(); }
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Sign In'; }
   }
 }
 
-function handleLogout() {
+async function handleLogout() {
   stopRealtimeSync();
-  sessionStorage.removeItem(AUTH_KEY);
-  checkAuth();
+  try {
+    if (_firebaseAdminAuth) await _firebaseAdminAuth.signOut();
+  } catch (err) { /* ignore */ }
+  _showLockScreen();
 }
 
 /* ── Theme Handling ────────────────────────────────────────── */
@@ -1172,10 +1243,10 @@ function showLoading(show) {
 
 /* ── Initialization ────────────────────────────────────────── */
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   initTheme();
 
-  // Auth setup
+  // Auth setup — Firebase Email/Password
   $('loginForm')?.addEventListener('submit', handleLogin);
   $('lockBtn')?.addEventListener('click', handleLogout);
 
@@ -1200,6 +1271,7 @@ window.addEventListener('DOMContentLoaded', () => {
     showToast('Data refreshed!');
   });
 
-  // Check auth and boot
+  // Boot Firebase auth then listen for sign-in state
+  await initAdminFirebase();
   checkAuth();
 });

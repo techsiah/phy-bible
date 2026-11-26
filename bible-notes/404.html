@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="day">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F7F5F0">
+  <title>Page not found · Advent 26</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    try {
+      var t = localStorage.getItem('xmas2026.theme.v1');
+      if (t === 'candle' || t === 'day') document.documentElement.dataset.theme = t;
+    } catch (e) { /* storage unavailable */ }
+  </script>
+  <style>
+    .notfound-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      gap: 1rem;
+    }
+    .notfound-wrap img { width: 72px; height: 72px; opacity: .9; }
+    .notfound-wrap h1 { font-size: 1.25rem; font-weight: 600; margin: 0; }
+    .notfound-wrap p  { font-size: 0.95rem; opacity: .65; margin: 0; max-width: 28ch; }
+    .notfound-wrap a  {
+      display: inline-block;
+      margin-top: .5rem;
+      padding: .6em 1.4em;
+      background: var(--gold, #F9A61A);
+      color: #fff;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="notfound-wrap">
+    <img src="icon-512.png" alt="">
+    <h1>Page not found</h1>
+    <p>That door doesn't exist. Head back to the Advent calendar.</p>
+    <a href="/">Open Advent 26</a>
+  </div>
+</body>
+</html>

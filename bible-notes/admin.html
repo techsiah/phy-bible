@@ -20,7 +20,7 @@
 
 <body class="admin-body">
 
-  <!-- ── Passcode Lock Screen ─────────────────────────────────── -->
+  <!-- ── Sign-In Screen (Firebase Email/Password) ──────────────── -->
   <div class="lock-screen" id="lockScreen">
     <div class="lock-card">
       <img src="icon.png" alt="Jesus Youth" class="lock-logo">
@@ -28,12 +28,18 @@
       <p>Jesus Youth · Pazhassi Raja College<br>Christmas 2026: 25 Days of the Word</p>
 
       <form id="loginForm" autocomplete="off">
-        <div class="passcode-input-wrap">
-          <input type="password" id="passcodeInput" class="passcode-input" placeholder="Enter Admin PIN" maxlength="20"
+        <div class="passcode-input-wrap" style="margin-bottom: 10px;">
+          <input type="email" id="adminEmailInput" class="passcode-input"
+            placeholder="Organizer email" autocomplete="email"
             required autofocus>
         </div>
-        <p id="passcodeError" style="color: var(--red); font-size: 0.8rem; margin: -8px 0 14px;" hidden></p>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Unlock Portal</button>
+        <div class="passcode-input-wrap">
+          <input type="password" id="passcodeInput" class="passcode-input"
+            placeholder="Password" autocomplete="current-password"
+            required maxlength="128">
+        </div>
+        <p id="passcodeError" style="color: var(--red); font-size: 0.8rem; margin: 4px 0 14px;" hidden></p>
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%;">Sign In</button>
       </form>
       <p class="lock-footnote">
         Authorized college organizers only
@@ -85,13 +91,14 @@
           </svg>
           <span>Student App</span>
         </a>
-        <button class="action-btn" id="lockBtn" type="button" title="Lock portal session">
+        <button class="action-btn" id="lockBtn" type="button" title="Sign out of portal">
           <svg class="admin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          <span>Lock</span>
+          <span>Sign Out</span>
+          <span id="lockUserEmail" style="font-size: 0.72rem; opacity: 0.65; margin-left: 4px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
         </button>
       </div>
     </header>
@@ -776,8 +783,11 @@
     <span id="toastText"></span>
   </div>
 
-  <!-- Scripts -->
+  <!-- Scripts — firebase-config first, then compat SDKs, then admin controller -->
   <script src="firebase-config.js"></script>
+  <script src="vendor/firebase/firebase-app-compat.js"></script>
+  <script src="vendor/firebase/firebase-auth-compat.js"></script>
+  <script src="vendor/firebase/firebase-firestore-compat.js"></script>
   <script type="module" src="js/admin.js"></script>
 </body>
 
