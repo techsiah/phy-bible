@@ -101,6 +101,7 @@ const dom = {
   accountBtn: $('accountBtn'),
   accountLabel: $('accountLabel'),
   coverRegBtn: $('coverRegBtn'),
+  coverPreviewBtn: $('coverPreviewBtn'),
   coverThemeBtn: $('coverThemeBtn'),
   coverAvatar: $('coverAvatar'),
   coverIdentityName: $('coverIdentityName'),
@@ -1000,6 +1001,7 @@ function renderCover() {
       : 'Save streaks & join your college group';
   }
   if (dom.coverRegBtn) {
+    dom.coverRegBtn.classList.toggle('is-profile', Boolean(profile));
     dom.coverRegBtn.setAttribute(
       'aria-label',
       profile ? `Signed in as ${name || profile.roll}. Tap to continue reading.` : 'Register with Roll Number'
@@ -1030,7 +1032,10 @@ function renderCover() {
 
   if (dom.openBtn) {
     const span = dom.openBtn.querySelector('span');
-    const label = profile ? 'Continue reading' : 'Explore the readings';
+    let label;
+    if (state.phase === 'before') label = 'Preview the 25 days';
+    else if (state.phase === 'after') label = 'Revisit the 25 days';
+    else label = profile ? 'Continue today’s reading' : 'Start today’s reading';
     if (span) span.textContent = label;
     else dom.openBtn.textContent = label;
   }
@@ -2781,6 +2786,10 @@ function isTyping(target) {
 
 function bindEvents() {
   if (dom.openBtn) dom.openBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    openApp();
+  });
+  if (dom.coverPreviewBtn) dom.coverPreviewBtn.addEventListener('click', (event) => {
     event.stopPropagation();
     openApp();
   });
